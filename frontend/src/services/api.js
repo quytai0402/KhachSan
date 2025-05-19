@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance with base URL
 const api = axios.create({
@@ -30,12 +30,87 @@ api.interceptors.response.use(
   (error) => {
     // Add better error details for debugging
     if (error.response) {
-      console.error('API Error Response:', error.response.data);
-      console.error('API Error Status:', error.response.status);
+      // Get the error response data
+      const errorData = error.response.data;
+      const errorStatus = error.response.status;
+      
+      // Log error details for debugging (can be disabled in production)
+      if (process.env.NODE_ENV !== 'production') {
+        console.error(`API Error [${errorStatus}]:`, errorData);
+      }
+      
+      // Handle common errors
+      switch (errorStatus) {
+        case 401:
+          // Unauthorized - clear token and redirect to login
+          // Only redirect if not already on login/register page to avoid redirect loops
+          if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+            localStorage.removeItem('token');
+            // Use a timeout to allow the current execution to complete
+            setTimeout(() => {
+              window.location.href = '/login?session=expired';
+            }, 100);
+          }
+          break;
+          
+        case 403:
+          // Forbidden - user doesn't have permission
+          console.error('Access denied: You do not have permission to perform this action');
+          break;
+          
+        case 404:
+          // Not found
+          console.error('Resource not found');
+          break;
+          
+        case 422:
+          // Validation error
+          console.error('Validation error:', errorData.errors || errorData.message);
+          break;
+          
+        case 500:
+          // Server error
+          console.error('Server error. Please try again later or contact support.');
+          break;
+          
+        default:
+          // Other errors
+          console.error(`Error (${errorStatus}):`); 
+      }
+      
+      // Return specific error message from server if available
+      // Format the error in a consistent way for the application
+      if (errorData) {
+        const errorMessage = errorData.message || 
+                            (typeof errorData === 'string' ? errorData : 'Unknown error occurred');
+                            
+        const errorDetails = errorData.errors || {};
+        
+        return Promise.reject({
+          ...error,
+          status: errorStatus,
+          message: errorMessage,
+          details: errorDetails,
+          timestamp: new Date()
+        });
+      }
     } else if (error.request) {
-      console.error('API Error Request:', error.request);
+      // The request was made but no response was received
+      console.error('Network Error: No response received from server. Please check your connection.');
+      return Promise.reject({
+        ...error,
+        message: 'Network error. Please check your connection and try again.',
+        isNetworkError: true,
+        timestamp: new Date()
+      });
     } else {
-      console.error('API Error Message:', error.message);
+      // Something happened in setting up the request
+      console.error('Error Message:', error.message);
+      return Promise.reject({
+        ...error,
+        message: error.message || 'An unexpected error occurred',
+        timestamp: new Date()
+      });
     }
     return Promise.reject(error);
   }
@@ -81,6 +156,7 @@ export const roomAPI = {
   getAllRooms: () => api.get('/rooms'),
   getRoomById: (id) => api.get(`/rooms/${id}`),
   getAvailableRooms: (checkIn, checkOut) => api.get(`/rooms/available?checkIn=${checkIn}&checkOut=${checkOut}`),
+  getRoomTypes: () => api.get('/rooms/types'),
   createRoom: (roomData) => {
     // If roomData contains files, use FormData
     if (roomData.images && (Array.isArray(roomData.images) || roomData.images instanceof File)) {
@@ -207,6 +283,15 @@ export const promotionAPI = {
     return api.put(`/promotions/${id}`, promotionData);
   },
   deletePromotion: (id) => api.delete(`/promotions/${id}`)
+};
+
+// Admin Services
+export const adminAPI = {
+  getDashboard: () => api.get('/admin/dashboard'),
+  getActivities: () => api.get('/admin/activities'),
+  getReports: (startDate, endDate) => api.get('/admin/reports', {
+    params: { startDate, endDate }
+  })
 };
 
 export default api; 

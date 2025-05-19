@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -10,68 +10,50 @@ import {
   Button,
   Box,
   Chip,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
 import { AccessTime as AccessTimeIcon } from '@mui/icons-material';
-
-const promotions = [
-  {
-    id: 1,
-    title: 'Weekend Escape',
-    description: 'Enjoy a relaxing weekend getaway with 20% off our best available rates. Includes complimentary breakfast and late checkout.',
-    validUntil: 'December 31, 2023',
-    discount: '20%',
-    code: 'WEEKEND20',
-    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 2,
-    title: 'Stay Longer, Save More',
-    description: 'Book 4 nights or more and receive 25% off your entire stay. Perfect for extended vacations or business trips.',
-    validUntil: 'January 15, 2024',
-    discount: '25%',
-    code: 'EXTRASTAY',
-    image: 'https://images.unsplash.com/photo-1568084680786-a84f91d1153c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 3,
-    title: 'Early Bird Special',
-    description: 'Plan ahead and save! Book at least 30 days in advance to receive 15% off your room rate.',
-    validUntil: 'Ongoing',
-    discount: '15%',
-    code: 'EARLYBIRD',
-    image: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 4,
-    title: 'Spa & Wellness Package',
-    description: 'Book any room and add our premium spa package at 30% off. Includes a 60-minute massage and facial treatment.',
-    validUntil: 'November 30, 2023',
-    discount: '30%',
-    code: 'SPADELUXE',
-    image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 5,
-    title: 'Family Fun Package',
-    description: 'Bring the whole family and enjoy spacious accommodations with 20% off when booking two rooms. Kids eat free!',
-    validUntil: 'February 28, 2024',
-    discount: '20%',
-    code: 'FAMILY20',
-    image: 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 6,
-    title: 'Honeymoon Special',
-    description: 'Celebrate your new beginning with our romantic package including champagne, chocolate-covered strawberries, and rose petal turndown service.',
-    validUntil: 'Ongoing',
-    discount: '25%',
-    code: 'HONEYMOON',
-    image: 'https://images.unsplash.com/photo-1519011985187-444d62641929?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  }
-];
+import { promotionAPI } from '../services/api';
 
 const Promotions = () => {
+  const [promotions, setPromotions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPromotions = async () => {
+      try {
+        setLoading(true);
+        const response = await promotionAPI.getAllPromotions();
+        setPromotions(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching promotions:', err);
+        setError('Failed to load promotions');
+        setLoading(false);
+      }
+    };
+
+    fetchPromotions();
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '70vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <Typography variant="h5" color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
       <Box sx={{ textAlign: 'center', mb: 6 }}>
@@ -86,7 +68,7 @@ const Promotions = () => {
 
       <Grid container spacing={4}>
         {promotions.map((promo) => (
-          <Grid item xs={12} md={6} lg={4} key={promo.id}>
+          <Grid item xs={12} md={6} lg={4} key={promo._id || promo.id}>
             <Card sx={{ 
               height: '100%', 
               display: 'flex', 

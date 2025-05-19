@@ -159,7 +159,9 @@ const RoomDetail = () => {
         <Link component={RouterLink} to="/rooms" color="inherit">
           Rooms
         </Link>
-        <Typography color="text.primary">{getRoomTypeLabel(room.type)} {room.roomNumber}</Typography>
+        <Typography color="text.primary">{typeof room.type === 'object' ? 
+          getRoomTypeLabel(room.type.name) : 
+          getRoomTypeLabel(room.type)} {room.roomNumber}</Typography>
       </Breadcrumbs>
       
       <Grid container spacing={4}>
@@ -210,7 +212,9 @@ const RoomDetail = () => {
           
           {/* Room Description */}
           <Typography variant="h4" component="h1" gutterBottom>
-            {getRoomTypeLabel(room.type)} {room.roomNumber}
+            {typeof room.type === 'object' ? 
+              getRoomTypeLabel(room.type.name) : 
+              getRoomTypeLabel(room.type)} {room.roomNumber}
           </Typography>
           
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -232,7 +236,9 @@ const RoomDetail = () => {
               color={room.status === 'available' ? 'success' : 'error'} 
             />
             <Chip 
-              label={room.type === 'double' || room.type === 'twin' ? '2 Beds' : '1 Bed'} 
+              label={typeof room.type === 'object' ? 
+                (room.type.name === 'double' || room.type.name === 'twin' ? '2 Beds' : '1 Bed') : 
+                (room.type === 'double' || room.type === 'twin' ? '2 Beds' : '1 Bed')} 
               size="small" 
               color="primary" 
               variant="outlined" 
@@ -357,14 +363,23 @@ const RoomDetail = () => {
                     </ListItemIcon>
                     <ListItemText primary="Free cancellation (24h before)" />
                   </ListItem>
-                  {room.type !== 'single' && (
-                    <ListItem disablePadding>
-                      <ListItemIcon sx={{ minWidth: 24 }}>
-                        <CheckIcon color="success" fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Breakfast for 2" />
-                    </ListItem>
-                  )}
+                  {typeof room.type === 'object' ? 
+                    (room.type.name !== 'single' && (
+                      <ListItem disablePadding>
+                        <ListItemIcon sx={{ minWidth: 24 }}>
+                          <CheckIcon color="success" fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText primary="Breakfast for 2" />
+                      </ListItem>
+                    )) : (
+                    room.type !== 'single' && (
+                      <ListItem disablePadding>
+                        <ListItemIcon sx={{ minWidth: 24 }}>
+                          <CheckIcon color="success" fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText primary="Breakfast for 2" />
+                      </ListItem>
+                    ))}
                 </List>
               </Box>
             </Stack>

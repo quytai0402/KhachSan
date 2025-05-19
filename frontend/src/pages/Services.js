@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -7,7 +7,8 @@ import {
   CardContent,
   CardMedia,
   Box,
-  Button
+  Button,
+  CircularProgress
 } from '@mui/material';
 import {
   SpaOutlined,
@@ -19,67 +20,70 @@ import {
   LocalLaundryServiceOutlined,
   AirportShuttleOutlined
 } from '@mui/icons-material';
-
-const services = [
-  {
-    id: 1,
-    title: 'Luxury Spa & Wellness',
-    description: 'Indulge in our award-winning spa treatments and wellness services designed for ultimate relaxation and rejuvenation.',
-    icon: <SpaOutlined fontSize="large" />,
-    image: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 2,
-    title: 'Fine Dining Experience',
-    description: 'Savor exquisite culinary delights at our restaurant featuring international cuisine prepared by world-class chefs.',
-    icon: <RestaurantOutlined fontSize="large" />,
-    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 3,
-    title: 'Secure Parking',
-    description: 'Enjoy peace of mind with our 24/7 secure parking facilities available for all guests during their stay.',
-    icon: <LocalParkingOutlined fontSize="large" />,
-    image: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 4,
-    title: 'High-Speed WiFi',
-    description: 'Stay connected with complimentary high-speed internet access available throughout the hotel.',
-    icon: <WifiOutlined fontSize="large" />,
-    image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 5,
-    title: 'Fitness Center',
-    description: 'Maintain your fitness routine in our state-of-the-art gym equipped with the latest exercise machines and free weights.',
-    icon: <FitnessCenterOutlined fontSize="large" />,
-    image: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 6,
-    title: 'Swimming Pool',
-    description: 'Relax and unwind in our indoor and outdoor swimming pools with lounging areas and poolside service.',
-    icon: <PoolOutlined fontSize="large" />,
-    image: 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 7,
-    title: 'Laundry Service',
-    description: 'Keep your wardrobe fresh with our professional laundry and dry-cleaning services available daily.',
-    icon: <LocalLaundryServiceOutlined fontSize="large" />,
-    image: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  },
-  {
-    id: 8,
-    title: 'Airport Shuttle',
-    description: 'Enjoy convenient transportation with our complimentary airport shuttle service for all guests.',
-    icon: <AirportShuttleOutlined fontSize="large" />,
-    image: 'https://images.unsplash.com/photo-1566204773863-cf63e6d4ab88?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80'
-  }
-];
+import { serviceAPI } from '../services/api';
 
 const Services = () => {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const response = await serviceAPI.getAllServices();
+        setServices(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        setError('Failed to load services');
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  // Function to get icon component based on icon name
+  const getServiceIcon = (iconName) => {
+    switch (iconName) {
+      case 'spa':
+        return <SpaOutlined fontSize="large" />;
+      case 'restaurant':
+        return <RestaurantOutlined fontSize="large" />;
+      case 'parking':
+        return <LocalParkingOutlined fontSize="large" />;
+      case 'wifi':
+        return <WifiOutlined fontSize="large" />;
+      case 'fitness':
+        return <FitnessCenterOutlined fontSize="large" />;
+      case 'pool':
+        return <PoolOutlined fontSize="large" />;
+      case 'laundry':
+        return <LocalLaundryServiceOutlined fontSize="large" />;
+      case 'shuttle':
+        return <AirportShuttleOutlined fontSize="large" />;
+      default:
+        return <SpaOutlined fontSize="large" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '70vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <Typography variant="h5" color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
       <Box sx={{ textAlign: 'center', mb: 6 }}>
@@ -94,7 +98,7 @@ const Services = () => {
 
       <Grid container spacing={4}>
         {services.map((service) => (
-          <Grid item xs={12} md={6} key={service.id}>
+          <Grid item xs={12} md={6} key={service._id || service.id}>
             <Card sx={{ 
               display: 'flex', 
               flexDirection: {xs: 'column', sm: 'row'},
@@ -117,7 +121,7 @@ const Services = () => {
               <CardContent sx={{ flex: '1 0 auto', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <Box sx={{ mr: 2, color: 'primary.main' }}>
-                    {service.icon}
+                    {getServiceIcon(service.icon)}
                   </Box>
                   <Typography variant="h6" component="h2">
                     {service.title}

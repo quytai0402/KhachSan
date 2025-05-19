@@ -103,10 +103,29 @@ router.post('/', [auth, admin], async (req, res) => {
   } = req.body;
 
   try {
+    console.log('Creating new promotion with data:', req.body);
+    
+    // Validate required fields
+    if (!name || !code || !description || !discountValue || !validFrom || !validTo) {
+      console.error('Missing required fields:', { name, code, description, discountValue, validFrom, validTo });
+      return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
     // Check if code already exists
     const existingPromotion = await Promotion.findOne({ code: code.toUpperCase() });
     if (existingPromotion) {
+      console.error('Promotion code already exists:', code);
       return res.status(400).json({ message: 'Promotion code already exists' });
+    }
+
+    // Format dates
+    const formattedValidFrom = new Date(validFrom);
+    const formattedValidTo = new Date(validTo);
+    
+    // Validate dates
+    if (formattedValidTo <= formattedValidFrom) {
+      console.error('Invalid date range:', { validFrom, validTo });
+      return res.status(400).json({ message: 'End date must be after start date' });
     }
 
     // Create new promotion
@@ -114,22 +133,26 @@ router.post('/', [auth, admin], async (req, res) => {
       name,
       code: code.toUpperCase(),
       description,
-      discountType,
+      discountType: discountType || 'percentage',
       discountValue,
-      validFrom,
-      validTo,
+      validFrom: formattedValidFrom,
+      validTo: formattedValidTo,
       applicableRoomTypes: Array.isArray(applicableRoomTypes) 
         ? applicableRoomTypes 
-        : [applicableRoomTypes],
+        : (applicableRoomTypes ? [applicableRoomTypes] : ['all']),
       minimumStay: minimumStay || 1
     });
 
     // Save promotion to database
     const promotion = await newPromotion.save();
+    console.log('Promotion created successfully:', promotion._id);
     res.json(promotion);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error('Error creating promotion:', err.message);
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation Error', errors: err.errors });
+    }
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 

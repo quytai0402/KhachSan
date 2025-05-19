@@ -23,13 +23,13 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { adminAPI } from '../../services/api';
 
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import PeopleIcon from '@mui/icons-material/People';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
-import { bookingAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 const Reports = () => {
@@ -71,33 +71,20 @@ const Reports = () => {
   // Fetch report data
   useEffect(() => {
     const fetchReportData = async () => {
+      if (!isAuthenticated || !user || user.role !== 'admin') return;
+      
+      setLoading(true);
+      
       try {
-        setLoading(true);
+        // Format dates for API
+        const formattedStartDate = format(startDate, 'yyyy-MM-dd');
+        const formattedEndDate = format(endDate, 'yyyy-MM-dd');
         
-        // In a real app, you'd have APIs for these reports
-        // For now we'll simulate with booking data
-        const bookingsResponse = await bookingAPI.getAllBookings();
-        const bookings = bookingsResponse.data;
+        // Get report data using adminAPI
+        const response = await adminAPI.getReports(formattedStartDate, formattedEndDate);
         
-        // Calculate summary metrics
-        const totalBookings = bookings.length;
-        const totalRevenue = bookings.reduce((sum, booking) => sum + (booking.totalPrice || 0), 0);
-        const totalGuests = bookings.reduce((sum, booking) => 
-          sum + (booking.numberOfGuests?.adults || 0) + (booking.numberOfGuests?.children || 0), 0);
-        
-        // Simulate occupancy rate
-        const occupancyRate = Math.min(85, Math.round((totalBookings / 30) * 100)); // Just a simulation
-        
-        setReportData({
-          totalRevenue,
-          totalBookings,
-          totalGuests,
-          occupancyRate,
-          revenueByMonth: generateMockMonthlyData(),
-          bookingsByRoomType: generateMockRoomTypeData(),
-          recentBookings: bookings.slice(0, 5) // Just the 5 most recent bookings
-        });
-        
+        // Set the report data
+        setReportData(response.data);
         setError(null);
       } catch (err) {
         console.error('Error fetching report data:', err);
@@ -110,30 +97,57 @@ const Reports = () => {
     if (isAuthenticated && user && user.role === 'admin') {
       fetchReportData();
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, startDate, endDate]);
+  
+  // Process real revenue data by month
+  const processRevenueByMonth = (bookings) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const revenueByMonth = Array(12).fill(0);
+    
+    bookings.forEach(booking => {
+      if (booking.status !== 'cancelled' && booking.createdAt) {
+        const bookingDate = new Date(booking.createdAt);
+        const monthIndex = bookingDate.getMonth();
+        revenueByMonth[monthIndex] += (booking.totalPrice || 0);
+      }
+    });
+    
+    return months.map((month, index) => ({
+      month,
+      revenue: revenueByMonth[index]
+    }));
+  };
+  
+  // Process real bookings by room type
+  const processBookingsByRoomType = (bookings, rooms) => {
+    // Create a map of room IDs to room types
+    const roomTypesMap = {};
+    rooms.forEach(room => {
+      roomTypesMap[room._id] = room.type?.name || 'Unknown';
+    });
+    
+    // Count bookings by room type
+    const bookingCounts = {};
+    
+    bookings.forEach(booking => {
+      if (booking.room) {
+        const roomType = roomTypesMap[booking.room] || 'Unknown';
+        bookingCounts[roomType] = (bookingCounts[roomType] || 0) + 1;
+      }
+    });
+    
+    // Convert to array format needed for chart
+    return Object.keys(bookingCounts).map(type => ({
+      type,
+      bookings: bookingCounts[type]
+    }));
+  };
   
   // Handle tab change
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-  };
-  
-  // Generate mock monthly data for the chart
-  const generateMockMonthlyData = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months.map(month => ({
-      month,
-      revenue: Math.floor(Math.random() * 10000) + 5000
-    }));
-  };
-  
-  // Generate mock room type data
-  const generateMockRoomTypeData = () => {
-    const roomTypes = ['single', 'double', 'twin', 'suite', 'family', 'deluxe'];
-    return roomTypes.map(type => ({
-      type,
-      bookings: Math.floor(Math.random() * 30) + 10
-    }));
   };
   
   // Handle date changes

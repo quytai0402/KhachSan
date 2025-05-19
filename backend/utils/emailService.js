@@ -2,19 +2,51 @@ const nodemailer = require('nodemailer');
 
 // Create a transporter object
 const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+  try {
+    // Check if email configuration exists
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.warn('Email configuration missing. Email functionality disabled.');
+      return null;
     }
-  });
+    
+    return nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create email transporter:', error);
+    return null;
+  }
+};
+
+// Helper to send email with proper error handling
+const sendEmail = async (mailOptions) => {
+  try {
+    const transporter = createTransporter();
+    if (!transporter) {
+      return { success: false, message: 'Email service not configured' };
+    }
+    
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return { 
+      success: false, 
+      message: error.message || 'Failed to send email',
+      error 
+    };
+  }
 };
 
 // Send booking confirmation email
 const sendBookingConfirmation = async (user, booking, room) => {
   try {
     const transporter = createTransporter();
+    if (!transporter) return false;
     
     // Format dates
     const checkInDate = new Date(booking.checkInDate).toLocaleDateString();
@@ -60,9 +92,14 @@ const sendBookingConfirmation = async (user, booking, room) => {
       `
     };
     
-    await transporter.sendMail(mailOptions);
-    console.log(`Booking confirmation email sent to ${user.email}`);
-    return true;
+    const result = await sendEmail(mailOptions);
+    if (result.success) {
+      console.log(`Booking confirmation email sent to ${user.email}`);
+      return true;
+    } else {
+      console.error(`Failed to send booking confirmation email to ${user.email}:`, result.message);
+      return false;
+    }
   } catch (error) {
     console.error('Error sending booking confirmation email:', error);
     return false;
@@ -73,6 +110,7 @@ const sendBookingConfirmation = async (user, booking, room) => {
 const sendBookingCancellation = async (user, booking, room) => {
   try {
     const transporter = createTransporter();
+    if (!transporter) return false;
     
     // Format dates
     const checkInDate = new Date(booking.checkInDate).toLocaleDateString();
@@ -110,9 +148,14 @@ const sendBookingCancellation = async (user, booking, room) => {
       `
     };
     
-    await transporter.sendMail(mailOptions);
-    console.log(`Booking cancellation email sent to ${user.email}`);
-    return true;
+    const result = await sendEmail(mailOptions);
+    if (result.success) {
+      console.log(`Booking cancellation email sent to ${user.email}`);
+      return true;
+    } else {
+      console.error(`Failed to send booking cancellation email to ${user.email}:`, result.message);
+      return false;
+    }
   } catch (error) {
     console.error('Error sending booking cancellation email:', error);
     return false;
@@ -123,6 +166,7 @@ const sendBookingCancellation = async (user, booking, room) => {
 const sendWelcomeEmail = async (user) => {
   try {
     const transporter = createTransporter();
+    if (!transporter) return false;
     
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -144,9 +188,14 @@ const sendWelcomeEmail = async (user) => {
       `
     };
     
-    await transporter.sendMail(mailOptions);
-    console.log(`Welcome email sent to ${user.email}`);
-    return true;
+    const result = await sendEmail(mailOptions);
+    if (result.success) {
+      console.log(`Welcome email sent to ${user.email}`);
+      return true;
+    } else {
+      console.error(`Failed to send welcome email to ${user.email}:`, result.message);
+      return false;
+    }
   } catch (error) {
     console.error('Error sending welcome email:', error);
     return false;

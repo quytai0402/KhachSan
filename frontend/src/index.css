@@ -1,8 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #1e4e8c;
+  --primary-light: #4c7ac0;
+  --primary-dark: #0d2d5e;
+  --secondary-color: #e67e22;
+  --secondary-light: #f39c12;
+  --secondary-dark: #d35400;
+  --success-color: #2ecc71;
+  --error-color: #e74c3c;
+  --text-primary: #2c3e50;
+  --text-secondary: #7f8c8d;
+  --background-light: #f5f7fa;
+  --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  --transition-fast: 0.2s all ease;
+  --transition-normal: 0.3s all ease;
+  --transition-slow: 0.5s all ease;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   margin: 0;
-  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Poppins', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
+  background-color: var(--background-light);
+  line-height: 1.6;
+  font-weight: 400;
+  overflow-x: hidden;
 }
 
 code {
@@ -13,6 +44,51 @@ code {
 a {
   text-decoration: none;
   color: inherit;
+  transition: var(--transition-fast);
+}
+
+button {
+  font-family: 'Poppins', 'Roboto', sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Admin Panel Styles */
+.sidebar-link.active {
+  background-color: rgba(30, 78, 140, 0.08);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.admin-section {
+  transition: var(--transition-normal);
+}
+
+.admin-card {
+  transition: var(--transition-normal);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--card-shadow);
 }
 
 /* General transitions */
@@ -21,12 +97,92 @@ a {
 }
 .fade-enter-active {
   opacity: 1;
-  transition: opacity 300ms;
+  transition: opacity 300ms ease;
 }
 .fade-exit {
   opacity: 1;
 }
 .fade-exit-active {
   opacity: 0;
-  transition: opacity 300ms;
+  transition: opacity 300ms ease;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(30, 78, 140, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(30, 78, 140, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(30, 78, 140, 0);
+  }
+}
+
+/* Common utility classes */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease forwards;
+}
+
+.page-container {
+  padding: 2rem 0;
+  min-height: 60vh;
+}
+
+/* Button effects */
+.btn-hover-effect {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-hover-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Card effects */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Image hover effects */
+.img-zoom-container {
+  overflow: hidden;
+}
+
+.img-zoom {
+  transition: transform 0.5s ease;
+}
+
+.img-zoom:hover {
+  transform: scale(1.05);
 }

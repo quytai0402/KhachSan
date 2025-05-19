@@ -2,8 +2,17 @@ const express = require('express');
 const router = express.Router();
 const { auth, admin } = require('../middleware/auth');
 const Room = require('../models/Room');
+const RoomType = require('../models/RoomType');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const mongoose = require('mongoose');
+
+// Ensure upload directory exists
+const uploadDir = path.join(__dirname, '../uploads/rooms');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Setup multer for file uploads
 const storage = multer.diskStorage({
@@ -30,12 +39,26 @@ const upload = multer({
   }
 });
 
+// @route   GET api/rooms/types
+// @desc    Get all room types
+// @access  Public
+router.get('/types', async (req, res) => {
+  try {
+    console.log('Fetching all room types');
+    const roomTypes = await RoomType.find().sort({ name: 1 });
+    res.json(roomTypes);
+  } catch (err) {
+    console.error('Error fetching room types:', err.message);
+    res.status(500).json({ message: 'Server error retrieving room types' });
+  }
+});
+
 // @route   GET api/rooms
 // @desc    Get all rooms
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const rooms = await Room.find().sort({ createdAt: -1 });
+    const rooms = await Room.find().sort({ createdAt: -1 }).populate('type');
     res.json(rooms);
   } catch (err) {
     console.error(err.message);
@@ -83,6 +106,27 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// @route   GET api/rooms/featured
+// @desc    Get featured rooms for homepage
+// @access  Public
+router.get('/featured', async (req, res) => {
+  try {
+    // Get featured rooms - rooms that are available and have good features
+    const featuredRooms = await Room.find({ 
+      status: 'available',
+      price: { $exists: true }
+    })
+    .populate('type')
+    .sort({ price: -1 }) // Sort by price descending to get premium rooms first
+    .limit(4); // Only get top 4 rooms
+    
+    res.json(featuredRooms);
+  } catch (err) {
+    console.error('Error fetching featured rooms:', err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 // @route   POST api/rooms
 // @desc    Create a room
 // @access  Private (Admin only)
@@ -90,10 +134,26 @@ router.post('/', [auth, admin, upload.array('images', 5)], async (req, res) => {
   const { roomNumber, type, description, price, capacity, amenities, floor } = req.body;
 
   try {
+    console.log('Creating new room with data:', req.body);
+    
+    // Validate required fields
+    if (!roomNumber || !type || !description || !price) {
+      console.error('Missing required fields:', { roomNumber, type, description, price });
+      return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
     // Check if room number already exists
     const existingRoom = await Room.findOne({ roomNumber });
     if (existingRoom) {
+      console.error('Room number already exists:', roomNumber);
       return res.status(400).json({ message: 'Room number already exists' });
+    }
+
+    // Validate room type exists
+    const roomType = await mongoose.model('RoomType').findById(type);
+    if (!roomType) {
+      console.error('Invalid room type:', type);
+      return res.status(400).json({ message: 'Invalid room type' });
     }
 
     // Process amenities (convert from string to array if needed)
@@ -105,22 +165,27 @@ router.post('/', [auth, admin, upload.array('images', 5)], async (req, res) => {
       type,
       description,
       price,
-      capacity,
-      amenities: amenitiesArray,
-      floor
+      capacity: capacity || 2,
+      amenities: amenitiesArray || [],
+      floor: floor || 1
     });
 
     // Add image paths if uploaded
     if (req.files && req.files.length > 0) {
+      console.log('Processing uploaded images:', req.files.length);
       newRoom.images = req.files.map(file => `/uploads/rooms/${file.filename}`);
     }
 
     // Save room to database
     const room = await newRoom.save();
+    console.log('Room created successfully:', room._id);
     res.json(room);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error('Error creating room:', err.message);
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation Error', errors: err.errors });
+    }
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 

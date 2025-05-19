@@ -27,24 +27,57 @@ import {
   CardContent,
   CardMedia,
   Chip,
-  Stack
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import {
+  DatePicker,
+  DateRangePicker
+} from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { format, differenceInDays, addDays } from 'date-fns';
+import {
+  CalendarMonth as CalendarIcon,
+  Person as PersonIcon,
+  FamilyRestroom as FamilyIcon,
+  LocalOffer as OfferIcon,
+  ConfirmationNumber as ConfirmationIcon,
+  ArrowBack as ArrowBackIcon,
+  ArrowForward as ArrowForwardIcon,
+  CheckCircleOutline as CheckCircleIcon,
+  Error as ErrorIcon,
+  Warning as WarningIcon,
+  Info as InfoIcon,
+  Room as RoomIcon,
+  Hotel as HotelIcon,
+  MoreVert as MoreVertIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon
+} from '@mui/icons-material';
+import { format, differenceInDays, addDays, isWithinInterval } from 'date-fns';
 import { roomAPI, bookingAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toastService from '../services/toastService';
+import { vi } from 'date-fns/locale';
 
 const BookingForm = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   // Form steps
   const [activeStep, setActiveStep] = useState(0);
-  const steps = ['Booking Details', 'Guest Information', 'Review & Payment'];
+  const steps = ['Thông tin đặt phòng', 'Thông tin khách hàng', 'Xác nhận và thanh toán'];
   
   // State for room data
   const [room, setRoom] = useState(null);
@@ -78,6 +111,13 @@ const BookingForm = () => {
   // Add this state at the top with other state variables
   const [unavailableDates, setUnavailableDates] = useState([]);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  
+  // Calculated values
+  const dayCount = differenceInDays(bookingData.checkOutDate, bookingData.checkInDate);
+  const totalPrice = room ? room.price * dayCount : 0;
+  const taxAmount = totalPrice * 0.1; // 10% tax
+  const serviceCharge = totalPrice * 0.05; // 5% service charge
+  const totalAmount = totalPrice + taxAmount + serviceCharge;
   
   // Add this function to fetch unavailable dates for the room
   const fetchRoomAvailability = async (roomId) => {
@@ -116,7 +156,25 @@ const BookingForm = () => {
     const fetchRoomData = async () => {
       try {
         setLoading(true);
+        setError(null); // Clear any previous errors
+        
+        // First, validate the roomId format before making API call
+        if (!roomId || roomId === 'undefined') {
+          setError('ID phòng không hợp lệ. Vui lòng thử lại hoặc chọn phòng khác.');
+          setLoading(false);
+          return;
+        }
+        
         const response = await roomAPI.getRoomById(roomId);
+        
+        // Verify that we received valid room data
+        if (!response.data || !response.data._id) {
+          setError('Không thể tải thông tin phòng. Vui lòng thử lại sau.');
+          setLoading(false);
+          return;
+        }
+        
+        // Store room data
         setRoom(response.data);
         
         // Initialize adults with room capacity or 1
@@ -127,16 +185,23 @@ const BookingForm = () => {
         
         // Fetch room availability after getting room data
         await fetchRoomAvailability(roomId);
+        
+        // Show success message
+        toastService.success(`Phòng ${response.data.roomNumber} hiện có sẵn để đặt!`);
       } catch (err) {
-        console.error('Error fetching room:', err);
-        setError('Failed to load room details. Please try again later.');
-        toastService.error('Failed to load room details. Please try again later.');
+        console.error('Error fetching room data:', err);
+        setError('Không thể tải thông tin phòng. Vui lòng thử lại sau.');
       } finally {
         setLoading(false);
       }
     };
     
-    fetchRoomData();
+    if (roomId) {
+      fetchRoomData();
+    } else {
+      setLoading(false);
+      setError('Không tìm thấy ID phòng. Vui lòng quay lại và chọn phòng.');
+    }
   }, [roomId]);
   
   // Pre-fill user information if authenticated
@@ -152,327 +217,238 @@ const BookingForm = () => {
     }
   }, [user, isAuthenticated]);
   
-  // Calculate stay duration and total price
-  const calculateStayDetails = () => {
-    if (!room) return { nights: 0, totalPrice: 0 };
-    
-    const nights = differenceInDays(bookingData.checkOutDate, bookingData.checkInDate);
-    const totalPrice = nights * room.price;
-    
-    return { nights, totalPrice };
+  // Form date change handler
+  const handleDateChange = (field, newDate) => {
+    if (field === 'checkInDate') {
+      const newCheckOutDate = addDays(new Date(newDate), 1);
+      
+      setBookingData(prev => ({
+        ...prev,
+        [field]: newDate,
+        checkOutDate: newCheckOutDate
+      }));
+      
+      // Clear any validation errors for dates
+      setValidationErrors(prev => ({
+        ...prev,
+        checkInDate: null,
+        checkOutDate: null
+      }));
+    } else if (field === 'checkOutDate') {
+      setBookingData(prev => ({
+        ...prev,
+        [field]: newDate
+      }));
+      
+      // Clear validation error
+      setValidationErrors(prev => ({
+        ...prev,
+        checkOutDate: null
+      }));
+    }
   };
   
-  const { nights, totalPrice } = calculateStayDetails();
-  
-  // Handle form field changes
-  const handleChange = (e) => {
-    const { name, value, checked, type } = e.target;
+  // Form input change handler
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    
     setBookingData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
     
-    // Clear validation error when field changes
-    if (validationErrors[name]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
+    // Clear the validation error for this field
+    setValidationErrors(prev => ({
+      ...prev,
+      [name]: null
+    }));
   };
   
-  // Handle date changes
-  const handleDateChange = (name, value) => {
-    // Clear validation error when date changes
-    if (validationErrors[name]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
+  // Checkbox field change handler
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
     
-    if (name === 'checkInDate') {
-      // When check-in date changes, ensure check-out date is at least the day after
-      setBookingData(prev => ({
-        ...prev,
-        [name]: value,
-        // If current checkout is before or same as new checkin, set checkout to next day
-        checkOutDate: prev.checkOutDate <= value ? addDays(value, 1) : prev.checkOutDate
-      }));
-    } else if (name === 'checkOutDate') {
-      // When check-out date changes
-      if (value <= bookingData.checkInDate) {
-        // If selected checkout is before or same as checkin, show error
-        const errorMsg = 'Check-out date must be after check-in date';
-        setValidationErrors(prev => ({
-          ...prev,
-          checkOutDate: errorMsg
-        }));
-        toastService.warning(errorMsg);
-        return; // Don't update state
-      }
-      
-      // Check if selected date range overlaps with any unavailable dates
-      const isOverlapping = checkDateRangeOverlap(
-        bookingData.checkInDate, 
-        value, 
-        unavailableDates
-      );
-      
-      if (isOverlapping) {
-        const errorMsg = 'Selected date range includes already booked dates';
-        setValidationErrors(prev => ({
-          ...prev,
-          checkOutDate: errorMsg
-        }));
-        toastService.warning(errorMsg);
-        return; // Don't update state
-      }
-      
-      // Update state if everything is valid
-      setBookingData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-      
-      // Show success message for valid date selection
-      toastService.success('Selected dates are available!');
-    }
-  };
-  
-  // Helper function to check if a date range overlaps with unavailable dates
-  const checkDateRangeOverlap = (startDate, endDate, unavailableDates) => {
-    if (!unavailableDates || unavailableDates.length === 0) {
-      return false; // No unavailable dates, so no overlap
-    }
+    setBookingData(prev => ({
+      ...prev,
+      [name]: checked
+    }));
     
-    // Check each day in range
-    let currentDate = new Date(startDate);
-    while (currentDate < endDate) {
-      // Check if current date is in unavailable dates
-      const isUnavailable = unavailableDates.some(unavailableDate => 
-        unavailableDate.getFullYear() === currentDate.getFullYear() &&
-        unavailableDate.getMonth() === currentDate.getMonth() &&
-        unavailableDate.getDate() === currentDate.getDate()
-      );
-      
-      if (isUnavailable) {
-        return true; // Found an overlap
-      }
-      
-      // Move to next day
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    return false; // No overlap found
-  };
-  
-  // Add this helper function to check if a date range would conflict with booked dates
-  // This is specifically for the checkout date picker
-  const checkDateRangeConflict = (startDate, endDate, unavailableDates) => {
-    if (!unavailableDates || unavailableDates.length === 0 || !startDate || !endDate) {
-      return false;
-    }
-    
-    // For the checkout date picker, we need to check if selecting this date
-    // would create a range that includes any unavailable date
-    
-    // First, check if the date itself is unavailable
-    const isDateUnavailable = unavailableDates.some(unavailableDate => 
-      endDate.getFullYear() === unavailableDate.getFullYear() &&
-      endDate.getMonth() === unavailableDate.getMonth() &&
-      endDate.getDate() === unavailableDate.getDate()
-    );
-    
-    if (isDateUnavailable) {
-      return true;
-    }
-    
-    // Then check if any unavailable date falls between start and end
-    return unavailableDates.some(unavailableDate => {
-      return unavailableDate > startDate && unavailableDate < endDate;
-    });
+    // Clear the validation error for this field
+    setValidationErrors(prev => ({
+      ...prev,
+      [name]: null
+    }));
   };
   
   // Navigation between steps
   const handleNext = () => {
-    // Check validation before proceeding
-    const isValid = validateCurrentStep();
-    
-    if (isValid) {
-      if (activeStep === steps.length - 1) {
-        handleSubmitBooking();
-      } else {
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        // Clear validation errors when moving to next step
-        setValidationErrors({});
-      }
-    } else {
-      // Set validation errors based on current step
-      if (activeStep === 0) {
-        const errors = {};
-        if (!bookingData.checkInDate) errors.checkInDate = 'Check-in date is required';
-        if (!bookingData.checkOutDate) errors.checkOutDate = 'Check-out date is required';
-        if (nights <= 0) errors.checkOutDate = 'Check-out date must be after check-in date';
-        if (bookingData.adults <= 0) errors.adults = 'At least 1 adult is required';
-        if (bookingData.adults + bookingData.children > (room?.capacity || 1)) {
-          errors.adults = `Maximum ${room?.capacity} guests in total`;
-        }
-        setValidationErrors(errors);
-      } else if (activeStep === 1) {
-        const errors = {};
-        if (!bookingData.guestName.trim()) errors.guestName = 'Name is required';
-        if (!bookingData.guestEmail.trim()) errors.guestEmail = 'Email is required';
-        if (!bookingData.guestPhone.trim()) errors.guestPhone = 'Phone number is required';
-        if (!bookingData.guestAddress.trim()) errors.guestAddress = 'Address is required';
-        setValidationErrors(errors);
-      } else if (activeStep === 2) {
-        const errors = {};
-        if (!bookingData.agreeToTerms) errors.agreeToTerms = 'You must agree to the terms and conditions';
-        setValidationErrors(errors);
-      }
+    // Validate current step before proceeding
+    if (validateStep(activeStep)) {
+      setActiveStep((prevStep) => prevStep + 1);
+      window.scrollTo(0, 0);
     }
   };
   
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setActiveStep((prevStep) => prevStep - 1);
+    window.scrollTo(0, 0);
   };
   
-  // Form validation for each step
-  const validateCurrentStep = () => {
-    switch (activeStep) {
-      case 0: // Booking Details
-        return (
-          bookingData.checkInDate && 
-          bookingData.checkOutDate && 
-          nights > 0 && 
-          bookingData.adults > 0 && 
-          bookingData.adults + bookingData.children <= (room?.capacity || 1)
-        );
+  // Step validation
+  const validateStep = (step) => {
+    const errors = {};
+    
+    if (step === 0) {
+      // Validate booking details
+      if (!bookingData.checkInDate) {
+        errors.checkInDate = 'Vui lòng chọn ngày check-in';
+      }
       
-      case 1: // Guest Information
-        if (bookingData.isGuestBooking || isAuthenticated) {
-          return (
-            bookingData.guestName.trim() !== '' && 
-            bookingData.guestEmail.trim() !== '' && 
-            bookingData.guestPhone.trim() !== '' &&
-            bookingData.guestAddress.trim() !== ''
-          );
+      if (!bookingData.checkOutDate) {
+        errors.checkOutDate = 'Vui lòng chọn ngày check-out';
+      } else if (differenceInDays(bookingData.checkOutDate, bookingData.checkInDate) < 1) {
+        errors.checkOutDate = 'Ngày check-out phải sau ngày check-in ít nhất 1 ngày';
+      }
+      
+      if (bookingData.adults < 1) {
+        errors.adults = 'Phải có ít nhất 1 người lớn';
+      }
+      
+      if (bookingData.adults + bookingData.children > (room?.capacity || 1)) {
+        errors.adults = `Tổng số người vượt quá sức chứa tối đa của phòng (${room.capacity})`;
+      }
+    } else if (step === 1) {
+      // Validate guest information
+      if (!isAuthenticated && bookingData.isGuestBooking) {
+        if (!bookingData.guestName) {
+          errors.guestName = 'Vui lòng nhập tên khách hàng';
         }
-        return false;
+        
+        if (!bookingData.guestEmail) {
+          errors.guestEmail = 'Vui lòng nhập email';
+        } else if (!/\S+@\S+\.\S+/.test(bookingData.guestEmail)) {
+          errors.guestEmail = 'Vui lòng nhập email hợp lệ';
+        }
+        
+        if (!bookingData.guestPhone) {
+          errors.guestPhone = 'Vui lòng nhập số điện thoại';
+        } else if (!/^[0-9+\s-]{10,15}$/.test(bookingData.guestPhone.replace(/\s/g, ''))) {
+          errors.guestPhone = 'Vui lòng nhập số điện thoại hợp lệ';
+        }
+      }
+    } else if (step === 2) {
+      // Validate payment information
+      if (!bookingData.paymentMethod) {
+        errors.paymentMethod = 'Vui lòng chọn phương thức thanh toán';
+      }
       
-      case 2: // Review & Payment
-        return bookingData.agreeToTerms;
-      
-      default:
-        return true;
+      if (!bookingData.agreeToTerms) {
+        errors.agreeToTerms = 'Bạn phải đồng ý với điều khoản và điều kiện';
+      }
     }
+    
+    // Update validation errors
+    setValidationErrors(errors);
+    
+    // Return true if no errors
+    return Object.keys(errors).length === 0;
   };
   
-  // Submit booking
-  const handleSubmitBooking = async () => {
-    if (!validateCurrentStep()) return;
+  // Handle form submission
+  const handleSubmit = async () => {
+    // Validate final step
+    if (!validateStep(activeStep)) return;
     
-    setIsSubmitting(true);
-    setBookingError(null);
-    
-    try {
-      // Prepare booking data
-      const bookingPayload = {
-        room: roomId,
-        checkInDate: format(bookingData.checkInDate, 'yyyy-MM-dd'),
-        checkOutDate: format(bookingData.checkOutDate, 'yyyy-MM-dd'),
-        numberOfGuests: {
-          adults: bookingData.adults,
-          children: bookingData.children
-        },
-        totalPrice,
-        specialRequests: bookingData.specialRequests,
-        // For guest bookings
-        isGuestBooking: bookingData.isGuestBooking,
+    // Prepare booking data
+    const bookingPayload = {
+      roomId,
+      checkInDate: bookingData.checkInDate,
+      checkOutDate: bookingData.checkOutDate,
+      adults: bookingData.adults,
+      children: bookingData.children,
+      specialRequests: bookingData.specialRequests,
+      // Add guest information if it's a guest booking
+      ...(bookingData.isGuestBooking && {
         guestName: bookingData.guestName,
         guestEmail: bookingData.guestEmail,
         guestPhone: bookingData.guestPhone,
         guestAddress: bookingData.guestAddress
-      };
+      }),
+      paymentMethod: bookingData.paymentMethod,
+      totalAmount: totalAmount
+    };
+    
+    try {
+      setIsSubmitting(true);
+      setBookingError(null);
       
       // Submit booking
       const response = await bookingAPI.createBooking(bookingPayload);
       
-      // Handle success
-      setBookingSuccess(true);
-      toastService.success('Booking completed successfully!');
-      
-      setTimeout(() => {
-        navigate(`/booking-confirmation/${response.data._id}`);
-      }, 2000);
+      // Check for successful response
+      if (response.data && response.data._id) {
+        setBookingSuccess(true);
+        
+        // Show success message
+        toastService.success('Đặt phòng thành công!');
+        
+        // Navigate to booking confirmation or user bookings page
+        setTimeout(() => {
+          navigate(`/my-bookings?new=${response.data._id}`);
+        }, 3000);
+      } else {
+        throw new Error('Không nhận được xác nhận đặt phòng.');
+      }
     } catch (err) {
-      console.error('Error creating booking:', err);
-      const errorMsg = err.response?.data?.message || 'Failed to create booking. Please try again.';
-      setBookingError(errorMsg);
-      toastService.error(errorMsg);
+      console.error('Error submitting booking:', err);
+      setBookingError(err.response?.data?.message || 'Đã xảy ra lỗi khi đặt phòng. Vui lòng thử lại sau.');
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  // Render loading state
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress />
-      </Box>
+  // Check if a date should be disabled (due to unavailability)
+  const isDateDisabled = (date) => {
+    // Disable dates before today
+    if (date < new Date().setHours(0,0,0,0)) {
+      return true;
+    }
+    
+    // Disable dates that are already booked
+    return unavailableDates.some(unavailableDate => 
+      date.getFullYear() === unavailableDate.getFullYear() &&
+      date.getMonth() === unavailableDate.getMonth() &&
+      date.getDate() === unavailableDate.getDate()
     );
-  }
+  };
   
-  // Render error state
-  if (error) {
-    return (
-      <Container sx={{ py: 4 }}>
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          {error}
-        </Alert>
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Button variant="outlined" onClick={() => navigate('/rooms')}>
-            Back to Rooms
-          </Button>
-        </Box>
-      </Container>
-    );
-  }
-  
-  // Render room not found state
-  if (!room) {
-    return (
-      <Container sx={{ py: 4 }}>
-        <Alert severity="info">
-          <AlertTitle>Room Not Found</AlertTitle>
-          The requested room could not be found.
-        </Alert>
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Button variant="outlined" onClick={() => navigate('/rooms')}>
-            Browse Available Rooms
-          </Button>
-        </Box>
-      </Container>
-    );
-  }
-  
-  // Render success state
-  if (bookingSuccess) {
-    return (
-      <Container sx={{ py: 4 }}>
-        <Alert severity="success">
-          <AlertTitle>Booking Successful!</AlertTitle>
-          Your booking has been confirmed. Redirecting to confirmation page...
-        </Alert>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-          <CircularProgress size={24} />
-        </Box>
-      </Container>
-    );
-  }
+  // Increment/decrement guests
+  const handleGuestCountChange = (type, operation) => {
+    setBookingData(prev => {
+      const currentValue = prev[type];
+      let newValue;
+      
+      if (operation === 'increment') {
+        newValue = currentValue + 1;
+      } else {
+        newValue = Math.max(type === 'adults' ? 1 : 0, currentValue - 1);
+      }
+      
+      // Check if new total exceeds room capacity
+      const otherType = type === 'adults' ? 'children' : 'adults';
+      const totalGuests = newValue + prev[otherType];
+      
+      if (room && totalGuests > room.capacity) {
+        toastService.warning(`Tổng số khách không thể vượt quá ${room.capacity} người`);
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        [type]: newValue
+      };
+    });
+  };
   
   // Step content rendering
   const getStepContent = (step) => {
@@ -481,441 +457,743 @@ const BookingForm = () => {
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              Stay Details
+              Chi Tiết Đặt Phòng
             </Typography>
             
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <Grid item xs={12} md={6}>
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={vi}>
                   <DatePicker
-                    label="Check-in Date"
+                    label="Ngày check-in"
                     value={bookingData.checkInDate}
-                    onChange={(newValue) => handleDateChange('checkInDate', newValue)}
+                    onChange={(newDate) => handleDateChange('checkInDate', newDate)}
+                    shouldDisableDate={isDateDisabled}
+                    renderInput={(params) => (
+                      <TextField 
+                        {...params} 
+                        fullWidth 
+                        margin="normal" 
+                        error={Boolean(validationErrors.checkInDate)}
+                        helperText={validationErrors.checkInDate}
+                        required
+                      />
+                    )}
                     disablePast
-                    format="MM/dd/yyyy"
-                    shouldDisableDate={(date) => 
-                      unavailableDates.some(unavailableDate => 
-                        date.getFullYear() === unavailableDate.getFullYear() &&
-                        date.getMonth() === unavailableDate.getMonth() &&
-                        date.getDate() === unavailableDate.getDate()
-                      )
-                    }
-                    slotProps={{ 
-                      textField: { 
-                        fullWidth: true, 
-                        variant: 'outlined', 
-                        required: true,
-                        error: Boolean(validationErrors.checkInDate),
-                        helperText: validationErrors.checkInDate || ''
-                      },
-                      day: {
-                        // Custom styling for unavailable dates
-                        unavailableDateClassName: 'unavailable-date'
-                      }
-                    }}
+                    minDate={new Date()}
                   />
                 </LocalizationProvider>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
+              
+              <Grid item xs={12} md={6}>
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={vi}>
                   <DatePicker
-                    label="Check-out Date"
+                    label="Ngày check-out"
                     value={bookingData.checkOutDate}
-                    onChange={(newValue) => handleDateChange('checkOutDate', newValue)}
+                    onChange={(newDate) => handleDateChange('checkOutDate', newDate)}
+                    shouldDisableDate={isDateDisabled}
+                    renderInput={(params) => (
+                      <TextField 
+                        {...params} 
+                        fullWidth 
+                        margin="normal" 
+                        error={Boolean(validationErrors.checkOutDate)}
+                        helperText={validationErrors.checkOutDate}
+                        required
+                      />
+                    )}
                     disablePast
-                    format="MM/dd/yyyy"
                     minDate={addDays(bookingData.checkInDate, 1)}
-                    shouldDisableDate={(date) => 
-                      // For checkout, we need to disable dates that would cause an overlap
-                      checkDateRangeConflict(bookingData.checkInDate, date, unavailableDates)
-                    }
-                    slotProps={{ 
-                      textField: { 
-                        fullWidth: true, 
-                        variant: 'outlined', 
-                        required: true,
-                        error: Boolean(validationErrors.checkOutDate),
-                        helperText: validationErrors.checkOutDate || ''
-                      }
-                    }}
                   />
                 </LocalizationProvider>
               </Grid>
               
               <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Adults"
-                  name="adults"
-                  type="number"
-                  InputProps={{ inputProps: { min: 1, max: room.capacity } }}
-                  value={bookingData.adults}
-                  onChange={handleChange}
-                  helperText={validationErrors.adults || `Maximum ${room.capacity} guests in total`}
-                  error={Boolean(validationErrors.adults)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Children"
-                  name="children"
-                  type="number"
-                  InputProps={{ 
-                    inputProps: { 
-                      min: 0, 
-                      max: Math.max(0, room.capacity - bookingData.adults) 
-                    } 
-                  }}
-                  value={bookingData.children}
-                  onChange={handleChange}
-                  error={Boolean(validationErrors.children)}
-                  helperText={validationErrors.children || `Ages 0-17`}
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Special Requests"
-                  name="specialRequests"
-                  multiline
-                  rows={4}
-                  value={bookingData.specialRequests}
-                  onChange={handleChange}
-                  placeholder="Any special requests or requirements for your stay..."
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        );
-      
-      case 1:
-        return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Guest Information
-            </Typography>
-            
-            {!isAuthenticated && (
-              <Box sx={{ mb: 3 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      name="isGuestBooking"
-                      checked={bookingData.isGuestBooking}
-                      onChange={handleChange}
-                    />
-                  }
-                  label="Book as a guest"
-                />
-                
-                {!bookingData.isGuestBooking && (
-                  <Alert severity="info" sx={{ mt: 1 }}>
-                    You need to <Button onClick={() => navigate('/login')} size="small">login</Button> to continue.
-                  </Alert>
-                )}
-              </Box>
-            )}
-            
-            {(bookingData.isGuestBooking || isAuthenticated) && (
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Full Name"
-                    name="guestName"
-                    value={bookingData.guestName}
-                    onChange={handleChange}
-                    placeholder="Enter your full name"
-                    disabled={isAuthenticated && !bookingData.isGuestBooking}
-                    error={Boolean(validationErrors.guestName)}
-                    helperText={validationErrors.guestName || ''}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Email"
-                    name="guestEmail"
-                    type="email"
-                    value={bookingData.guestEmail}
-                    onChange={handleChange}
-                    placeholder="Enter your email address"
-                    disabled={isAuthenticated && !bookingData.isGuestBooking}
-                    error={Boolean(validationErrors.guestEmail)}
-                    helperText={validationErrors.guestEmail || ''}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Phone Number"
-                    name="guestPhone"
-                    value={bookingData.guestPhone}
-                    onChange={handleChange}
-                    placeholder="Enter your phone number"
-                    disabled={isAuthenticated && !bookingData.isGuestBooking}
-                    error={Boolean(validationErrors.guestPhone)}
-                    helperText={validationErrors.guestPhone || ''}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Address"
-                    name="guestAddress"
-                    value={bookingData.guestAddress}
-                    onChange={handleChange}
-                    placeholder="Enter your address"
-                    error={Boolean(validationErrors.guestAddress)}
-                    helperText={validationErrors.guestAddress || ''}
-                  />
-                </Grid>
-              </Grid>
-            )}
-          </Box>
-        );
-      
-      case 2:
-        return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Review Your Booking
-            </Typography>
-            
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2">Check-in</Typography>
-                      <Typography variant="body1">{format(bookingData.checkInDate, 'MMMM d, yyyy')}</Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2">Check-out</Typography>
-                      <Typography variant="body1">{format(bookingData.checkOutDate, 'MMMM d, yyyy')}</Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2">Guests</Typography>
-                      <Typography variant="body1">
-                        {bookingData.adults} {bookingData.adults === 1 ? 'Adult' : 'Adults'}
-                        {bookingData.children > 0 && `, ${bookingData.children} ${bookingData.children === 1 ? 'Child' : 'Children'}`}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2">Duration</Typography>
-                      <Typography variant="body1">{nights} {nights === 1 ? 'Night' : 'Nights'}</Typography>
-                    </Grid>
-                  </Grid>
-                </Paper>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Payment Method
+                <Typography variant="subtitle2" gutterBottom>
+                  Người lớn
                 </Typography>
-                
-                <FormControl component="fieldset">
-                  <RadioGroup 
-                    name="paymentMethod" 
-                    value={bookingData.paymentMethod} 
-                    onChange={handleChange}
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <IconButton 
+                    color="primary" 
+                    onClick={() => handleGuestCountChange('adults', 'decrement')}
+                    disabled={bookingData.adults <= 1}
                   >
-                    <FormControlLabel value="creditCard" control={<Radio />} label="Credit Card" />
-                    <FormControlLabel value="payAtHotel" control={<Radio />} label="Pay at Hotel" />
-                  </RadioGroup>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Price Summary
-                </Typography>
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body1">Room Rate</Typography>
-                  <Typography variant="body1">${room.price} per night</Typography>
+                    <RemoveIcon />
+                  </IconButton>
+                  <Typography variant="h6" sx={{ mx: 2, minWidth: '30px', textAlign: 'center' }}>
+                    {bookingData.adults}
+                  </Typography>
+                  <IconButton 
+                    color="primary" 
+                    onClick={() => handleGuestCountChange('adults', 'increment')}
+                  >
+                    <AddIcon />
+                  </IconButton>
                 </Box>
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body1">Duration</Typography>
-                  <Typography variant="body1">{nights} {nights === 1 ? 'night' : 'nights'}</Typography>
-                </Box>
-                
-                <Divider sx={{ my: 2 }} />
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="h6">Total Price</Typography>
-                  <Typography variant="h6" color="primary">${totalPrice}</Typography>
-                </Box>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      name="agreeToTerms" 
-                      checked={bookingData.agreeToTerms} 
-                      onChange={handleChange}
-                      required
-                    />
-                  }
-                  label="I agree to the terms and conditions*"
-                />
-                {validationErrors.agreeToTerms && (
-                  <Typography color="error" variant="caption" display="block">
-                    {validationErrors.agreeToTerms}
+                {validationErrors.adults && (
+                  <Typography color="error" variant="caption">
+                    {validationErrors.adults}
                   </Typography>
                 )}
               </Grid>
               
-              {bookingError && (
-                <Grid item xs={12}>
-                  <Alert severity="error">{bookingError}</Alert>
-                </Grid>
-              )}
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Trẻ em
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <IconButton 
+                    color="primary" 
+                    onClick={() => handleGuestCountChange('children', 'decrement')}
+                    disabled={bookingData.children <= 0}
+                  >
+                    <RemoveIcon />
+                  </IconButton>
+                  <Typography variant="h6" sx={{ mx: 2, minWidth: '30px', textAlign: 'center' }}>
+                    {bookingData.children}
+                  </Typography>
+                  <IconButton 
+                    color="primary" 
+                    onClick={() => handleGuestCountChange('children', 'increment')}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                </Box>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  name="specialRequests"
+                  label="Yêu cầu đặc biệt"
+                  multiline
+                  rows={3}
+                  value={bookingData.specialRequests}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin="normal"
+                  helperText="Vui lòng cho chúng tôi biết nếu bạn có bất kỳ yêu cầu đặc biệt nào"
+                />
+              </Grid>
             </Grid>
           </Box>
         );
-      
+        
+      case 1:
+        return (
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Thông Tin Khách Hàng
+            </Typography>
+            
+            {isAuthenticated ? (
+              <Box>
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <AlertTitle>Chào {user?.name}</AlertTitle>
+                  Bạn đang đặt phòng với tư cách thành viên đã đăng nhập. Thông tin cá nhân của bạn sẽ được sử dụng cho đặt phòng này.
+                </Alert>
+                
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Họ và tên
+                      </Typography>
+                      <Typography variant="body1">
+                        {user.name}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Email
+                      </Typography>
+                      <Typography variant="body1">
+                        {user.email}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox 
+                          name="isGuestBooking" 
+                          checked={bookingData.isGuestBooking} 
+                          onChange={handleCheckboxChange} 
+                          color="primary"
+                        />
+                      }
+                      label="Đặt phòng cho người khác"
+                    />
+                  </Grid>
+                  
+                  {bookingData.isGuestBooking && (
+                    <>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          name="guestName"
+                          label="Tên khách hàng"
+                          value={bookingData.guestName}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          error={Boolean(validationErrors.guestName)}
+                          helperText={validationErrors.guestName}
+                          required
+                        />
+                      </Grid>
+                      
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          name="guestEmail"
+                          label="Email khách hàng"
+                          type="email"
+                          value={bookingData.guestEmail}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          error={Boolean(validationErrors.guestEmail)}
+                          helperText={validationErrors.guestEmail}
+                          required
+                        />
+                      </Grid>
+                      
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          name="guestPhone"
+                          label="Số điện thoại khách hàng"
+                          value={bookingData.guestPhone}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          error={Boolean(validationErrors.guestPhone)}
+                          helperText={validationErrors.guestPhone}
+                          required
+                        />
+                      </Grid>
+                      
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          name="guestAddress"
+                          label="Địa chỉ khách hàng"
+                          value={bookingData.guestAddress}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                        />
+                      </Grid>
+                    </>
+                  )}
+                </Grid>
+              </Box>
+            ) : (
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Alert severity="warning" sx={{ mb: 3 }}>
+                    <AlertTitle>Thông báo</AlertTitle>
+                    Bạn đang đặt phòng mà không đăng nhập. Đăng nhập để sử dụng thông tin tài khoản của bạn hoặc điền thông tin bên dưới.
+                    <Button 
+                      color="primary" 
+                      sx={{ mt: 1, display: 'block' }}
+                      onClick={() => navigate('/login?redirect=/booking/' + roomId)}
+                    >
+                      Đăng nhập ngay
+                    </Button>
+                  </Alert>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="guestName"
+                    label="Họ và tên"
+                    value={bookingData.guestName}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                    error={Boolean(validationErrors.guestName)}
+                    helperText={validationErrors.guestName}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="guestEmail"
+                    label="Email"
+                    type="email"
+                    value={bookingData.guestEmail}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                    error={Boolean(validationErrors.guestEmail)}
+                    helperText={validationErrors.guestEmail}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="guestPhone"
+                    label="Số điện thoại"
+                    value={bookingData.guestPhone}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                    error={Boolean(validationErrors.guestPhone)}
+                    helperText={validationErrors.guestPhone}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="guestAddress"
+                    label="Địa chỉ"
+                    value={bookingData.guestAddress}
+                    onChange={handleInputChange}
+                    fullWidth
+                  />
+                </Grid>
+              </Grid>
+            )}
+          </Box>
+        );
+        
+      case 2:
+        return (
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Xác Nhận và Thanh Toán
+            </Typography>
+            
+            <Paper sx={{ p: 3, mb: 4, borderRadius: '12px' }}>
+              <Typography variant="subtitle1" gutterBottom fontWeight={600}>
+                Chi Tiết Đặt Phòng
+              </Typography>
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Phòng
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {room?.name} (Số phòng: {room?.roomNumber})
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Loại phòng
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {room?.roomType?.name || 'Standard'}
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Check-in
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {format(new Date(bookingData.checkInDate), 'dd/MM/yyyy')}
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Check-out
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {format(new Date(bookingData.checkOutDate), 'dd/MM/yyyy')}
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Số đêm
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {dayCount} đêm
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Số khách
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {bookingData.adults} người lớn, {bookingData.children} trẻ em
+                  </Typography>
+                </Grid>
+              </Grid>
+              
+              {bookingData.specialRequests && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Yêu cầu đặc biệt
+                  </Typography>
+                  <Typography variant="body1">
+                    {bookingData.specialRequests}
+                  </Typography>
+                </Box>
+              )}
+              
+              <Divider sx={{ my: 2 }} />
+              
+              <Typography variant="subtitle1" gutterBottom fontWeight={600}>
+                Thông Tin Khách Hàng
+              </Typography>
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Họ tên
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {bookingData.isGuestBooking ? bookingData.guestName : user?.name || 'N/A'}
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Email
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {bookingData.isGuestBooking ? bookingData.guestEmail : user?.email || 'N/A'}
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Số điện thoại
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {bookingData.isGuestBooking ? bookingData.guestPhone : user?.phone || 'N/A'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+            
+            <Paper sx={{ p: 3, mb: 4, borderRadius: '12px' }}>
+              <Typography variant="subtitle1" gutterBottom fontWeight={600}>
+                Hóa Đơn Chi Tiết
+              </Typography>
+              
+              <TableContainer component={Box}>
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ border: 'none', pl: 0 }}>
+                        Giá phòng x {dayCount} đêm
+                      </TableCell>
+                      <TableCell align="right" sx={{ border: 'none', pr: 0 }}>
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ border: 'none', pl: 0 }}>
+                        Thuế (10%)
+                      </TableCell>
+                      <TableCell align="right" sx={{ border: 'none', pr: 0 }}>
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(taxAmount)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ border: 'none', pl: 0 }}>
+                        Phí dịch vụ (5%)
+                      </TableCell>
+                      <TableCell align="right" sx={{ border: 'none', pr: 0 }}>
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(serviceCharge)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ pl: 0, pt: 2 }}>
+                        <Typography variant="subtitle1" fontWeight={600}>
+                          Tổng cộng
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right" sx={{ pr: 0, pt: 2 }}>
+                        <Typography variant="subtitle1" fontWeight={600} color="primary">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount)}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+            
+            <Paper sx={{ p: 3, mb: 4, borderRadius: '12px' }}>
+              <Typography variant="subtitle1" gutterBottom fontWeight={600}>
+                Phương Thức Thanh Toán
+              </Typography>
+              
+              <FormControl component="fieldset" sx={{ width: '100%' }}>
+                <RadioGroup
+                  name="paymentMethod"
+                  value={bookingData.paymentMethod}
+                  onChange={handleInputChange}
+                >
+                  <FormControlLabel 
+                    value="creditCard" 
+                    control={<Radio color="primary" />} 
+                    label="Thẻ tín dụng/ghi nợ"
+                  />
+                  <FormControlLabel 
+                    value="bankTransfer" 
+                    control={<Radio color="primary" />} 
+                    label="Chuyển khoản ngân hàng"
+                  />
+                  <FormControlLabel 
+                    value="payAtHotel" 
+                    control={<Radio color="primary" />} 
+                    label="Thanh toán tại khách sạn"
+                  />
+                </RadioGroup>
+                
+                {validationErrors.paymentMethod && (
+                  <Typography color="error" variant="caption">
+                    {validationErrors.paymentMethod}
+                  </Typography>
+                )}
+              </FormControl>
+            </Paper>
+            
+            <Box>
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    name="agreeToTerms" 
+                    checked={bookingData.agreeToTerms} 
+                    onChange={handleCheckboxChange} 
+                    color="primary"
+                  />
+                }
+                label="Tôi đồng ý với các điều khoản và điều kiện đặt phòng"
+              />
+              
+              {validationErrors.agreeToTerms && (
+                <Typography color="error" variant="caption" display="block">
+                  {validationErrors.agreeToTerms}
+                </Typography>
+              )}
+            </Box>
+            
+            {bookingError && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {bookingError}
+              </Alert>
+            )}
+          </Box>
+        );
+        
       default:
         return 'Unknown step';
     }
   };
   
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ py: 8 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Container maxWidth="md" sx={{ py: 8 }}>
+        <Alert severity="error" sx={{ mb: 4 }}>
+          <AlertTitle>Lỗi</AlertTitle>
+          {error}
+        </Alert>
+        
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate('/rooms')}
+          startIcon={<ArrowBackIcon />}
+        >
+          Quay lại trang phòng
+        </Button>
+      </Container>
+    );
+  }
+  
+  if (bookingSuccess) {
+    return (
+      <Container maxWidth="md" sx={{ py: 8 }}>
+        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: '12px' }}>
+          <CheckCircleIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
+          
+          <Typography variant="h4" gutterBottom>
+            Đặt phòng thành công!
+          </Typography>
+          
+          <Typography variant="body1" paragraph>
+            Cảm ơn bạn đã đặt phòng tại khách sạn của chúng tôi. Chi tiết đặt phòng đã được gửi đến email của bạn.
+          </Typography>
+          
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Bạn sẽ được chuyển hướng đến trang đặt phòng của bạn trong vài giây...
+          </Typography>
+          
+          <CircularProgress size={24} sx={{ mt: 2 }} />
+        </Paper>
+      </Container>
+    );
+  }
+  
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 4, md: 8 } }}>
+      <Box sx={{ mb: 4 }}>
+        <Button
+          variant="text"
+          color="inherit"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/rooms')}
+          sx={{ mb: 2 }}
+        >
+          Quay lại trang phòng
+        </Button>
+        
+        <Typography variant="h4" component="h1" gutterBottom>
+          Đặt Phòng {room?.name}
+        </Typography>
+        
+        <Divider sx={{ mb: 4 }} />
+        
+        <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 5 }} >
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      </Box>
+      
       <Grid container spacing={4}>
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 4, borderRadius: 2 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              Book Your Stay
-            </Typography>
-            
-            <Stepper activeStep={activeStep} sx={{ pt: 3, pb: 5 }}>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-            
+          <Paper sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: '12px', mb: { xs: 3, md: 0 } }}>
             {getStepContent(activeStep)}
             
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-              <Button 
-                onClick={handleBack} 
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+              <Button
+                variant="outlined"
+                onClick={handleBack}
                 disabled={activeStep === 0}
+                startIcon={<ArrowBackIcon />}
               >
-                Back
+                Quay lại
               </Button>
               
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={!validateCurrentStep() || isSubmitting || (!isAuthenticated && !bookingData.isGuestBooking && activeStep === 1)}
-              >
-                {isSubmitting ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : activeStep === steps.length - 1 ? (
-                  'Complete Booking'
-                ) : (
-                  'Next'
-                )}
-              </Button>
+              {activeStep === steps.length - 1 ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  endIcon={isSubmitting ? <CircularProgress size={24} /> : <CheckCircleIcon />}
+                >
+                  {isSubmitting ? 'Đang xử lý...' : 'Xác nhận đặt phòng'}
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleNext}
+                  endIcon={<ArrowForwardIcon />}
+                >
+                  Tiếp theo
+                </Button>
+              )}
             </Box>
           </Paper>
         </Grid>
         
-        {/* Room Summary */}
         <Grid item xs={12} md={4}>
-          <Card sx={{ position: 'sticky', top: 24 }}>
+          <Card sx={{ 
+            borderRadius: '12px',
+            position: 'sticky',
+            top: 24,
+            transition: 'box-shadow 0.3s',
+            '&:hover': {
+              boxShadow: '0 8px 40px rgba(0,0,0,0.12)'
+            }
+          }}>
             <CardMedia
               component="img"
+              image={room.images && room.images[0] ? room.images[0] : '/placeholder-room.jpg'}
+              alt={room.name}
               height="200"
-              image={(() => {
-                if (room.images && room.images.length > 0) {
-                  // Select a random image only once
-                  const randomIndex = Math.floor(Math.random() * room.images.length);
-                  const selectedImage = room.images[randomIndex];
-                  return selectedImage.startsWith('http') 
-                    ? selectedImage 
-                    : `http://localhost:5000${selectedImage}`;
-                }
-                return 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2574&q=80';
-              })()}
-              alt={`Room ${room.roomNumber}`}
-              sx={{ objectFit: 'cover' }}
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2574&q=80';
-              }}
             />
+            
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {room.type.charAt(0).toUpperCase() + room.type.slice(1)} Room {room.roomNumber}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+                  {room.name}
+                </Typography>
+                <Chip 
+                  label={`Phòng ${room.roomNumber}`}
+                  size="small"
+                  color="primary"
+                  sx={{ bgcolor: '#1e4e8c' }}
+                />
+              </Box>
+              
+              <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                <Chip 
+                  icon={<HotelIcon fontSize="small" />} 
+                  label={`${room.capacity} khách`}
+                  size="small"
+                  variant="outlined"
+                />
+                {room.features && room.features.slice(0, 2).map((feature, index) => (
+                  <Chip 
+                    key={index}
+                    label={feature.name}
+                    size="small"
+                    variant="outlined"
+                  />
+                ))}
+              </Box>
+              
+              <Typography variant="body2" paragraph>
+                {room.description?.substring(0, 100)}...
               </Typography>
               
-              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-                <Chip 
-                  label={`${room.capacity} Guests`} 
-                  size="small" 
-                  color="primary" 
-                  variant="outlined" 
-                />
-                <Chip 
-                  label={`Floor ${room.floor || 1}`} 
-                  size="small" 
-                  variant="outlined" 
-                />
-              </Stack>
-              
-              <Typography variant="body2" color="text.secondary" paragraph sx={{ mb: 2 }}>
-                {room.description.substring(0, 100)}...
-              </Typography>
-              
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ my: 2 }} />
               
               <Typography variant="subtitle2" gutterBottom>
-                Price Summary
+                Chi tiết giá
               </Typography>
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2">Room Rate</Typography>
-                <Typography variant="body2">${room.price} per night</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(room.price)} x {dayCount} đêm
+                </Typography>
+                <Typography variant="body2">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}
+                </Typography>
               </Box>
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2">Duration</Typography>
-                <Typography variant="body2">{nights} {nights === 1 ? 'night' : 'nights'}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Thuế & phí
+                </Typography>
+                <Typography variant="body2">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(taxAmount + serviceCharge)}
+                </Typography>
               </Box>
               
               <Divider sx={{ my: 1 }} />
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Total
+                <Typography variant="subtitle2">
+                  Tổng cộng
                 </Typography>
-                <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                  ${totalPrice}
+                <Typography variant="subtitle1" fontWeight={600} color="primary">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount)}
                 </Typography>
               </Box>
             </CardContent>
@@ -926,4 +1204,4 @@ const BookingForm = () => {
   );
 };
 
-export default BookingForm; 
+export default BookingForm;

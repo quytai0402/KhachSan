@@ -7,9 +7,9 @@ const RoomSchema = new mongoose.Schema({
     unique: true
   },
   type: {
-    type: String,
-    required: true,
-    enum: ['single', 'double', 'twin', 'suite', 'family', 'deluxe']
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RoomType',
+    required: true
   },
   description: {
     type: String,
@@ -32,11 +32,27 @@ const RoomSchema = new mongoose.Schema({
   }],
   status: {
     type: String,
-    enum: ['available', 'booked', 'maintenance', 'cleaning'],
+    enum: ['available', 'booked', 'maintenance', 'cleaning', 'occupied', 'vacant-clean', 'vacant-dirty'],
     default: 'available'
+  },
+  cleaningStatus: {
+    type: String,
+    enum: ['clean', 'dirty', 'cleaning'],
+    default: 'clean'
   },
   floor: {
     type: Number
+  },
+  lastUpdated: {
+    type: Date,
+    default: Date.now
+  },
+  lastUpdatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  notes: {
+    type: String
   },
   createdAt: {
     type: Date,

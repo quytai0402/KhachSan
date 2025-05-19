@@ -7,14 +7,24 @@ import {
   TextField,
   Button,
   Link,
-  Paper,
   Grid,
   InputAdornment,
   IconButton,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Divider
 } from '@mui/material';
-import { Visibility, VisibilityOff, Lock, Email, Person, Phone } from '@mui/icons-material';
+import { 
+  Visibility, 
+  VisibilityOff, 
+  Lock, 
+  Email,
+  Person,
+  Phone,
+  Facebook as FacebookIcon,
+  Twitter as TwitterIcon,
+  Instagram as InstagramIcon
+} from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
@@ -26,6 +36,7 @@ const Register = () => {
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -79,7 +90,7 @@ const Register = () => {
       return false;
     }
     
-    // Validate password length
+    // Validate password strength
     if (formData.password.length < 6) {
       setFormError('Password must be at least 6 characters long');
       return false;
@@ -101,14 +112,11 @@ const Register = () => {
       return;
     }
     
-    setFormError('');
     setIsSubmitting(true);
+    setFormError('');
     
     try {
-      // Remove confirmPassword before sending to API
-      const { confirmPassword, ...userData } = formData;
-      
-      const success = await register(userData);
+      const success = await register(formData);
       if (success) {
         navigate('/');
       } else {
@@ -124,42 +132,155 @@ const Register = () => {
     setShowPassword(!showPassword);
   };
   
+  const handleToggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+  
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          marginBottom: 8,
-          display: 'flex',
+    <Container component="main" maxWidth="md">
+      <Grid container sx={{ minHeight: '80vh' }}>
+        <Grid item xs={12} md={6} sx={{ 
+          display: { xs: 'none', md: 'flex' },
           flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            p: 4,
-            width: '100%',
-            borderRadius: 2,
-          }}
-        >
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Register
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-            Create a new account to book rooms and access exclusive offers.
-          </Typography>
-          
-          {formError && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {formError}
-            </Alert>
-          )}
-          
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
+          justifyContent: 'center',
+          position: 'relative',
+          p: 4,
+        }}>
+          <Box
+            sx={{
+              background: 'linear-gradient(135deg, rgba(230, 126, 34, 0.8), rgba(243, 156, 18, 0.75))',
+              borderRadius: 3,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              p: 6,
+              color: 'white',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 10px 30px rgba(230, 126, 34, 0.2)',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundImage: `url(https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=2970&auto=format&fit=crop)`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: 0.2,
+                zIndex: 0,
+              }
+            }}
+          >
+            <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+              <Typography variant="h3" component="h1" gutterBottom fontWeight={600}>
+                Join Us Today
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 4, opacity: 0.9, fontSize: '1.1rem' }}>
+                Create an account to enjoy exclusive benefits, special rates, and personalized service at our luxury hotel
+              </Typography>
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 3, 
+                justifyContent: 'center', 
+                mt: 4,
+                '& .MuiIconButton-root': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  transition: 'all 0.3s',
+                  '&:hover': {
+                    backgroundColor: 'white',
+                    color: 'secondary.main',
+                    transform: 'translateY(-3px)',
+                  }
+                }
+              }}>
+                <IconButton>
+                  <FacebookIcon />
+                </IconButton>
+                <IconButton>
+                  <TwitterIcon />
+                </IconButton>
+                <IconButton>
+                  <InstagramIcon />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
+        </Grid>
+        
+        <Grid item xs={12} md={6}>
+          <Box
+            sx={{
+              marginTop: { xs: 4, md: 8 },
+              marginBottom: { xs: 4, md: 8 },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              p: { xs: 2, sm: 4 },
+            }}
+          >
+            <Box sx={{ maxWidth: 450, width: '100%' }}>
+              <Typography 
+                component="h1" 
+                variant="h4" 
+                align="center" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 600,
+                  color: 'secondary.dark',
+                  mb: 1,
+                }}
+              >
+                Create Account
+              </Typography>
+              
+              <Typography 
+                variant="body1" 
+                color="text.secondary" 
+                align="center" 
+                sx={{ mb: 4 }}
+              >
+                Enter your details to create your account and start your journey with us.
+              </Typography>
+              
+              {formError && (
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    mb: 3,
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                  }}
+                >
+                  {formError}
+                </Alert>
+              )}
+              
+              <Box 
+                component="form" 
+                onSubmit={handleSubmit} 
+                sx={{ 
+                  mt: 1,
+                  '& .MuiTextField-root': {
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'secondary.main',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderWidth: 2,
+                      },
+                    },
+                  }
+                }}
+              >
                 <TextField
                   required
                   fullWidth
@@ -170,6 +291,7 @@ const Register = () => {
                   autoFocus
                   value={formData.name}
                   onChange={handleChange}
+                  variant="outlined"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -178,9 +300,7 @@ const Register = () => {
                     ),
                   }}
                 />
-              </Grid>
-              
-              <Grid item xs={12}>
+                
                 <TextField
                   required
                   fullWidth
@@ -190,6 +310,7 @@ const Register = () => {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
+                  variant="outlined"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -198,17 +319,16 @@ const Register = () => {
                     ),
                   }}
                 />
-              </Grid>
-              
-              <Grid item xs={12}>
+                
                 <TextField
                   fullWidth
                   id="phone"
-                  label="Phone Number"
+                  label="Phone (optional)"
                   name="phone"
                   autoComplete="tel"
                   value={formData.phone}
                   onChange={handleChange}
+                  variant="outlined"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -217,9 +337,7 @@ const Register = () => {
                     ),
                   }}
                 />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
+                
                 <TextField
                   required
                   fullWidth
@@ -230,6 +348,8 @@ const Register = () => {
                   autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
+                  variant="outlined"
+                  helperText="Password must be at least 6 characters"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -249,56 +369,93 @@ const Register = () => {
                     ),
                   }}
                 />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
+                
                 <TextField
                   required
                   fullWidth
                   name="confirmPassword"
                   label="Confirm Password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
                   autoComplete="new-password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  variant="outlined"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
                         <Lock color="action" />
                       </InputAdornment>
                     ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle confirm password visibility"
+                          onClick={handleToggleConfirmPasswordVisibility}
+                          edge="end"
+                        >
+                          {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
                   }}
                 />
-              </Grid>
-            </Grid>
-            
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2, py: 1.5 }}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Register'
-              )}
-            </Button>
-            
-            <Grid container justifyContent="center">
-              <Grid item>
-                <Link component={RouterLink} to="/login" variant="body2">
-                  Already have an account? Sign in
-                </Link>
-              </Grid>
-            </Grid>
+                
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  color="secondary"
+                  size="large"
+                  disabled={isSubmitting}
+                  sx={{ 
+                    mt: 2, 
+                    mb: 3, 
+                    py: 1.5,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    boxShadow: '0 4px 10px rgba(230, 126, 34, 0.2)',
+                    '&:hover': {
+                      boxShadow: '0 6px 15px rgba(230, 126, 34, 0.3)',
+                    }
+                  }}
+                >
+                  {isSubmitting ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    'Create Account'
+                  )}
+                </Button>
+                
+                <Grid container justifyContent="center">
+                  <Grid item>
+                    <Typography variant="body2" align="center" color="text.secondary">
+                      Already have an account?{' '}
+                      <Link 
+                        component={RouterLink} 
+                        to="/login" 
+                        sx={{ 
+                          color: 'primary.main', 
+                          fontWeight: 500,
+                          '&:hover': {
+                            color: 'primary.dark'
+                          }
+                        }}
+                      >
+                        Sign in
+                      </Link>
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Box>
           </Box>
-        </Paper>
-      </Box>
+        </Grid>
+      </Grid>
     </Container>
   );
 };
 
-export default Register; 
+export default Register;

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
 import { jwtDecode } from 'jwt-decode';
 import toastService from '../services/toastService';
+import { ROLES, hasPermission } from '../utils/roles';
 
 const AuthContext = createContext();
 
@@ -90,6 +91,41 @@ export const AuthProvider = ({ children }) => {
     toastService.info('You have been logged out.');
   };
 
+  /**
+   * Check if user has one of the specified roles
+   * @param {Array<string>} roles - Array of allowed roles
+   * @returns {boolean} Whether user has one of the roles
+   */
+  const hasRole = (roles = []) => {
+    if (!user || !user.role) return false;
+    return roles.includes(user.role);
+  };
+
+  /**
+   * Check if user is an admin
+   * @returns {boolean} Whether user is an admin
+   */
+  const isAdmin = () => {
+    return user?.role === ROLES.ADMIN;
+  };
+
+  /**
+   * Check if user is a staff member
+   * @returns {boolean} Whether user is staff or admin
+   */
+  const isStaff = () => {
+    return user?.role === ROLES.STAFF || user?.role === ROLES.ADMIN;
+  };
+
+  /**
+   * Check if user has a specific permission
+   * @param {string} permission - The permission to check
+   * @returns {boolean} Whether user has the permission
+   */
+  const checkPermission = (permission) => {
+    return hasPermission(user, permission);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -99,7 +135,11 @@ export const AuthProvider = ({ children }) => {
         error,
         register,
         login,
-        logout
+        logout,
+        hasRole,
+        isAdmin,
+        isStaff,
+        checkPermission
       }}
     >
       {children}

@@ -8,7 +8,9 @@ import {
   Button,
   Box,
   Chip,
-  Grid
+  Grid,
+  Divider,
+  Rating
 } from '@mui/material';
 import BedIcon from '@mui/icons-material/Bed';
 import PeopleIcon from '@mui/icons-material/People';
@@ -16,21 +18,24 @@ import SquareFootIcon from '@mui/icons-material/SquareFoot';
 import WifiIcon from '@mui/icons-material/Wifi';
 import TvIcon from '@mui/icons-material/Tv';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
+import LocalBarIcon from '@mui/icons-material/LocalBar';
+import RoomServiceIcon from '@mui/icons-material/RoomService';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 const getRoomTypeLabel = (type) => {
   switch (type) {
     case 'single':
-      return 'Single Room';
+      return 'Phòng Đơn';
     case 'double':
-      return 'Double Room';
+      return 'Phòng Đôi';
     case 'twin':
-      return 'Twin Room';
+      return 'Phòng Twin';
     case 'suite':
-      return 'Suite';
+      return 'Phòng Suite';
     case 'family':
-      return 'Family Room';
+      return 'Phòng Gia Đình';
     case 'deluxe':
-      return 'Deluxe Room';
+      return 'Phòng Deluxe';
     default:
       return type;
   }
@@ -48,6 +53,21 @@ const getStatusColor = (status) => {
       return 'info';
     default:
       return 'default';
+  }
+};
+
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'available':
+      return 'Còn Trống';
+    case 'booked':
+      return 'Đã Đặt';
+    case 'maintenance':
+      return 'Bảo Trì';
+    case 'cleaning':
+      return 'Đang Dọn';
+    default:
+      return status;
   }
 };
 
@@ -85,141 +105,375 @@ const RoomCard = ({ room }) => {
         height: '100%', 
         display: 'flex', 
         flexDirection: 'column',
-        transition: 'transform 0.3s, box-shadow 0.3s',
+        overflow: 'visible',
+        transition: 'all 0.4s ease',
+        borderRadius: '16px',
+        boxShadow: '0 5px 20px rgba(0,0,0,0.08)',
+        position: 'relative',
         '&:hover': {
-          transform: 'translateY(-5px)',
-          boxShadow: '0 10px 20px rgba(0,0,0,0.1)',
+          transform: 'translateY(-10px)',
+          boxShadow: '0 15px 30px rgba(0,0,0,0.15)',
+          '& .MuiCardMedia-root': {
+            transform: 'scale(1.05)',
+          },
+          '& .room-price': {
+            backgroundColor: '#e67e22',
+            color: 'white',
+          }
         }
       }}
     >
-      <Box sx={{ position: 'relative' }}>
+      <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: '16px 16px 0 0' }}>
         <CardMedia
           component="img"
-          height="200"
+          height="260"
           image={randomImage}
           alt={room.roomNumber}
-          sx={{ objectFit: 'cover' }}
+          sx={{ 
+            objectFit: 'cover',
+            transition: 'transform 0.8s ease',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(0,0,0,0.7) 100%)',
+          }}
         />
         <Chip
-          label={getRoomTypeLabel(room.type)}
-          color="primary"
+          label={typeof room.type === 'object' ? getRoomTypeLabel(room.type.name) : getRoomTypeLabel(room.type)}
+          color="secondary"
           size="small"
           sx={{
             position: 'absolute',
             top: 16,
             left: 16,
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            textTransform: 'uppercase',
+            fontSize: '0.7rem',
+            letterSpacing: '0.5px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
           }}
         />
-        <Chip
-          label={`Floor ${room.floor || '1'}`}
-          color="default"
-          size="small"
+        <Box
           sx={{
             position: 'absolute',
             top: 16,
             right: 16,
-            bgcolor: 'rgba(255,255,255,0.8)',
-            color: 'text.primary'
+            background: 'rgba(255,255,255,0.9)',
+            borderRadius: '20px',
+            padding: '4px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
           }}
-        />
+        >
+          <Typography variant="caption" fontWeight={600}>
+            Tầng {room.floor || '1'}
+          </Typography>
+        </Box>
         <Chip
-          label={room.status}
+          label={getStatusLabel(room.status)}
           color={getStatusColor(room.status)}
           size="small"
           sx={{
             position: 'absolute',
             bottom: -12,
             right: 16,
-            textTransform: 'capitalize'
+            textTransform: 'capitalize',
+            fontWeight: 500,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
           }}
         />
       </Box>
       
-      <CardContent sx={{ flexGrow: 1, pt: 3 }}>
-        <Typography variant="h5" component="div" gutterBottom>
-          Room {room.roomNumber}
+      <Box
+        className="room-price"
+        sx={{
+          position: 'absolute',
+          top: 230,
+          left: 16,
+          backgroundColor: 'white',
+          padding: '8px 16px',
+          borderRadius: '30px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+          transition: 'all 0.3s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography 
+          variant="h6" 
+          component="span" 
+          sx={{ 
+            fontWeight: 700,
+            fontSize: '1.1rem',
+          }}
+        >
+          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(room.price)}
+          <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem', ml: 0.5, fontWeight: 400 }}>/đêm</Typography>
         </Typography>
+      </Box>
+      
+      <CardContent sx={{ flexGrow: 1, pt: 3, px: 3 }}>
+        <Box sx={{ mt: 2, mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography 
+            variant="h5" 
+            component="div" 
+            sx={{ 
+              fontWeight: 600,
+              color: 'primary.dark',
+              fontSize: '1.2rem',
+            }}
+          >
+            Phòng {room.roomNumber}
+          </Typography>
+          
+          <Rating 
+            value={4.5} 
+            precision={0.5} 
+            size="small" 
+            readOnly 
+          />
+        </Box>
         
         <Typography 
           variant="body2" 
           color="text.secondary" 
           sx={{ 
-            mb: 2,
+            mb: 2.5,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
+            lineHeight: 1.6,
+            minHeight: '3.2em',
           }}
         >
-          {room.description}
+          {room.description || 'Phòng nghỉ hiện đại với đầy đủ tiện nghi cao cấp, mang đến trải nghiệm lưu trú sang trọng và thoải mái.'}
         </Typography>
         
-        <Grid container spacing={1} sx={{ mb: 2 }}>
+        <Divider sx={{ mb: 2, opacity: 0.6 }} />
+        
+        <Grid container spacing={2} sx={{ mb: 2.5 }}>
           <Grid item xs={6}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <PeopleIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
-              <Typography variant="body2">
-                {room.capacity} {room.capacity > 1 ? 'Guests' : 'Guest'}
+              <Box sx={{ 
+                backgroundColor: 'rgba(30, 78, 140, 0.08)', 
+                borderRadius: '50%', 
+                width: 32, 
+                height: 32, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: 'primary.main',
+                mr: 1.5
+              }}>
+                <PeopleIcon fontSize="small" />
+              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {room.capacity} {room.capacity > 1 ? 'Khách' : 'Khách'}
               </Typography>
             </Box>
           </Grid>
           <Grid item xs={6}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <BedIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
-              <Typography variant="body2">
-                {room.type === 'double' || room.type === 'twin' ? '2 Beds' : '1 Bed'}
+              <Box sx={{ 
+                backgroundColor: 'rgba(30, 78, 140, 0.08)', 
+                borderRadius: '50%', 
+                width: 32, 
+                height: 32, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: 'primary.main',
+                mr: 1.5
+              }}>
+                <BedIcon fontSize="small" />
+              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {typeof room.type === 'object' ? 
+                  (room.type.name === 'double' || room.type.name === 'twin' ? '2 Giường' : '1 Giường') :
+                  (room.type === 'double' || room.type === 'twin' ? '2 Giường' : '1 Giường')}
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ 
+                backgroundColor: 'rgba(30, 78, 140, 0.08)', 
+                borderRadius: '50%', 
+                width: 32, 
+                height: 32, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: 'primary.main',
+                mr: 1.5
+              }}>
+                <SquareFootIcon fontSize="small" />
+              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {room.size || '30'} m²
               </Typography>
             </Box>
           </Grid>
         </Grid>
         
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'primary.dark', fontWeight: 600 }}>
+          Tiện Nghi
+        </Typography>
+        
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
           {room.amenities && room.amenities.map((amenity, index) => (
             <Chip 
               key={index} 
               label={amenity} 
               variant="outlined" 
               size="small" 
-              sx={{ fontSize: '0.7rem' }}
+              sx={{ 
+                fontSize: '0.7rem',
+                borderRadius: '16px',
+                borderColor: 'rgba(30, 78, 140, 0.3)',
+                color: 'primary.main',
+                fontWeight: 500,
+                '&:hover': {
+                  backgroundColor: 'rgba(30, 78, 140, 0.08)',
+                }
+              }}
             />
           ))}
           {(!room.amenities || room.amenities.length === 0) && (
             <>
-              <Chip icon={<WifiIcon fontSize="small" />} label="WiFi" variant="outlined" size="small" />
-              <Chip icon={<TvIcon fontSize="small" />} label="TV" variant="outlined" size="small" />
-              <Chip icon={<AcUnitIcon fontSize="small" />} label="AC" variant="outlined" size="small" />
+              <Chip 
+                icon={<WifiIcon fontSize="small" />} 
+                label="WiFi" 
+                variant="outlined" 
+                size="small" 
+                sx={{ 
+                  borderRadius: '16px',
+                  borderColor: 'rgba(30, 78, 140, 0.3)',
+                  color: 'primary.main',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: 'rgba(30, 78, 140, 0.08)',
+                  }
+                }}
+              />
+              <Chip 
+                icon={<TvIcon fontSize="small" />} 
+                label="TV" 
+                variant="outlined" 
+                size="small" 
+                sx={{ 
+                  borderRadius: '16px',
+                  borderColor: 'rgba(30, 78, 140, 0.3)',
+                  color: 'primary.main',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: 'rgba(30, 78, 140, 0.08)',
+                  }
+                }}
+              />
+              <Chip 
+                icon={<AcUnitIcon fontSize="small" />} 
+                label="Điều Hòa" 
+                variant="outlined" 
+                size="small" 
+                sx={{ 
+                  borderRadius: '16px',
+                  borderColor: 'rgba(30, 78, 140, 0.3)',
+                  color: 'primary.main',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: 'rgba(30, 78, 140, 0.08)',
+                  }
+                }}
+              />
+              <Chip 
+                icon={<LocalBarIcon fontSize="small" />} 
+                label="Mini Bar" 
+                variant="outlined" 
+                size="small" 
+                sx={{ 
+                  borderRadius: '16px',
+                  borderColor: 'rgba(30, 78, 140, 0.3)',
+                  color: 'primary.main',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: 'rgba(30, 78, 140, 0.08)',
+                  }
+                }}
+              />
+              <Chip 
+                icon={<RoomServiceIcon fontSize="small" />} 
+                label="Dịch vụ phòng" 
+                variant="outlined" 
+                size="small" 
+                sx={{ 
+                  borderRadius: '16px',
+                  borderColor: 'rgba(30, 78, 140, 0.3)',
+                  color: 'primary.main',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: 'rgba(30, 78, 140, 0.08)',
+                  }
+                }}
+              />
             </>
           )}
         </Box>
         
+        <Divider sx={{ mb: 2, opacity: 0.6 }} />
+        
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
-          <Typography variant="h6" color="primary.main">
-            ${room.price}<Typography component="span" variant="body2">/night</Typography>
-          </Typography>
+          <Button 
+            size="small" 
+            color="primary"
+            onClick={handleViewDetails}
+            sx={{ 
+              fontWeight: 500,
+              '&:hover': {
+                backgroundColor: 'rgba(30, 78, 140, 0.08)',
+              }
+            }}
+          >
+            Xem Chi Tiết
+          </Button>
           
-          <Box>
-            <Button 
-              size="small" 
-              onClick={handleViewDetails}
-              sx={{ mr: 1 }}
-            >
-              Details
-            </Button>
-            <Button 
-              variant="contained" 
-              size="small"
-              disabled={room.status !== 'available'}
-              onClick={handleBookNow}
-            >
-              Book Now
-            </Button>
-          </Box>
+          <Button 
+            variant="contained" 
+            color="secondary"
+            size="medium"
+            disabled={room.status !== 'available'}
+            onClick={handleBookNow}
+            endIcon={<ArrowForwardIcon />}
+            sx={{ 
+              borderRadius: '20px',
+              px: 2,
+              fontWeight: 500,
+              boxShadow: '0 4px 10px rgba(230, 126, 34, 0.25)',
+              '&:hover': {
+                boxShadow: '0 6px 15px rgba(230, 126, 34, 0.35)',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                color: 'rgba(0, 0, 0, 0.38)'
+              }
+            }}
+          >
+            Đặt Ngay
+          </Button>
         </Box>
       </CardContent>
     </Card>
   );
 };
 
-export default RoomCard; 
+export default RoomCard;

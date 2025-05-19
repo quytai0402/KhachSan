@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Typography,
   Box,
   Paper,
@@ -49,17 +48,9 @@ import {
 import { roomAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toastService from '../../services/toastService';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 
-// Room type options
-const roomTypes = [
-  { value: 'single', label: 'Single Room' },
-  { value: 'double', label: 'Double Room' },
-  { value: 'twin', label: 'Twin Room' },
-  { value: 'suite', label: 'Suite' },
-  { value: 'family', label: 'Family Room' },
-  { value: 'deluxe', label: 'Deluxe Room' }
-];
-
+// Room type options will now come from backend
 // Status options
 const roomStatuses = [
   { value: 'available', label: 'Available' },
@@ -92,6 +83,10 @@ const Rooms = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Room types state
+  const [roomTypes, setRoomTypes] = useState([]);
+  const [roomTypesLoading, setRoomTypesLoading] = useState(true);
+  
   // Dialog states
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -100,7 +95,7 @@ const Rooms = () => {
   // Form state
   const [formData, setFormData] = useState({
     roomNumber: '',
-    type: 'single',
+    type: '',
     price: '',
     capacity: 1,
     floor: 1,
@@ -130,6 +125,33 @@ const Rooms = () => {
       navigate('/');
     }
   }, [isAuthenticated, user, navigate]);
+  
+  // Fetch room types
+  useEffect(() => {
+    const fetchRoomTypes = async () => {
+      try {
+        setRoomTypesLoading(true);
+        const response = await roomAPI.getRoomTypes();
+        setRoomTypes(response.data);
+        // If we have room types, set the first one as default in form
+        if (response.data.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            type: response.data[0]._id
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching room types:', err);
+        setError('Failed to load room types. Please try again.');
+      } finally {
+        setRoomTypesLoading(false);
+      }
+    };
+    
+    if (isAuthenticated && user && user.role === 'admin') {
+      fetchRoomTypes();
+    }
+  }, [isAuthenticated, user]);
   
   // Fetch rooms
   useEffect(() => {
@@ -228,7 +250,7 @@ const Rooms = () => {
   const handleOpenAddDialog = () => {
     setFormData({
       roomNumber: '',
-      type: 'single',
+      type: '',
       price: '',
       capacity: 1,
       floor: 1,
@@ -246,7 +268,7 @@ const Rooms = () => {
     setSelectedRoom(room);
     setFormData({
       roomNumber: room.roomNumber,
-      type: room.type,
+      type: room.type._id,
       price: room.price,
       capacity: room.capacity,
       floor: room.floor || 1,
@@ -436,6 +458,12 @@ const Rooms = () => {
     }
   };
   
+  // Function to get room type name by ID
+  const getRoomTypeName = (typeId) => {
+    const foundType = roomTypes.find(type => type._id === typeId);
+    return foundType ? foundType.name : 'Unknown';
+  };
+  
   // Render loading state
   if (loading && rooms.length === 0) {
     return (
@@ -446,27 +474,29 @@ const Rooms = () => {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1">
-          Room Management
+    <Box sx={{ flexGrow: 1, pb: 3 }}>
+      {/* Page Title and Actions */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Quản Lý Phòng
         </Typography>
         <Box>
-          <Button 
-            variant="outlined" 
-            startIcon={<RefreshIcon />} 
-            onClick={handleRefreshRooms}
-            sx={{ mr: 2 }}
-          >
-            Refresh
-          </Button>
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
             onClick={handleOpenAddDialog}
+            sx={{ mr: 1 }}
           >
-            Add Room
+            Thêm Phòng
           </Button>
+          <IconButton
+            color="primary"
+            onClick={handleRefreshRooms}
+            disabled={loading}
+          >
+            <RefreshIcon />
+          </IconButton>
         </Box>
       </Box>
       
@@ -495,7 +525,9 @@ const Rooms = () => {
                 <TableRow key={room._id}>
                   <TableCell>{room.roomNumber}</TableCell>
                   <TableCell>
-                    {roomTypes.find(type => type.value === room.type)?.label || room.type}
+                    {typeof room.type === 'object' ? 
+                      (room.type?.name || "Unknown") : 
+                      getRoomTypeName(room.type) || "Unknown"}
                   </TableCell>
                   <TableCell>${room.price}</TableCell>
                   <TableCell>{room.capacity}</TableCell>
@@ -542,180 +574,190 @@ const Rooms = () => {
       <Dialog open={openAddDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
         <DialogTitle>Add New Room</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Room Number"
-                name="roomNumber"
-                value={formData.roomNumber}
-                onChange={handleChange}
-                fullWidth
-                required
-                error={Boolean(errors.roomNumber)}
-                helperText={errors.roomNumber || ''}
-                autoFocus
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={Boolean(errors.type)}>
-                <InputLabel>Room Type</InputLabel>
-                <Select
-                  name="type"
-                  value={formData.type}
+          {roomTypesLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : roomTypes.length === 0 ? (
+            <Alert severity="error" sx={{ my: 2 }}>
+              No room types found. Please create room types first.
+            </Alert>
+          ) : (
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Room Number"
+                  name="roomNumber"
+                  value={formData.roomNumber}
                   onChange={handleChange}
-                  label="Room Type"
-                >
-                  {roomTypes.map((type) => (
-                    <MenuItem key={type.value} value={type.value}>
-                      {type.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.type && <FormHelperText>{errors.type}</FormHelperText>}
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Price per Night"
-                name="price"
-                type="number"
-                value={formData.price}
-                onChange={handleChange}
-                fullWidth
-                required
-                error={Boolean(errors.price)}
-                helperText={errors.price || ''}
-                InputProps={{
-                  startAdornment: '$'
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Capacity"
-                name="capacity"
-                type="number"
-                value={formData.capacity}
-                onChange={handleChange}
-                fullWidth
-                required
-                error={Boolean(errors.capacity)}
-                helperText={errors.capacity || ''}
-                InputProps={{
-                  inputProps: { min: 1, max: 10 }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Floor"
-                name="floor"
-                type="number"
-                value={formData.floor}
-                onChange={handleChange}
-                fullWidth
-                error={Boolean(errors.floor)}
-                helperText={errors.floor || ''}
-                InputProps={{
-                  inputProps: { min: 1 }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  label="Status"
-                >
-                  {roomStatuses.map((status) => (
-                    <MenuItem key={status.value} value={status.value}>
-                      {status.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Amenities</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {commonAmenities.map(amenity => (
-                  <Chip
-                    key={amenity}
-                    label={amenity}
-                    color={formData.amenities.includes(amenity) ? "primary" : "default"}
-                    onClick={() => handleAmenityToggle(amenity)}
-                    sx={{ mb: 1 }}
-                  />
-                ))}
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Room Images</Typography>
-              <Button
-                variant="outlined"
-                component="label"
-                startIcon={<PhotoCameraIcon />}
-              >
-                Upload Images
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
+                  fullWidth
+                  required
+                  error={Boolean(errors.roomNumber)}
+                  helperText={errors.roomNumber || ''}
+                  autoFocus
                 />
-              </Button>
-              
-              {imagePreview.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <ImageList cols={3} gap={8}>
-                    {imagePreview.map((img, index) => (
-                      <ImageListItem key={index}>
-                        <img
-                          src={img.preview}
-                          alt={`Room preview ${index + 1}`}
-                          loading="lazy"
-                          style={{ height: '120px', objectFit: 'cover' }}
-                        />
-                        <IconButton
-                          onClick={() => handleRemoveImage(index)}
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            top: 4,
-                            right: 4,
-                            bgcolor: 'rgba(255,255,255,0.7)',
-                            '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' }
-                          }}
-                        >
-                          <CloseIcon fontSize="small" />
-                        </IconButton>
-                      </ImageListItem>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required error={Boolean(errors.type)}>
+                  <InputLabel>Room Type</InputLabel>
+                  <Select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    label="Room Type"
+                  >
+                    {roomTypes.map((type) => (
+                      <MenuItem key={type._id} value={type._id}>
+                        {type.name} - ${type.basePrice}
+                      </MenuItem>
                     ))}
-                  </ImageList>
+                  </Select>
+                  {errors.type && <FormHelperText>{errors.type}</FormHelperText>}
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Price per Night"
+                  name="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  error={Boolean(errors.price)}
+                  helperText={errors.price || ''}
+                  InputProps={{
+                    startAdornment: '$'
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Capacity"
+                  name="capacity"
+                  type="number"
+                  value={formData.capacity}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  error={Boolean(errors.capacity)}
+                  helperText={errors.capacity || ''}
+                  InputProps={{
+                    inputProps: { min: 1, max: 10 }
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Floor"
+                  name="floor"
+                  type="number"
+                  value={formData.floor}
+                  onChange={handleChange}
+                  fullWidth
+                  error={Boolean(errors.floor)}
+                  helperText={errors.floor || ''}
+                  InputProps={{
+                    inputProps: { min: 1 }
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    label="Status"
+                  >
+                    {roomStatuses.map((status) => (
+                      <MenuItem key={status.value} value={status.value}>
+                        {status.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>Amenities</Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {commonAmenities.map(amenity => (
+                    <Chip
+                      key={amenity}
+                      label={amenity}
+                      color={formData.amenities.includes(amenity) ? "primary" : "default"}
+                      onClick={() => handleAmenityToggle(amenity)}
+                      sx={{ mb: 1 }}
+                    />
+                  ))}
                 </Box>
-              )}
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>Room Images</Typography>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<PhotoCameraIcon />}
+                >
+                  Upload Images
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                  />
+                </Button>
+                
+                {imagePreview.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <ImageList cols={3} gap={8}>
+                      {imagePreview.map((img, index) => (
+                        <ImageListItem key={index}>
+                          <img
+                            src={img.preview}
+                            alt={`Room preview ${index + 1}`}
+                            loading="lazy"
+                            style={{ height: '120px', objectFit: 'cover' }}
+                          />
+                          <IconButton
+                            onClick={() => handleRemoveImage(index)}
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              bgcolor: 'rgba(255,255,255,0.7)',
+                              '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' }
+                            }}
+                          >
+                            <CloseIcon fontSize="small" />
+                          </IconButton>
+                        </ImageListItem>
+                      ))}
+                    </ImageList>
+                  </Box>
+                )}
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  label="Description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  fullWidth
+                  multiline
+                  rows={4}
+                  error={Boolean(errors.description)}
+                  helperText={errors.description || ''}
+                />
+              </Grid>
             </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={4}
-                error={Boolean(errors.description)}
-                helperText={errors.description || ''}
-              />
-            </Grid>
-          </Grid>
+          )}
         </DialogContent>
         {Object.keys(errors).length > 0 && (
           <Box sx={{ mt: 2, p: 2, bgcolor: 'error.lighter', borderRadius: 1 }}>
@@ -751,183 +793,193 @@ const Rooms = () => {
       <Dialog open={openEditDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
         <DialogTitle>Edit Room</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Room Number"
-                name="roomNumber"
-                value={formData.roomNumber}
-                onChange={handleChange}
-                fullWidth
-                required
-                error={Boolean(errors.roomNumber)}
-                helperText={errors.roomNumber || ''}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={Boolean(errors.type)}>
-                <InputLabel>Room Type</InputLabel>
-                <Select
-                  name="type"
-                  value={formData.type}
+          {roomTypesLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : roomTypes.length === 0 ? (
+            <Alert severity="error" sx={{ my: 2 }}>
+              No room types found. Please create room types first.
+            </Alert>
+          ) : (
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Room Number"
+                  name="roomNumber"
+                  value={formData.roomNumber}
                   onChange={handleChange}
-                  label="Room Type"
-                >
-                  {roomTypes.map((type) => (
-                    <MenuItem key={type.value} value={type.value}>
-                      {type.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.type && <FormHelperText>{errors.type}</FormHelperText>}
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Price per Night"
-                name="price"
-                type="number"
-                value={formData.price}
-                onChange={handleChange}
-                fullWidth
-                required
-                error={Boolean(errors.price)}
-                helperText={errors.price || ''}
-                InputProps={{
-                  startAdornment: '$'
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Capacity"
-                name="capacity"
-                type="number"
-                value={formData.capacity}
-                onChange={handleChange}
-                fullWidth
-                required
-                error={Boolean(errors.capacity)}
-                helperText={errors.capacity || ''}
-                InputProps={{
-                  inputProps: { min: 1, max: 10 }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Floor"
-                name="floor"
-                type="number"
-                value={formData.floor}
-                onChange={handleChange}
-                fullWidth
-                error={Boolean(errors.floor)}
-                helperText={errors.floor || ''}
-                InputProps={{
-                  inputProps: { min: 1 }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  label="Status"
-                >
-                  {roomStatuses.map((status) => (
-                    <MenuItem key={status.value} value={status.value}>
-                      {status.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Amenities</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {commonAmenities.map(amenity => (
-                  <Chip
-                    key={amenity}
-                    label={amenity}
-                    color={formData.amenities.includes(amenity) ? "primary" : "default"}
-                    onClick={() => handleAmenityToggle(amenity)}
-                    sx={{ mb: 1 }}
-                  />
-                ))}
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Room Images</Typography>
-              <Button
-                variant="outlined"
-                component="label"
-                startIcon={<PhotoCameraIcon />}
-              >
-                Upload New Images
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
+                  fullWidth
+                  required
+                  error={Boolean(errors.roomNumber)}
+                  helperText={errors.roomNumber || ''}
                 />
-              </Button>
-              
-              {imagePreview.length > 0 ? (
-                <Box sx={{ mt: 2 }}>
-                  <ImageList cols={3} gap={8}>
-                    {imagePreview.map((img, index) => (
-                      <ImageListItem key={index}>
-                        <img
-                          src={img.preview}
-                          alt={`Room preview ${index + 1}`}
-                          loading="lazy"
-                          style={{ height: '120px', objectFit: 'cover' }}
-                        />
-                        <IconButton
-                          onClick={() => handleRemoveImage(index)}
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            top: 4,
-                            right: 4,
-                            bgcolor: 'rgba(255,255,255,0.7)',
-                            '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' }
-                          }}
-                        >
-                          <CloseIcon fontSize="small" />
-                        </IconButton>
-                      </ImageListItem>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required error={Boolean(errors.type)}>
+                  <InputLabel>Room Type</InputLabel>
+                  <Select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    label="Room Type"
+                  >
+                    {roomTypes.map((type) => (
+                      <MenuItem key={type._id} value={type._id}>
+                        {type.name} - ${type.basePrice}
+                      </MenuItem>
                     ))}
-                  </ImageList>
+                  </Select>
+                  {errors.type && <FormHelperText>{errors.type}</FormHelperText>}
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Price per Night"
+                  name="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  error={Boolean(errors.price)}
+                  helperText={errors.price || ''}
+                  InputProps={{
+                    startAdornment: '$'
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Capacity"
+                  name="capacity"
+                  type="number"
+                  value={formData.capacity}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  error={Boolean(errors.capacity)}
+                  helperText={errors.capacity || ''}
+                  InputProps={{
+                    inputProps: { min: 1, max: 10 }
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Floor"
+                  name="floor"
+                  type="number"
+                  value={formData.floor}
+                  onChange={handleChange}
+                  fullWidth
+                  error={Boolean(errors.floor)}
+                  helperText={errors.floor || ''}
+                  InputProps={{
+                    inputProps: { min: 1 }
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    label="Status"
+                  >
+                    {roomStatuses.map((status) => (
+                      <MenuItem key={status.value} value={status.value}>
+                        {status.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>Amenities</Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {commonAmenities.map(amenity => (
+                    <Chip
+                      key={amenity}
+                      label={amenity}
+                      color={formData.amenities.includes(amenity) ? "primary" : "default"}
+                      onClick={() => handleAmenityToggle(amenity)}
+                      sx={{ mb: 1 }}
+                    />
+                  ))}
                 </Box>
-              ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  No images uploaded yet
-                </Typography>
-              )}
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>Room Images</Typography>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<PhotoCameraIcon />}
+                >
+                  Upload New Images
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                  />
+                </Button>
+                
+                {imagePreview.length > 0 ? (
+                  <Box sx={{ mt: 2 }}>
+                    <ImageList cols={3} gap={8}>
+                      {imagePreview.map((img, index) => (
+                        <ImageListItem key={index}>
+                          <img
+                            src={img.preview}
+                            alt={`Room preview ${index + 1}`}
+                            loading="lazy"
+                            style={{ height: '120px', objectFit: 'cover' }}
+                          />
+                          <IconButton
+                            onClick={() => handleRemoveImage(index)}
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              bgcolor: 'rgba(255,255,255,0.7)',
+                              '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' }
+                            }}
+                          >
+                            <CloseIcon fontSize="small" />
+                          </IconButton>
+                        </ImageListItem>
+                      ))}
+                    </ImageList>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    No images uploaded yet
+                  </Typography>
+                )}
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  label="Description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  fullWidth
+                  multiline
+                  rows={4}
+                  error={Boolean(errors.description)}
+                  helperText={errors.description || ''}
+                />
+              </Grid>
             </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={4}
-                error={Boolean(errors.description)}
-                helperText={errors.description || ''}
-              />
-            </Grid>
-          </Grid>
+          )}
         </DialogContent>
         {Object.keys(errors).length > 0 && (
           <Box sx={{ mt: 2, p: 2, bgcolor: 'error.lighter', borderRadius: 1 }}>
@@ -981,8 +1033,8 @@ const Rooms = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 
-export default Rooms; 
+export default withDashboardLayout(Rooms, "Quản Lý Phòng"); 
