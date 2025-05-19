@@ -43,6 +43,8 @@ import StaffRooms from './pages/staff/Rooms';
 import StaffBookings from './pages/staff/Bookings';
 import StaffSchedule from './pages/staff/Schedule';
 import StaffGuests from './pages/staff/Guests';
+import StaffHousekeeping from './pages/staff/Housekeeping';
+import StaffPromotions from './pages/staff/Promotions';
 
 // Create theme
 const theme = createTheme({
@@ -247,6 +249,22 @@ const App = () => {
                       element={
                         <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
                           <StaffGuests />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/staff/housekeeping" 
+                      element={
+                        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+                          <StaffHousekeeping />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/staff/promotions" 
+                      element={
+                        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+                          <StaffPromotions />
                         </ProtectedRoute>
                       } 
                     />
