@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Typography,
   Box,
   Paper,
@@ -23,12 +22,14 @@ import {
   Chip,
   Divider
 } from '@mui/material';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
   Refresh as RefreshIcon,
-  AccessTime as AccessTimeIcon
+  AccessTime as AccessTimeIcon,
+  PhotoCamera as PhotoCameraIcon
 } from '@mui/icons-material';
 import { promotionAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -109,9 +110,9 @@ const Promotions = () => {
       title: '',
       description: '',
       validUntil: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-      discount: '',
+      discount: '20%',  // Default discount
       code: '',
-      image: '',
+      image: null,
       isActive: true
     });
     setOpenAddDialog(true);
@@ -120,15 +121,22 @@ const Promotions = () => {
   // Open edit dialog
   const handleOpenEditDialog = (promotion) => {
     setSelectedPromotion(promotion);
+    
+    // Format promotion data for the form
+    const discountStr = promotion.discountType === 'percentage' ? 
+      `${promotion.discountValue}%` : 
+      `${promotion.discountValue} VND`;
+      
     setFormData({
-      title: promotion.title || '',
+      title: promotion.title || promotion.name || '',
       description: promotion.description || '',
-      validUntil: promotion.validUntil || '',
-      discount: promotion.discount || '',
+      validUntil: promotion.validTo ? format(new Date(promotion.validTo), 'yyyy-MM-dd') : '',
+      discount: promotion.discountPercent ? `${promotion.discountPercent}%` : discountStr,
       code: promotion.code || '',
-      image: promotion.image || '',
+      image: promotion.image || null,
       isActive: promotion.isActive !== false
     });
+    
     setOpenEditDialog(true);
   };
   
@@ -150,7 +158,23 @@ const Promotions = () => {
   const handleAddPromotion = async () => {
     try {
       setSubmitting(true);
-      const response = await promotionAPI.createPromotion(formData);
+      
+      // Format data according to backend requirements
+      const promotionData = {
+        ...formData,
+        // Convert title to name if needed
+        name: formData.title,
+        // Format discount as discountValue and discountType
+        discountValue: parseInt(formData.discount.replace(/[^0-9]/g, '')),
+        discountType: formData.discount.toLowerCase().includes('%') ? 'percentage' : 'fixed',
+        // Format dates
+        validFrom: new Date(),
+        validTo: formData.validUntil === 'Ongoing' ? 
+          new Date(new Date().getFullYear() + 1, 0, 1) : // One year from now if ongoing
+          new Date(formData.validUntil)
+      };
+      
+      const response = await promotionAPI.createPromotion(promotionData);
       setPromotions(prev => [...prev, response.data]);
       setError(null);
       handleCloseDialogs();
@@ -168,7 +192,22 @@ const Promotions = () => {
     
     try {
       setSubmitting(true);
-      const response = await promotionAPI.updatePromotion(selectedPromotion._id, formData);
+      
+      // Format data according to backend requirements
+      const promotionData = {
+        ...formData,
+        // Convert title to name if needed
+        name: formData.title,
+        // Format discount as discountValue and discountType
+        discountValue: parseInt(formData.discount.replace(/[^0-9]/g, '')),
+        discountType: formData.discount.toLowerCase().includes('%') ? 'percentage' : 'fixed',
+        // Format dates if necessary
+        validTo: formData.validUntil === 'Ongoing' ? 
+          new Date(new Date().getFullYear() + 1, 0, 1) : // One year from now if ongoing
+          new Date(formData.validUntil)
+      };
+      
+      const response = await promotionAPI.updatePromotion(selectedPromotion._id, promotionData);
       setPromotions(prev => 
         prev.map(promotion => 
           promotion._id === selectedPromotion._id ? response.data : promotion
@@ -233,7 +272,7 @@ const Promotions = () => {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
           Quản Lý Khuyến Mãi
@@ -427,14 +466,35 @@ const Promotions = () => {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Image URL"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
+              <Button
+                variant="outlined"
+                component="label"
                 fullWidth
-                required
-              />
+                startIcon={<PhotoCameraIcon />}
+                sx={{ height: '56px', textTransform: 'none' }}
+              >
+                Upload Image
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setFormData(prev => ({
+                        ...prev,
+                        image: e.target.files[0]
+                      }));
+                    }
+                  }}
+                />
+              </Button>
+              {formData.image && (
+                <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
+                  {formData.image instanceof File ? 
+                    `Selected: ${formData.image.name}` : 
+                    `Current image: ${formData.image}`}
+                </Typography>
+              )}
             </Grid>
           </Grid>
         </DialogContent>
@@ -512,14 +572,35 @@ const Promotions = () => {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Image URL"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
+              <Button
+                variant="outlined"
+                component="label"
                 fullWidth
-                required
-              />
+                startIcon={<PhotoCameraIcon />}
+                sx={{ height: '56px', textTransform: 'none' }}
+              >
+                Update Image
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setFormData(prev => ({
+                        ...prev,
+                        image: e.target.files[0]
+                      }));
+                    }
+                  }}
+                />
+              </Button>
+              {formData.image && (
+                <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
+                  {formData.image instanceof File ? 
+                    `Selected: ${formData.image.name}` : 
+                    `Current image: ${formData.image}`}
+                </Typography>
+              )}
             </Grid>
           </Grid>
         </DialogContent>
@@ -559,8 +640,8 @@ const Promotions = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 
-export default Promotions; 
+export default withDashboardLayout(Promotions, "Quản Lý Khuyến Mãi");

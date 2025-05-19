@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Typography,
   Box,
   Paper,
@@ -32,6 +31,7 @@ import {
 import { bookingAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 
 const Bookings = () => {
   const navigate = useNavigate();
@@ -200,7 +200,7 @@ const Bookings = () => {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
           Quản Lý Đặt Phòng
@@ -387,8 +387,8 @@ const Bookings = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 
-export default Bookings; 
+export default withDashboardLayout(Bookings, "Quản Lý Đặt Phòng"); 

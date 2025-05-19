@@ -53,15 +53,23 @@ router.get('/types', async (req, res) => {
   }
 });
 
-// @route   GET api/rooms
-// @desc    Get all rooms
+// @route   GET api/rooms/featured
+// @desc    Get featured rooms for homepage
 // @access  Public
-router.get('/', async (req, res) => {
+router.get('/featured', async (req, res) => {
   try {
-    const rooms = await Room.find().sort({ createdAt: -1 }).populate('type');
-    res.json(rooms);
+    // Get featured rooms - rooms that are available and have good features
+    const featuredRooms = await Room.find({ 
+      status: 'available',
+      price: { $exists: true }
+    })
+    .populate('type')
+    .sort({ price: -1 }) // Sort by price descending to get premium rooms first
+    .limit(4); // Only get top 4 rooms
+    
+    res.json(featuredRooms);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error fetching featured rooms:', err.message);
     res.status(500).send('Server error');
   }
 });
@@ -81,6 +89,19 @@ router.get('/available', async (req, res) => {
     // This will require a query to the Booking model to check overlapping dates
     const availableRooms = await Room.find({ status: 'available' });
     res.json(availableRooms);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route   GET api/rooms
+// @desc    Get all rooms
+// @access  Public
+router.get('/', async (req, res) => {
+  try {
+    const rooms = await Room.find().sort({ createdAt: -1 }).populate('type');
+    res.json(rooms);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');

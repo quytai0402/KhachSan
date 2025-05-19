@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
   Typography,
   Box,
   Grid,
@@ -47,7 +46,8 @@ import {
   Settings as SettingsIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
-import { DashboardLayout, ActionModal } from '../../components/dashboard';
+import { ActionModal } from '../../components/dashboard';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 import axios from 'axios';
 import toastService from '../../services/toastService';
 
@@ -167,6 +167,7 @@ const StaffRooms = () => {
   const [cleaningFilter, setCleaningFilter] = useState('all');
   const [currentTab, setCurrentTab] = useState(0);
   const [showGrid, setShowGrid] = useState(true);
+  const [error, setError] = useState(null);
   
   // For room action modal
   const [openActionModal, setOpenActionModal] = useState(false);
@@ -186,9 +187,10 @@ const StaffRooms = () => {
       } catch (err) {
         console.error('Error fetching rooms:', err);
         
-        // Use sample data if API fails
-        setRooms(sampleRooms);
-        setFilteredRooms(sampleRooms);
+        // Initialize with empty arrays instead of sample data
+        setRooms([]);
+        setFilteredRooms([]);
+        setError('Không thể tải dữ liệu phòng. Vui lòng thử lại sau.');
         setLoading(false);
       }
     };
@@ -276,36 +278,36 @@ const StaffRooms = () => {
     setActionError(null);
     
     try {
-      // In a real application, you would make API calls here
-      // For example:
-      // await axios.post('/api/staff/rooms/update-status', {
-      //   roomId: selectedRoom._id,
-      //   status: formData.status,
-      //   notes: formData.notes,
-      //   ...other data
-      // });
+      // Prepare the update data based on action type
+      const updateData = {
+        status: actionType === 'check-in' ? 'occupied' :
+                actionType === 'check-out' ? 'available' :
+                formData.status || selectedRoom.status,
+        cleaningStatus: actionType === 'cleaning' ? 'cleaned' : 
+                        actionType === 'check-out' ? 'needs-cleaning' :
+                        formData.cleaningStatus || selectedRoom.cleaningStatus,
+        notes: formData.notes || selectedRoom.notes
+      };
       
-      // For this demo, we'll just simulate a successful update
-      setTimeout(() => {
-        // Update the room in local state
+      // Additional data for check-in/check-out actions 
+      if (actionType === 'check-in' && formData.guestName) {
+        updateData.guestName = formData.guestName;
+      }
+      
+      // Make API call to update room
+      const response = await axios.put(`/api/staff/rooms/${selectedRoom._id}`, updateData);
+      
+      if (response.data) {
+        // Update the room in local state with the server response
         const updatedRooms = rooms.map(room => {
           if (room._id === selectedRoom._id) {
-            return {
-              ...room,
-              ...formData,
-              status: actionType === 'check-in' ? 'occupied' :
-                      actionType === 'check-out' ? 'available' :
-                      formData.status || room.status,
-              cleaningStatus: actionType === 'cleaning' ? 'cleaned' :
-                              actionType === 'check-out' ? 'needs-cleaning' :
-                              formData.cleaningStatus || room.cleaningStatus,
-              notes: formData.notes || room.notes
-            };
+            return response.data;
           }
           return room;
         });
         
         setRooms(updatedRooms);
+        setFilteredRooms(updatedRooms);
         
         // Show success message
         toastService.success(
@@ -317,12 +319,11 @@ const StaffRooms = () => {
         
         // Close the modal
         handleCloseActionModal();
-        setActionLoading(false);
-      }, 1000);
-      
+      }
     } catch (error) {
       console.error('Error updating room:', error);
-      setActionError('Đã xảy ra lỗi khi cập nhật. Vui lòng thử lại sau.');
+      setActionError(error.response?.data?.message || 'Đã xảy ra lỗi khi cập nhật. Vui lòng thử lại sau.');
+    } finally {
       setActionLoading(false);
     }
   };
@@ -330,16 +331,16 @@ const StaffRooms = () => {
   const handleRefresh = async () => {
     setLoading(true);
     try {
-      // Replace with actual API call in real app
-      // const response = await axios.get('/api/staff/rooms');
-      // setRooms(response.data);
-      // For demo, just reuse the current data with a delay
-      setTimeout(() => {
-        setLoading(false);
-        toastService.info('Đã cập nhật danh sách phòng');
-      }, 1000);
+      // Make actual API call to fetch latest data
+      const response = await axios.get('/api/staff/rooms');
+      setRooms(response.data);
+      setFilteredRooms(response.data);
+      setError(null);
+      toastService.info('Đã cập nhật danh sách phòng');
     } catch (error) {
       console.error('Error refreshing rooms:', error);
+      setError('Không thể tải dữ liệu phòng. Vui lòng thử lại sau.');
+    } finally {
       setLoading(false);
     }
   };
@@ -476,8 +477,8 @@ const StaffRooms = () => {
   };
 
   return (
-    <DashboardLayout title="Quản Lý Phòng">
-      <Box sx={{ p: { xs: 2, md: 3 } }}>
+    <Box sx={{ py: 4 }}>
+      <Box sx={{ p: { xs: 0, md: 0 } }}>
         {/* Header with search and actions */}
         <Box sx={{ 
           display: 'flex', 
@@ -606,6 +607,13 @@ const StaffRooms = () => {
             </Grid>
           </Grid>
         </Paper>
+        
+        {/* Error message */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
         
         {/* Tabs for quick filtering */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -881,8 +889,8 @@ const StaffRooms = () => {
         error={actionError}
         fields={getModalFields(actionType, selectedRoom)}
       />
-    </DashboardLayout>
+    </Box>
   );
 };
 
-export default StaffRooms;
+export default withDashboardLayout(StaffRooms, "Quản Lý Phòng");

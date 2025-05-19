@@ -37,6 +37,7 @@ import {
   ListItemText,
   FormHelperText
 } from '@mui/material';
+import { formatVND, getVietnameseRoomType } from '../../utils/formatCurrency';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -57,6 +58,21 @@ const roomStatuses = [
   { value: 'booked', label: 'Đã đặt' },
   { value: 'maintenance', label: 'Bảo trì' }
 ];
+
+// Generate room numbers for each floor (1-10)
+const generateRoomNumbers = () => {
+  const roomNumbers = [];
+  for (let floor = 1; floor <= 10; floor++) {
+    for (let room = 1; room <= 20; room++) {
+      // Create format like: 101, 102, ..., 110, 201, 202, etc.
+      const roomNumber = `${floor}${room.toString().padStart(2, '0')}`;
+      roomNumbers.push(roomNumber);
+    }
+  }
+  return roomNumbers;
+};
+
+const roomNumberOptions = generateRoomNumbers();
 
 // Common amenities
 const commonAmenities = [
@@ -212,6 +228,8 @@ const Rooms = () => {
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     
+    if (files.length === 0) return;
+    
     // Generate preview URLs
     const newPreviews = files.map(file => ({
       file,
@@ -220,10 +238,21 @@ const Rooms = () => {
     
     setImagePreview(prev => [...prev, ...newPreviews]);
     
-    setFormData(prev => ({
-      ...prev,
-      images: [...files]
-    }));
+    setFormData(prev => {
+      // Get existing files if any, or initialize empty array
+      const existingFiles = prev.images || [];
+      
+      // Combine with new files
+      return {
+        ...prev,
+        images: [...existingFiles, ...files]
+      };
+    });
+    
+    // Clear error if exists
+    if (errors.images) {
+      setErrors(prev => ({ ...prev, images: '' }));
+    }
   };
   
   // Remove image from preview
@@ -234,6 +263,13 @@ const Rooms = () => {
       URL.revokeObjectURL(newPreviews[index].preview);
       newPreviews.splice(index, 1);
       return newPreviews;
+    });
+    
+    // Also remove from formData
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      newImages.splice(index, 1);
+      return { ...prev, images: newImages };
     });
     
     setFormData(prev => {
@@ -535,10 +571,10 @@ const Rooms = () => {
                   <TableCell>{room.roomNumber}</TableCell>
                   <TableCell>
                     {typeof room.type === 'object' ? 
-                      (room.type?.name || "Unknown") : 
-                      getRoomTypeName(room.type) || "Unknown"}
+                      getVietnameseRoomType(room.type?.name || "Unknown") : 
+                      getVietnameseRoomType(getRoomTypeName(room.type)) || "Unknown"}
                   </TableCell>
-                  <TableCell>${room.price}</TableCell>
+                  <TableCell>{formatVND(room.price)}</TableCell>
                   <TableCell>{room.capacity}</TableCell>
                   <TableCell>{room.floor || 1}</TableCell>
                   <TableCell>
@@ -594,17 +630,32 @@ const Rooms = () => {
           ) : (
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Số Phòng"
-                  name="roomNumber"
-                  value={formData.roomNumber}
-                  onChange={handleChange}
-                  fullWidth
-                  required
-                  error={Boolean(errors.roomNumber)}
-                  helperText={errors.roomNumber || ''}
-                  autoFocus
-                />
+                <FormControl fullWidth required error={Boolean(errors.roomNumber)}>
+                  <InputLabel>Số Phòng</InputLabel>
+                  <Select
+                    name="roomNumber"
+                    value={formData.roomNumber}
+                    onChange={handleChange}
+                    label="Số Phòng"
+                    autoFocus
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 300
+                        }
+                      }
+                    }}
+                  >
+                    {roomNumberOptions.map((roomNum) => (
+                      <MenuItem key={roomNum} value={roomNum}>
+                        {roomNum}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.roomNumber && (
+                    <FormHelperText error>{errors.roomNumber}</FormHelperText>
+                  )}
+                </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required error={Boolean(errors.type)}>
@@ -636,7 +687,7 @@ const Rooms = () => {
                   error={Boolean(errors.price)}
                   helperText={errors.price || ''}
                   InputProps={{
-                    startAdornment: '$'
+                    startAdornment: 'VND'
                   }}
                 />
               </Grid>
@@ -813,16 +864,31 @@ const Rooms = () => {
           ) : (
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Room Number"
-                  name="roomNumber"
-                  value={formData.roomNumber}
-                  onChange={handleChange}
-                  fullWidth
-                  required
-                  error={Boolean(errors.roomNumber)}
-                  helperText={errors.roomNumber || ''}
-                />
+                <FormControl fullWidth required error={Boolean(errors.roomNumber)}>
+                  <InputLabel>Room Number</InputLabel>
+                  <Select
+                    name="roomNumber"
+                    value={formData.roomNumber}
+                    onChange={handleChange}
+                    label="Room Number"
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 300
+                        }
+                      }
+                    }}
+                  >
+                    {roomNumberOptions.map((roomNum) => (
+                      <MenuItem key={roomNum} value={roomNum}>
+                        {roomNum}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.roomNumber && (
+                    <FormHelperText error>{errors.roomNumber}</FormHelperText>
+                  )}
+                </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required error={Boolean(errors.type)}>
@@ -854,7 +920,7 @@ const Rooms = () => {
                   error={Boolean(errors.price)}
                   helperText={errors.price || ''}
                   InputProps={{
-                    startAdornment: '$'
+                    startAdornment: 'VND'
                   }}
                 />
               </Grid>

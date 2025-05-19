@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Typography,
   Box,
   Paper,
@@ -19,6 +18,7 @@ import {
   FormControl,
   InputLabel
 } from '@mui/material';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -202,7 +202,7 @@ const Reports = () => {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
         Phân Tích & Báo Cáo
       </Typography>
@@ -363,8 +363,8 @@ const Reports = () => {
           )}
         </Box>
       </Paper>
-    </Container>
+    </Box>
   );
 };
 
-export default Reports; 
+export default withDashboardLayout(Reports, "Báo Cáo Khách Sạn"); 

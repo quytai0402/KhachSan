@@ -25,6 +25,7 @@ import {
   Alert,
   Divider
 } from '@mui/material';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 import {
   Search as SearchIcon,
   FilterList as FilterListIcon,
@@ -38,109 +39,38 @@ import { format, parseISO } from 'date-fns';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
-// Sample promotions data for the UI
-const samplePromotions = [
-  {
-    _id: 'p1',
-    title: 'Ưu đãi Nghỉ dưỡng Cuối tuần',
-    description: 'Giảm 20% cho đặt phòng vào cuối tuần. Áp dụng cho tất cả các loại phòng.',
-    discountType: 'percentage',
-    discountValue: 20,
-    code: 'WEEKEND20',
-    startDate: '2025-05-01T00:00:00Z',
-    endDate: '2025-07-31T23:59:59Z',
-    status: 'active',
-    minStay: 2,
-    conditions: 'Chỉ áp dụng cho đặt phòng từ thứ 6 đến Chủ nhật',
-    createdAt: '2025-04-01T10:00:00Z',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop'
-  },
-  {
-    _id: 'p2',
-    title: 'Ưu đãi Kỳ nghỉ Hè',
-    description: 'Giảm 15% cho tất cả các đặt phòng trong mùa hè. Thêm bữa sáng miễn phí cho 2 người.',
-    discountType: 'percentage',
-    discountValue: 15,
-    code: 'SUMMER15',
-    startDate: '2025-06-01T00:00:00Z',
-    endDate: '2025-08-31T23:59:59Z',
-    status: 'active',
-    minStay: 3,
-    conditions: 'Áp dụng cho đặt phòng từ 3 đêm trở lên',
-    createdAt: '2025-04-15T14:30:00Z',
-    image: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=1000&auto=format&fit=crop'
-  },
-  {
-    _id: 'p3',
-    title: 'Đặt sớm - Tiết kiệm nhiều',
-    description: 'Giảm 100,000 VNĐ cho mỗi đêm khi đặt phòng trước 30 ngày. Không hoàn hủy.',
-    discountType: 'fixed',
-    discountValue: 100000,
-    code: 'EARLY30',
-    startDate: '2025-05-01T00:00:00Z',
-    endDate: '2025-12-31T23:59:59Z',
-    status: 'active',
-    minStay: 1,
-    conditions: 'Đặt trước ít nhất 30 ngày, không áp dụng hoàn hủy',
-    createdAt: '2025-04-20T09:15:00Z',
-    image: 'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?q=80&w=1000&auto=format&fit=crop'
-  },
-  {
-    _id: 'p4',
-    title: 'Gói Trăng mật',
-    description: 'Giảm 25% cho phòng hạng sang và bao gồm bữa tối lãng mạn, dịch vụ Spa cho các cặp đôi.',
-    discountType: 'percentage',
-    discountValue: 25,
-    code: 'HONEY25',
-    startDate: '2025-06-01T00:00:00Z',
-    endDate: '2025-09-30T23:59:59Z',
-    status: 'active',
-    minStay: 2,
-    conditions: 'Chỉ áp dụng cho phòng hạng sang và phải đặt trước ít nhất 7 ngày',
-    createdAt: '2025-05-01T11:45:00Z',
-    image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=1000&auto=format&fit=crop'
-  },
-  {
-    _id: 'p5',
-    title: 'Ưu đãi Doanh nghiệp',
-    description: 'Giảm 10% cho đặt phòng của doanh nghiệp. Áp dụng cho nhóm từ 5 phòng trở lên.',
-    discountType: 'percentage',
-    discountValue: 10,
-    code: 'CORP10',
-    startDate: '2025-01-01T00:00:00Z',
-    endDate: '2025-12-31T23:59:59Z',
-    status: 'active',
-    minStay: 1,
-    conditions: 'Chỉ áp dụng cho đặt phòng doanh nghiệp với ít nhất 5 phòng',
-    createdAt: '2024-12-15T15:20:00Z',
-    image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=1000&auto=format&fit=crop'
-  },
-  {
-    _id: 'p6',
-    title: 'Ưu đãi dài hạn',
-    description: 'Giảm 30% cho lưu trú từ 14 đêm trở lên. Bao gồm dịch vụ giặt là miễn phí.',
-    discountType: 'percentage',
-    discountValue: 30,
-    code: 'LONG30',
-    startDate: '2025-01-01T00:00:00Z',
-    endDate: '2025-12-31T23:59:59Z',
-    status: 'inactive',
-    minStay: 14,
-    conditions: 'Chỉ áp dụng cho lưu trú từ 14 đêm trở lên',
-    createdAt: '2025-01-05T10:10:00Z',
-    image: 'https://images.unsplash.com/photo-1562133567-b6a0a9c7e6eb?q=80&w=1000&auto=format&fit=crop'
-  }
-];
+// Empty promotions array as fallback
+const emptyPromotions = [];
 
 const StaffPromotions = () => {
-  const [promotions, setPromotions] = useState(samplePromotions);
+  const [promotions, setPromotions] = useState([]);
   const [filteredPromotions, setFilteredPromotions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [error, setError] = useState('');
+  
+  // Fetch promotions data from API
+  useEffect(() => {
+    const fetchPromotions = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/promotions');
+        setPromotions(response.data);
+        setError('');
+      } catch (err) {
+        console.error('Error fetching promotions:', err);
+        setError('Không thể tải danh sách khuyến mãi. Vui lòng thử lại sau.');
+        setPromotions(emptyPromotions);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPromotions();
+  }, []);
   
   useEffect(() => {
     filterPromotions();
@@ -168,13 +98,19 @@ const StaffPromotions = () => {
     setFilteredPromotions(filtered);
   };
   
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setLoading(true);
-    // Simulate API call to fetch promotions
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const response = await axios.get('/api/promotions');
+      setPromotions(response.data);
+      setError('');
       toast.success('Danh sách khuyến mãi đã được cập nhật');
-    }, 1000);
+    } catch (err) {
+      console.error('Error refreshing promotions:', err);
+      setError('Không thể tải danh sách khuyến mãi. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleOpenDetails = (promotion) => {
@@ -426,4 +362,4 @@ const StaffPromotions = () => {
   );
 };
 
-export default StaffPromotions;
+export default withDashboardLayout(StaffPromotions, "Quản Lý Khuyến Mãi");

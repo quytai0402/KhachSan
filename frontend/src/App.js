@@ -36,6 +36,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminServices from './pages/admin/Services';
 import AdminPromotions from './pages/admin/Promotions';
 import AdminReports from './pages/admin/Reports';
+import AdminHousekeeping from './pages/admin/Housekeeping';
 
 // Staff Pages
 import StaffDashboard from './pages/staff/Dashboard';
@@ -299,6 +300,14 @@ const App = () => {
                       element={
                         <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
                           <AdminUsers />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin/housekeeping" 
+                      element={
+                        <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                          <AdminHousekeeping />
                         </ProtectedRoute>
                       } 
                     />

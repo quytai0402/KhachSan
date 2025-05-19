@@ -24,6 +24,7 @@ import {
   Chip,
   Avatar
 } from '@mui/material';
+import { formatVND, getVietnameseRoomType } from '../utils/formatCurrency';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -195,9 +196,15 @@ const Home = () => {
         const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
         
         // Load featured rooms
-        const roomsResponse = await axios.get(`${API_URL}/api/rooms/featured`);
+        const roomsResponse = await axios.get(`${API_URL}/api/rooms`);
         if (roomsResponse.data && roomsResponse.data.length > 0) {
-          setFeaturedRooms(roomsResponse.data);
+          // If we have rooms, get a sample of up to 4 rooms sorted by price
+          const sortedRooms = roomsResponse.data
+            .filter(room => room.status === 'available')
+            .sort((a, b) => b.price - a.price)
+            .slice(0, 4);
+          
+          setFeaturedRooms(sortedRooms.length > 0 ? sortedRooms : generateExampleRooms());
         } else {
           // If no real rooms found, use example rooms
           setFeaturedRooms(generateExampleRooms());
@@ -444,12 +451,13 @@ const Home = () => {
                   label="Loại phòng"
                 >
                   <MenuItem value="">Tất cả</MenuItem>
-                  <MenuItem value="single">Phòng Đơn</MenuItem>
-                  <MenuItem value="double">Phòng Đôi</MenuItem>
-                  <MenuItem value="twin">Phòng Twin</MenuItem>
-                  <MenuItem value="suite">Phòng Suite</MenuItem>
-                  <MenuItem value="family">Phòng Gia Đình</MenuItem>
-                  <MenuItem value="deluxe">Phòng Deluxe</MenuItem>
+                  <MenuItem value="standard">{getVietnameseRoomType('standard')}</MenuItem>
+                  <MenuItem value="deluxe">{getVietnameseRoomType('deluxe')}</MenuItem>
+                  <MenuItem value="suite">{getVietnameseRoomType('suite')}</MenuItem>
+                  <MenuItem value="family">{getVietnameseRoomType('family')}</MenuItem>
+                  <MenuItem value="single">{getVietnameseRoomType('single')}</MenuItem>
+                  <MenuItem value="double">{getVietnameseRoomType('double')}</MenuItem>
+                  <MenuItem value="twin">{getVietnameseRoomType('twin')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

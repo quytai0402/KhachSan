@@ -14,9 +14,22 @@ class DashboardService {
   async getStats(role = 'admin') {
     try {
       const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
       
-      // Fetch dashboard data directly from dedicated API endpoint
-      const response = await axios.get(`${API_URL}/api/${role === 'admin' ? 'admin' : 'staff'}/dashboard`);
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // Fetch dashboard data directly from dedicated API endpoint with proper authentication
+      const response = await axios.get(
+        `${API_URL}/api/${role === 'admin' ? 'admin' : 'staff'}/dashboard`,
+        {
+          headers: {
+            'x-auth-token': token,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       
       // Return data from the API with additional processing if needed
       const dashboardData = response.data;
@@ -86,7 +99,21 @@ class DashboardService {
   async getRecentActivities(role = 'admin') {
     try {
       const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const response = await axios.get(`${API_URL}/api/${role}/activities`);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await axios.get(
+        `${API_URL}/api/${role}/activities`,
+        {
+          headers: {
+            'x-auth-token': token,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       return response.data || [];
     } catch (error) {
       console.error('Error getting recent activities:', error);

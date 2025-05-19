@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
   Typography,
   Box,
   Grid,
@@ -32,6 +31,7 @@ import {
   Tabs,
   Tab
 } from '@mui/material';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonIcon from '@mui/icons-material/Person';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
@@ -295,7 +295,7 @@ const StaffGuests = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
         Quản Lý Khách và Yêu Cầu
       </Typography>
@@ -602,8 +602,8 @@ const StaffGuests = () => {
           </>
         )}
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 
-export default StaffGuests; 
+export default withDashboardLayout(StaffGuests, "Quản Lý Khách và Yêu Cầu"); 

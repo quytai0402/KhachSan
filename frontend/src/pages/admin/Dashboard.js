@@ -44,30 +44,30 @@ import dashboardService from '../../services/dashboardService';
 import { useActivityTracker, ACTION_TYPES } from '../../utils/activityTracker';
 import { withDashboardLayout } from '../../utils/layoutHelpers';
 
-// Add sample data for realistic presentation
-const sampleStats = {
+// Default empty data structure that will be populated from the API
+const emptyStats = {
   rooms: { 
-    total: 30, 
-    available: 12, 
-    booked: 15, 
-    maintenance: 3 
+    total: 0, 
+    available: 0, 
+    booked: 0, 
+    maintenance: 0 
   },
   bookings: { 
-    total: 45, 
-    pending: 8, 
-    confirmed: 25, 
-    checkedIn: 10, 
-    cancelled: 2 
+    total: 0, 
+    pending: 0, 
+    confirmed: 0, 
+    checkedIn: 0, 
+    cancelled: 0 
   },
   users: { 
-    total: 180, 
-    active: 152, 
-    inactive: 28 
+    total: 0, 
+    active: 0, 
+    inactive: 0 
   },
   revenue: { 
-    today: 15700000, 
-    thisWeek: 82450000, 
-    thisMonth: 354200000 
+    today: 0, 
+    thisWeek: 0, 
+    thisMonth: 0 
   }
 };
 
@@ -236,9 +236,12 @@ const RevenueChart = ({ data }) => (
 const OngoingActivities = ({ activities = [] }) => {
   if (!activities || activities.length === 0) {
     return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
+      <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
           Không có hoạt động nào đang diễn ra
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+          Dữ liệu hoạt động sẽ xuất hiện ở đây khi có hoạt động mới
         </Typography>
       </Box>
     );
@@ -300,57 +303,44 @@ const AdminDashboard = () => {
   const { trackAction } = useActivityTracker();
   const theme = useTheme();
 
-  // Sample bookings data
-  const sampleBookings = [
-    {
-      _id: 'b1',
-      title: 'Nguyễn Văn A đã đặt phòng 205',
-      description: 'Đặt phòng từ 20/05/2024 đến 25/05/2024',
-      timestamp: '10 phút trước',
-      icon: <PersonAddIcon />,
-      type: 'booking',
-      color: '#1e4e8c'
-    },
-    {
-      _id: 'b2',
-      title: 'Trần Thị B đã thanh toán đặt phòng 103',
-      description: 'Số tiền: 4.500.000₫',
-      timestamp: '30 phút trước',
-      icon: <CheckCircleIcon />,
-      type: 'payment',
-      color: '#2e7d32'
-    },
-    {
-      _id: 'b3',
-      title: 'Lê Văn C đã hủy đặt phòng 301',
-      description: 'Lý do: Thay đổi lịch trình công tác',
-      timestamp: '2 giờ trước',
-      icon: <CancelIcon />,
-      type: 'cancellation',
-      color: '#d32f2f'
-    },
-    {
-      _id: 'b4',
-      title: 'Phạm Thị D đã check-in phòng 402',
-      description: 'Check-in lúc 14:30, lưu trú 3 đêm',
-      timestamp: '3 giờ trước',
-      icon: <LocalHotelIcon />,
-      type: 'checkin',
-      color: '#ed6c02'
-    },
-    {
-      _id: 'b5',
-      title: 'Đoàn Văn E đã đặt dịch vụ spa',
-      description: 'Đặt lịch massage thư giãn lúc 16:00',
-      timestamp: '4 giờ trước',
-      icon: <EventIcon />,
-      type: 'service',
-      color: '#9c27b0'
+  // Helper function to determine icon based on activity type
+  const getActivityIcon = (type) => {
+    switch(type) {
+      case 'booking':
+        return <PersonAddIcon />;
+      case 'payment':
+        return <CheckCircleIcon />;
+      case 'cancellation':
+        return <CancelIcon />;
+      case 'checkin':
+        return <LocalHotelIcon />;
+      case 'service':
+        return <EventIcon />;
+      default:
+        return <EventIcon />;
     }
-  ];
+  };
   
-  // Sample ongoing activities
-  const sampleActivities = [
+  // Helper function to determine color based on activity type
+  const getActivityColor = (type) => {
+    switch(type) {
+      case 'booking':
+        return '#1e4e8c';
+      case 'payment':
+        return '#2e7d32';
+      case 'cancellation':
+        return '#d32f2f';
+      case 'checkin':
+        return '#ed6c02';
+      case 'service':
+        return '#9c27b0';
+      default:
+        return '#1e4e8c';
+    }
+  };
+  
+  // Empty array for staff tasks instead of sample data
+  const staffTasks = [
     {
       id: 'act1',
       title: 'Dọn phòng 205',
@@ -390,11 +380,11 @@ const AdminDashboard = () => {
   ];
   
   // Stats state
-  const [stats, setStats] = useState(sampleStats);
+  const [stats, setStats] = useState(emptyStats);
   
   // Recent activity
-  const [recentBookings, setRecentBookings] = useState(sampleBookings);
-  const [ongoingActivities, setOngoingActivities] = useState(sampleActivities);
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [ongoingActivities, setOngoingActivities] = useState([]);
   
   // Loading and error states
   const [loading, setLoading] = useState(true);
@@ -463,48 +453,62 @@ const AdminDashboard = () => {
         // Get data through dashboard service 
         const dashboardData = await dashboardService.getStats('admin');
         
-        // Always try to use real data first, fall back to sample data only if needed
+        // Also fetch recent activities for more complete data
+        const recentActivitiesData = await dashboardService.getRecentActivities('admin');
+        
+        // Use only real data from API, with fallback to zeros if data is missing
         
         // Create processed stats object with explicit number conversion
         const processedStats = {
           rooms: {
-            total: dashboardData?.rooms?.total !== undefined ? Number(dashboardData.rooms.total) : sampleStats.rooms.total,
-            available: dashboardData?.rooms?.available !== undefined ? Number(dashboardData.rooms.available) : sampleStats.rooms.available,
-            booked: dashboardData?.rooms?.booked !== undefined ? Number(dashboardData.rooms.booked) : sampleStats.rooms.booked,
-            maintenance: dashboardData?.rooms?.maintenance !== undefined ? Number(dashboardData.rooms.maintenance) : sampleStats.rooms.maintenance
+            total: Number(dashboardData?.rooms?.total || 0),
+            available: Number(dashboardData?.rooms?.available || 0),
+            booked: Number(dashboardData?.rooms?.booked || 0),
+            maintenance: Number(dashboardData?.rooms?.maintenance || 0)
           },
           bookings: {
-            total: dashboardData?.bookings?.total !== undefined ? Number(dashboardData.bookings.total) : sampleStats.bookings.total,
-            pending: dashboardData?.bookings?.pending !== undefined ? Number(dashboardData.bookings.pending) : sampleStats.bookings.pending,
-            confirmed: dashboardData?.bookings?.confirmed !== undefined ? Number(dashboardData.bookings.confirmed) : sampleStats.bookings.confirmed,
-            checkedIn: dashboardData?.bookings?.checkedIn !== undefined ? Number(dashboardData.bookings.checkedIn) : sampleStats.bookings.checkedIn,
-            cancelled: dashboardData?.bookings?.cancelled !== undefined ? Number(dashboardData.bookings.cancelled) : sampleStats.bookings.cancelled
+            total: Number(dashboardData?.bookings?.total || 0),
+            pending: Number(dashboardData?.bookings?.pending || 0),
+            confirmed: Number(dashboardData?.bookings?.confirmed || 0),
+            checkedIn: Number(dashboardData?.bookings?.checkedIn || 0),
+            cancelled: Number(dashboardData?.bookings?.cancelled || 0)
           },
           users: {
-            total: dashboardData?.users?.total !== undefined ? Number(dashboardData.users.total) : sampleStats.users.total,
-            active: dashboardData?.users?.active !== undefined ? Number(dashboardData.users.active) : sampleStats.users.active,
-            inactive: dashboardData?.users?.inactive !== undefined ? Number(dashboardData.users.inactive) : sampleStats.users.inactive
+            total: Number(dashboardData?.users?.total || 0),
+            active: Number(dashboardData?.users?.active || 0),
+            inactive: Number(dashboardData?.users?.inactive || 0)
           },
           revenue: {
-            today: dashboardData?.revenue?.today !== undefined ? Number(dashboardData.revenue.today) : sampleStats.revenue.today,
-            thisWeek: dashboardData?.revenue?.thisWeek !== undefined ? Number(dashboardData.revenue.thisWeek) : sampleStats.revenue.thisWeek,
-            thisMonth: dashboardData?.revenue?.thisMonth !== undefined ? Number(dashboardData.revenue.thisMonth) : sampleStats.revenue.thisMonth
+            today: Number(dashboardData?.revenue?.today || 0),
+            thisWeek: Number(dashboardData?.revenue?.thisWeek || 0),
+            thisMonth: Number(dashboardData?.revenue?.thisMonth || 0)
           }
         };
         
         // Update state with the data
         setStats(processedStats);
         
-        // For booking data, use real data if available, or sample data as fallback
+        // Always use real data from API for bookings
         if (dashboardData && dashboardData.bookingsData) {
-          setRecentBookings(dashboardData.bookingsData.length > 0 ? 
-            dashboardData.bookingsData : sampleBookings);
+          setRecentBookings(dashboardData.bookingsData || []);
         }
         
-        // For activities, use real data if available, or sample data as fallback
-        if (dashboardData && dashboardData.activities) {
-          setOngoingActivities(dashboardData.activities.length > 0 ? 
-            dashboardData.activities : sampleActivities);
+        // Use real activities data from dedicated activities API if available
+        if (recentActivitiesData && recentActivitiesData.length > 0) {
+          setOngoingActivities(recentActivitiesData);
+        }
+        // Otherwise use dashboard activities data 
+        else if (dashboardData && dashboardData.activities) {
+          setOngoingActivities(dashboardData.activities || []);
+        }
+        // If still no data, use empty array
+        else {
+          setOngoingActivities([]);
+        }
+        
+        // If no booking data is returned, initialize with empty array
+        if (!dashboardData || !dashboardData.bookingsData) {
+          setRecentBookings([]);
         }
         
         // Track activity (with rate limiting) - only when component first mounts
@@ -518,10 +522,11 @@ const AdminDashboard = () => {
         }
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
-        // Use sample data on error
-        setStats(sampleStats);
-        setRecentBookings(sampleBookings);
-        setOngoingActivities(sampleActivities);
+        // On error, use empty data structures instead of sample data
+        setStats(emptyStats);
+        setRecentBookings([]);
+        setOngoingActivities([]);
+        setError('Không thể kết nối với API. Vui lòng kiểm tra kết nối của bạn hoặc đăng nhập lại.');
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -539,14 +544,16 @@ const AdminDashboard = () => {
       clearInterval(intervalId);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, user, trackAction, sampleActivities, sampleBookings]);
+  }, [isAuthenticated, user, trackAction]);
 
   const handleRefresh = () => {
     setRefreshing(true);
     // Fetch latest data
     const fetchDashboardData = async () => {
       try {
+        // Get data from both APIs
         const dashboardData = await dashboardService.getStats('admin');
+        const recentActivitiesData = await dashboardService.getRecentActivities('admin');
         
         if (dashboardData) {
           // Process data similar to above
@@ -578,12 +585,14 @@ const AdminDashboard = () => {
         
           setStats(processedStats);
           
-          if (dashboardData.bookingsData && dashboardData.bookingsData.length > 0) {
-            setRecentBookings(dashboardData.bookingsData);
-          }
+          // Always use the data from API, even if empty
+          setRecentBookings(dashboardData.bookingsData || []);
           
-          if (dashboardData.activities && dashboardData.activities.length > 0) {
-            setOngoingActivities(dashboardData.activities);
+          // Use activities data from dedicated API if available, otherwise use dashboard activities
+          if (recentActivitiesData && recentActivitiesData.length > 0) {
+            setOngoingActivities(recentActivitiesData);
+          } else {
+            setOngoingActivities(dashboardData.activities || []);
           }
         }
       } catch (err) {
@@ -942,41 +951,52 @@ const AdminDashboard = () => {
               </Box>
               
               <List sx={{ flexGrow: 1, overflow: 'auto', maxHeight: 430, py: 0 }}>
-                {recentBookings.map((booking, index) => (
-                  <React.Fragment key={booking._id || index}>
-                    <ListItem alignItems="flex-start" sx={{
-                      py: 1.5,
-                      px: 2,
-                      transition: 'all 0.2s ease',
-                      '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.02)' }
-                    }}>
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: booking.color || 'primary.main' }}>
-                          {booking.icon || <EventIcon />}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={booking.title}
-                        secondary={
-                          <React.Fragment>
-                            <Typography
-                              component="span"
-                              variant="body2"
-                              color="text.primary"
-                              sx={{ display: 'block', fontSize: '0.8rem' }}
-                            >
-                              {booking.description}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {booking.timestamp}
-                            </Typography>
-                          </React.Fragment>
-                        }
-                      />
-                    </ListItem>
-                    {index < recentBookings.length - 1 && <Divider component="li" />}
-                  </React.Fragment>
-                ))}
+                {recentBookings && recentBookings.length > 0 ? (
+                  recentBookings.map((booking, index) => (
+                    <React.Fragment key={booking._id || index}>
+                      <ListItem alignItems="flex-start" sx={{
+                        py: 1.5,
+                        px: 2,
+                        transition: 'all 0.2s ease',
+                        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.02)' }
+                      }}>
+                        <ListItemAvatar>
+                          <Avatar sx={{ bgcolor: booking.color || 'primary.main' }}>
+                            {booking.icon || <EventIcon />}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={booking.title}
+                          secondary={
+                            <React.Fragment>
+                              <Typography
+                                component="span"
+                                variant="body2"
+                                color="text.primary"
+                                sx={{ display: 'block', fontSize: '0.8rem' }}
+                              >
+                                {booking.description}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {booking.timestamp}
+                              </Typography>
+                            </React.Fragment>
+                          }
+                        />
+                      </ListItem>
+                      {index < recentBookings.length - 1 && <Divider component="li" />}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Không có hoạt động đặt phòng nào gần đây
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                      Dữ liệu đặt phòng sẽ xuất hiện ở đây khi có đơn đặt phòng mới
+                    </Typography>
+                  </Box>
+                )}
               </List>
               
               <Box sx={{ p: 2, bgcolor: 'rgba(0, 0, 0, 0.02)' }}>

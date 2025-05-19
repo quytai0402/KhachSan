@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
   Typography,
   Box,
   Grid,
@@ -22,6 +21,7 @@ import {
   DialogActions,
   TextField
 } from '@mui/material';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 import { format, addDays, parseISO } from 'date-fns';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import FlightLandIcon from '@mui/icons-material/FlightLand';
@@ -259,7 +259,7 @@ const StaffSchedule = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
         Lịch Trình Hôm Nay
       </Typography>
@@ -513,8 +513,8 @@ const StaffSchedule = () => {
           </>
         )}
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 
-export default StaffSchedule; 
+export default withDashboardLayout(StaffSchedule, "Lịch Trình Làm Việc"); 

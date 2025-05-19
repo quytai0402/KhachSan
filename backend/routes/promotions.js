@@ -2,6 +2,40 @@ const express = require('express');
 const router = express.Router();
 const { auth, admin } = require('../middleware/auth');
 const Promotion = require('../models/Promotion');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure upload directory exists
+const uploadDir = path.join(__dirname, '../uploads/promotions');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Setup multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/promotions');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `promo-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5000000 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb('Error: Images only!');
+    }
+  }
+});
 
 // @route   GET api/promotions
 // @desc    Get all active promotions
@@ -89,9 +123,10 @@ router.get('/:id', async (req, res) => {
 // @route   POST api/promotions
 // @desc    Create a promotion
 // @access  Private (Admin only)
-router.post('/', [auth, admin], async (req, res) => {
+router.post('/', [auth, admin, upload.single('image')], async (req, res) => {
   const {
     name,
+    title,
     code,
     description,
     discountType,
@@ -128,13 +163,20 @@ router.post('/', [auth, admin], async (req, res) => {
       return res.status(400).json({ message: 'End date must be after start date' });
     }
 
+    // Calculate discount percentage if discount type is fixed
+    let discountPercent = discountType === 'percentage' ? 
+      parseInt(discountValue) : 
+      Math.round((parseInt(discountValue) / 100) * 100);
+
     // Create new promotion
     const newPromotion = new Promotion({
       name,
+      title: title || name,
       code: code.toUpperCase(),
       description,
       discountType: discountType || 'percentage',
-      discountValue,
+      discountValue: parseInt(discountValue),
+      discountPercent,
       validFrom: formattedValidFrom,
       validTo: formattedValidTo,
       applicableRoomTypes: Array.isArray(applicableRoomTypes) 
@@ -142,6 +184,11 @@ router.post('/', [auth, admin], async (req, res) => {
         : (applicableRoomTypes ? [applicableRoomTypes] : ['all']),
       minimumStay: minimumStay || 1
     });
+
+    // Add image path if uploaded
+    if (req.file) {
+      newPromotion.image = `/uploads/promotions/${req.file.filename}`;
+    }
 
     // Save promotion to database
     const promotion = await newPromotion.save();
@@ -159,9 +206,10 @@ router.post('/', [auth, admin], async (req, res) => {
 // @route   PUT api/promotions/:id
 // @desc    Update a promotion
 // @access  Private (Admin only)
-router.put('/:id', [auth, admin], async (req, res) => {
+router.put('/:id', [auth, admin, upload.single('image')], async (req, res) => {
   const {
     name,
+    title,
     description,
     discountType,
     discountValue,
@@ -175,11 +223,22 @@ router.put('/:id', [auth, admin], async (req, res) => {
   // Build promotion object
   const promotionFields = {};
   if (name) promotionFields.name = name;
+  if (title) promotionFields.title = title;
   if (description) promotionFields.description = description;
   if (discountType) promotionFields.discountType = discountType;
-  if (discountValue) promotionFields.discountValue = discountValue;
-  if (validFrom) promotionFields.validFrom = validFrom;
-  if (validTo) promotionFields.validTo = validTo;
+  
+  if (discountValue) {
+    promotionFields.discountValue = parseInt(discountValue);
+    // Calculate discount percentage if applicable
+    if (discountType) {
+      promotionFields.discountPercent = discountType === 'percentage' ? 
+        parseInt(discountValue) : 
+        Math.round((parseInt(discountValue) / 100) * 100);
+    }
+  }
+  
+  if (validFrom) promotionFields.validFrom = new Date(validFrom);
+  if (validTo) promotionFields.validTo = new Date(validTo);
   if (isActive !== undefined) promotionFields.isActive = isActive;
   if (applicableRoomTypes) {
     promotionFields.applicableRoomTypes = Array.isArray(applicableRoomTypes) 
@@ -193,6 +252,11 @@ router.put('/:id', [auth, admin], async (req, res) => {
     let promotion = await Promotion.findById(req.params.id);
     if (!promotion) {
       return res.status(404).json({ message: 'Promotion not found' });
+    }
+
+    // Add image path if uploaded
+    if (req.file) {
+      promotionFields.image = `/uploads/promotions/${req.file.filename}`;
     }
 
     // Update promotion

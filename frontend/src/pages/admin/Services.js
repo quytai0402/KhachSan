@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Typography,
   Box,
   Paper,
@@ -12,7 +11,6 @@ import {
   TableHead,
   TableRow,
   Button,
-  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
@@ -35,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import { serviceAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 
 const Services = () => {
   const navigate = useNavigate();
@@ -223,7 +222,7 @@ const Services = () => {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
           Quản Lý Dịch Vụ
@@ -476,8 +475,8 @@ const Services = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 
-export default Services; 
+export default withDashboardLayout(Services, "Quản Lý Dịch Vụ");

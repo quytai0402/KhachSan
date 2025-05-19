@@ -21,24 +21,10 @@ import AcUnitIcon from '@mui/icons-material/AcUnit';
 import LocalBarIcon from '@mui/icons-material/LocalBar';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { formatVND, getVietnameseRoomType } from '../utils/formatCurrency';
 
 const getRoomTypeLabel = (type) => {
-  switch (type) {
-    case 'single':
-      return 'Phòng Đơn';
-    case 'double':
-      return 'Phòng Đôi';
-    case 'twin':
-      return 'Phòng Twin';
-    case 'suite':
-      return 'Phòng Suite';
-    case 'family':
-      return 'Phòng Gia Đình';
-    case 'deluxe':
-      return 'Phòng Deluxe';
-    default:
-      return type;
-  }
+  return getVietnameseRoomType(type);
 };
 
 const getStatusColor = (status) => {
@@ -215,7 +201,7 @@ const RoomCard = ({ room }) => {
             fontSize: '1.1rem',
           }}
         >
-          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(room.price)}
+          {formatVND(room.price)}
           <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem', ml: 0.5, fontWeight: 400 }}>/đêm</Typography>
         </Typography>
       </Box>

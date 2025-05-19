@@ -24,82 +24,27 @@ import {
   DialogContent,
   DialogActions
 } from '@mui/material';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 import {
   Search as SearchIcon,
   Refresh as RefreshIcon,
   CheckCircle as CheckCircleIcon,
   Assignment as AssignmentIcon
 } from '@mui/icons-material';
-import axios from 'axios';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
+import taskService from '../../services/taskService';
+import api from '../../services/api';
 
-// Sample data for room cleaning tasks
-const sampleCleaningTasks = [
-  {
-    _id: 'task1',
-    roomNumber: '101',
-    taskType: 'cleaning',
-    priority: 'high',
-    status: 'pending',
-    notes: 'Guest checkout, deep cleaning required',
-    assignedTo: 'Nguyễn Thị Hương',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    _id: 'task2',
-    roomNumber: '203',
-    taskType: 'cleaning',
-    priority: 'medium',
-    status: 'in-progress',
-    notes: 'Regular cleaning',
-    assignedTo: 'Lê Văn Minh',
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    _id: 'task3',
-    roomNumber: '305',
-    taskType: 'maintenance',
-    priority: 'low',
-    status: 'completed',
-    notes: 'Replace light bulbs',
-    assignedTo: 'Trần Văn Lực',
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    _id: 'task4',
-    roomNumber: '402',
-    taskType: 'cleaning',
-    priority: 'medium',
-    status: 'pending',
-    notes: 'Guest requested room cleaning',
-    assignedTo: null,
-    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-  },
-  {
-    _id: 'task5',
-    roomNumber: '506',
-    taskType: 'maintenance',
-    priority: 'high',
-    status: 'pending',
-    notes: 'AC not working properly',
-    assignedTo: null,
-    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
-  }
-];
+// Cấu trúc trống cho dữ liệu nhiệm vụ
+const emptyTasks = [];
 
-// Sample staff members for assignment
-const sampleStaffMembers = [
-  { _id: 'staff1', name: 'Nguyễn Thị Hương', role: 'housekeeper' },
-  { _id: 'staff2', name: 'Lê Văn Minh', role: 'housekeeper' },
-  { _id: 'staff3', name: 'Trần Văn Lực', role: 'maintenance' },
-  { _id: 'staff4', name: 'Phạm Thị Mai', role: 'housekeeper' },
-  { _id: 'staff5', name: 'Hoàng Văn Bình', role: 'maintenance' }
-];
+// Cấu trúc trống cho dữ liệu nhân viên
+const emptyStaffMembers = [];
 
 const StaffHousekeeping = () => {
-  const [tasks, setTasks] = useState(sampleCleaningTasks);
+  const [tasks, setTasks] = useState(emptyTasks);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -109,10 +54,40 @@ const StaffHousekeeping = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [open, setOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [staffMembers, setStaffMembers] = useState(sampleStaffMembers);
+  const [staffMembers, setStaffMembers] = useState(emptyStaffMembers);
   const [assignedStaff, setAssignedStaff] = useState('');
   const { user } = useAuth();
 
+  // Fetch tasks from API
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setLoading(true);
+      try {
+        const tasksData = await taskService.getTasks();
+        setTasks(tasksData || []);
+        
+        // Đồng thời lấy danh sách nhân viên từ API
+        try {
+          const response = await api.get('/users?role=staff');
+          setStaffMembers(response.data || []);
+        } catch (staffError) {
+          console.error("Error fetching staff members:", staffError);
+          toast.error("Không thể tải danh sách nhân viên");
+          setStaffMembers([]);
+        }
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+        toast.error("Không thể tải danh sách nhiệm vụ");
+        setTasks([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTasks();
+  }, []);
+
+  // Filter tasks based on search/filter criteria
   useEffect(() => {
     filterTasks();
   }, [tasks, searchTerm, statusFilter, typeFilter]);
@@ -126,8 +101,12 @@ const StaffHousekeeping = () => {
       filtered = filtered.filter(
         (task) =>
           task.roomNumber.toLowerCase().includes(lowerSearchTerm) ||
-          task.notes.toLowerCase().includes(lowerSearchTerm) ||
-          (task.assignedTo && task.assignedTo.toLowerCase().includes(lowerSearchTerm))
+          (task.notes && task.notes.toLowerCase().includes(lowerSearchTerm)) ||
+          (task.assignedTo && (
+            typeof task.assignedTo === 'string' 
+              ? task.assignedTo.toLowerCase().includes(lowerSearchTerm)
+              : task.assignedTo.name && task.assignedTo.name.toLowerCase().includes(lowerSearchTerm)
+          ))
       );
     }
 
@@ -153,13 +132,20 @@ const StaffHousekeeping = () => {
     setPage(0);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const tasksData = await taskService.getTasks();
+      if (tasksData) {
+        setTasks(tasksData);
+        toast.success('Danh sách nhiệm vụ đã được cập nhật');
+      }
+    } catch (error) {
+      console.error("Error refreshing tasks:", error);
+      toast.error("Không thể cập nhật danh sách nhiệm vụ");
+    } finally {
       setLoading(false);
-      toast.success('Danh sách nhiệm vụ đã được cập nhật');
-    }, 1000);
+    }
   };
 
   const handleOpenDialog = (task) => {
@@ -440,4 +426,4 @@ const StaffHousekeeping = () => {
   );
 };
 
-export default StaffHousekeeping;
+export default withDashboardLayout(StaffHousekeeping, "Quản Lý Dịch Vụ Phòng");

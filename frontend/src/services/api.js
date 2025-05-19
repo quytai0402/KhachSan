@@ -124,22 +124,33 @@ const createFormData = (data) => {
     if (key === 'images' || key === 'image') {
       // Handle file uploads
       if (Array.isArray(data[key])) {
-        data[key].forEach(file => {
+        // For multiple files
+        data[key].forEach((file, index) => {
           if (file instanceof File) {
-            formData.append(key, file);
+            formData.append(`${key}`, file); // Use the plural name for multiple files
+          } else if (file && file.file instanceof File) {
+            // Handle objects that contain File objects (e.g. from image preview)
+            formData.append(`${key}`, file.file);
           }
         });
       } else if (data[key] instanceof File) {
+        // For single file
         formData.append(key, data[key]);
       } else if (typeof data[key] === 'string' && data[key].trim() !== '') {
+        // For file paths as strings
         formData.append(key, data[key]);
       }
     } else if (key === 'amenities' && Array.isArray(data[key])) {
+      // Join array values with comma for backend processing
       formData.append('amenities', data[key].join(','));
     } else {
+      // For all other fields
       formData.append(key, data[key]);
     }
   });
+  
+  // Log form data contents for debugging
+  console.log('Form data built:', Object.fromEntries(formData.entries()));
   
   return formData;
 };

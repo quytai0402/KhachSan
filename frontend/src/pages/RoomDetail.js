@@ -23,6 +23,7 @@ import {
   Link
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import { formatVND, getVietnameseRoomType } from '../utils/formatCurrency';
 import WifiIcon from '@mui/icons-material/Wifi';
 import TvIcon from '@mui/icons-material/Tv';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
@@ -53,21 +54,7 @@ const amenityIcons = {
 };
 
 const getRoomTypeLabel = (type) => {
-  switch (type) {
-    case 'single':
-      return 'Phòng Đơn';
-    case 'double':
-      return 'Phòng Đôi';
-    case 'twin':
-      return 'Phòng Twin';
-    case 'suite':
-      return 'Suite';
-    case 'family':
-      return 'Phòng Gia Đình';
-    case 'deluxe':
-      return 'Phòng Deluxe';
-    default:
-      return type;
+  return getVietnameseRoomType(type);
   }
 };
 
@@ -308,7 +295,7 @@ const RoomDetail = () => {
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: 3, borderRadius: 2, position: 'sticky', top: 24 }}>
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-              ${room.price}
+              {formatVND(room.price)}
               <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                 mỗi đêm
               </Typography>

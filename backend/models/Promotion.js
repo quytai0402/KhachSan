@@ -23,6 +23,12 @@ const PromotionSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  discountPercent: {
+    type: Number,
+    default: function() {
+      return this.discountType === 'percentage' ? this.discountValue : 0;
+    }
+  },
   validFrom: {
     type: Date,
     required: true
@@ -30,6 +36,15 @@ const PromotionSchema = new mongoose.Schema({
   validTo: {
     type: Date,
     required: true
+  },
+  image: {
+    type: String
+  },
+  title: {
+    type: String,
+    default: function() {
+      return this.name;
+    }
   },
   isActive: {
     type: Boolean,

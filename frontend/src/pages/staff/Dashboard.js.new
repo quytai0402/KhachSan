@@ -1,0 +1,691 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Grid,
+  Paper,
+  Typography,
+  Button,
+  Chip,
+  Divider,
+  Card,
+  CardHeader,
+  CardContent,
+  IconButton,
+  Avatar,
+  CircularProgress,
+  Alert,
+  useTheme,
+  useMediaQuery
+} from '@mui/material';
+import {
+  Refresh as RefreshIcon,
+  CalendarToday as CalendarTodayIcon,
+  Person as PersonIcon,
+  Hotel as HotelIcon,
+  CheckCircle as CheckCircleIcon,
+  Assignment as AssignmentIcon,
+  LocalHotel as LocalHotelIcon,
+  DoneAll as DoneAllIcon
+} from '@mui/icons-material';
+import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
+import dashboardService from '../../services/dashboardService';
+import taskService from '../../services/taskService';
+import ActivityLog from '../../components/ActivityLog';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
+import { useActivityTracker, ACTION_TYPES } from '../../utils/activityTracker';
+
+// Empty data structure for staff dashboard
+const emptyDashboardData = {
+  rooms: { 
+    total: 0, 
+    available: 0, 
+    booked: 0, 
+    maintenance: 0 
+  },
+  bookings: { 
+    total: 0, 
+    pending: 0, 
+    confirmed: 0, 
+    checkedIn: 0, 
+    cancelled: 0 
+  },
+  users: { 
+    total: 0, 
+    active: 0 
+  },
+  revenue: { 
+    today: 0, 
+    thisWeek: 0, 
+    thisMonth: 0 
+  },
+  totalRooms: 0,
+  availableRooms: 0,
+  todayBookings: 0,
+  activeGuests: 0,
+  todayCheckins: 0,
+  todayCheckouts: 0,
+  tasks: { 
+    total: 0, 
+    rooms: 0, 
+    services: 0 
+  }
+};
+
+// Helper function to format time differences
+const formatTimeAgo = (date) => {
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now - past;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHrs = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHrs / 24);
+  
+  if (diffDays > 0) {
+    return `${diffDays} ngày trước`;
+  } else if (diffHrs > 0) {
+    return `${diffHrs} giờ trước`;
+  } else if (diffMins > 0) {
+    return `${diffMins} phút trước`;
+  } else {
+    return 'Vừa xong';
+  }
+};
+
+// Helper function to generate status text
+const getStatusText = (status) => {
+  switch(status) {
+    case 'pending': return 'Đang chờ';
+    case 'confirmed': return 'Đã xác nhận';
+    case 'checked-in': return 'Đã check-in';
+    case 'checked-out': return 'Đã check-out';
+    case 'cancelled': return 'Đã hủy';
+    case 'completed': return 'Hoàn thành';
+    case 'in-progress': return 'Đang thực hiện';
+    default: return status;
+  }
+};
+
+// StaffDashboard component
+const StaffDashboard = () => {
+  const [stats, setStats] = useState({
+    rooms: { total: 0, available: 0 },
+    bookings: { total: 0, pending: 0 },
+    tasks: { total: 0, rooms: 0, services: 0 },
+    todayCheckins: 0,
+    todayCheckouts: 0,
+    activeGuests: 0
+  });
+  
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [upcomingTasks, setUpcomingTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const { systemAlerts } = useSocket();
+  const { trackAction } = useActivityTracker();
+  const dashboardLoaded = useRef(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const quickAccessItems = [
+    {
+      id: 'tasks',
+      title: 'Nhiệm Vụ Của Tôi',
+      count: stats.tasks?.total || 0,
+      icon: <AssignmentIcon />,
+      color: theme.palette.primary.main,
+      onClick: () => navigate('/staff/housekeeping')
+    },
+    {
+      id: 'checkins',
+      title: 'Check-in Hôm Nay',
+      count: stats.todayCheckins || 0,
+      icon: <CheckCircleIcon />,
+      color: theme.palette.success.main,
+      onClick: () => navigate('/staff/bookings?filter=checkin')
+    },
+    {
+      id: 'checkouts',
+      title: 'Check-out Hôm Nay',
+      count: stats.todayCheckouts || 0,
+      icon: <DoneAllIcon />,
+      color: theme.palette.warning.main,
+      onClick: () => navigate('/staff/bookings?filter=checkout')
+    },
+    {
+      id: 'rooms',
+      title: 'Phòng Trống',
+      count: stats.rooms?.available || stats.availableRooms || 0,
+      icon: <HotelIcon />,
+      color: theme.palette.info.main,
+      onClick: () => navigate('/staff/rooms')
+    }
+  ];
+
+  // Effect to check authentication
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/staff/dashboard');
+      return;
+    }
+    
+    if (isAuthenticated && user && user.role !== 'staff' && user.role !== 'admin') {
+      navigate('/');
+      return;
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  // Fetch data effect
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!isAuthenticated || !user) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch dashboard data and tasks
+        const [dashboardData, tasksList] = await Promise.all([
+          dashboardService.getStats('staff'),
+          taskService.getTasks({ assignedTo: user.id, status: 'pending,in-progress' })
+        ]);
+        
+        console.log('Dashboard data:', dashboardData);
+        console.log('Tasks data:', tasksList);
+        
+        const taskStats = await taskService.getTaskStats();
+        
+        // Create a combined stats object
+        const combinedStats = {
+          ...dashboardData,
+          tasks: {
+            total: taskStats ? taskStats.total : (dashboardData.tasks?.total || 0),
+            rooms: taskStats ? taskStats.cleaning : (dashboardData.tasks?.rooms || 0),
+            services: taskStats ? taskStats.service : (dashboardData.tasks?.services || 0)
+          }
+        };
+        
+        setStats({
+          ...combinedStats,
+          rooms: combinedStats.rooms || {
+            total: combinedStats.totalRooms || 0,
+            available: combinedStats.availableRooms || 0,
+            booked: combinedStats.rooms?.booked || 0,
+            maintenance: combinedStats.rooms?.maintenance || 0
+          },
+          bookings: {
+            total: combinedStats.bookings?.total || 0,
+            pending: combinedStats.bookings?.pending || 0,
+            confirmed: combinedStats.bookings?.confirmed || 0,
+            checkedIn: combinedStats.bookings?.checkedIn || combinedStats.activeGuests || 0
+          },
+          tasks: combinedStats.tasks
+        });
+        
+        setRecentBookings(combinedStats.bookingsData && combinedStats.bookingsData.length > 0 ? 
+          combinedStats.bookingsData : []);
+        
+        // Format tasks data for display
+        const formattedTasks = tasksList && tasksList.length > 0 ? 
+          tasksList.slice(0, 3).map(task => ({
+            id: task._id,
+            title: `${task.taskType === 'cleaning' ? 'Dọn phòng' : 
+                    task.taskType === 'maintenance' ? 'Bảo trì' : 'Dịch vụ'} phòng ${task.roomNumber}`,
+            priority: task.priority,
+            type: task.taskType,
+            eta: new Date(task.estimatedTime || Date.now()).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})
+          })) : [];
+          
+        setUpcomingTasks(formattedTasks);
+        
+        // Track visit (once)
+        if (!dashboardLoaded.current) {
+          trackAction(ACTION_TYPES.PAGE_VIEW, {
+            page: 'staff-dashboard'
+          });
+          dashboardLoaded.current = true;
+        }
+        
+      } catch (err) {
+        console.error('Error fetching staff dashboard data:', err);
+        setError('Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.');
+        // Initialize with empty data on error
+        setStats({
+          rooms: { total: 0, available: 0 },
+          bookings: { total: 0, pending: 0 },
+          tasks: { total: 0, rooms: 0, services: 0 },
+          todayCheckins: 0,
+          todayCheckouts: 0,
+          activeGuests: 0
+        });
+        setRecentBookings([]);
+        setUpcomingTasks([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+    
+    // Refresh every 5 minutes
+    const intervalId = setInterval(() => {
+      fetchDashboardData();
+    }, 300000);
+    
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, user, navigate, trackAction]);
+  
+  // Handle refresh button click
+  const handleRefresh = async () => {
+    setLoading(true);
+    
+    try {
+      // Fetch latest data
+      const [dashboardData, tasksList] = await Promise.all([
+        dashboardService.getStats('staff'),
+        taskService.getTasks({ assignedTo: user.id, status: 'pending,in-progress' })
+      ]);
+      
+      // Combine the data
+      const taskStats = await taskService.getTaskStats();
+      
+      const combinedStats = {
+        ...dashboardData,
+        tasks: {
+          total: taskStats ? taskStats.total : (dashboardData.tasks?.total || 0),
+          rooms: taskStats ? taskStats.cleaning : (dashboardData.tasks?.rooms || 0),
+          services: taskStats ? taskStats.service : (dashboardData.tasks?.services || 0)
+        }
+      };
+      
+      setStats({
+        ...combinedStats,
+        rooms: combinedStats.rooms || {
+          total: combinedStats.totalRooms || 0,
+          available: combinedStats.availableRooms || 0,
+          booked: combinedStats.rooms?.booked || 0,
+          maintenance: combinedStats.rooms?.maintenance || 0
+        },
+        bookings: {
+          total: combinedStats.bookings?.total || 0,
+          pending: combinedStats.bookings?.pending || 0,
+          confirmed: combinedStats.bookings?.confirmed || 0,
+          checkedIn: combinedStats.bookings?.checkedIn || combinedStats.activeGuests || 0
+        },
+        tasks: combinedStats.tasks
+      });
+      
+      setRecentBookings(combinedStats.bookingsData && combinedStats.bookingsData.length > 0 ? 
+        combinedStats.bookingsData : []);
+          
+      // Format tasks data for display
+      if (tasksList && tasksList.length > 0) {
+        const formattedTasks = tasksList.slice(0, 3).map(task => ({
+          id: task._id,
+          title: `${task.taskType === 'cleaning' ? 'Dọn phòng' : 
+                  task.taskType === 'maintenance' ? 'Bảo trì' : 'Dịch vụ'} phòng ${task.roomNumber}`,
+          priority: task.priority,
+          type: task.taskType,
+          eta: new Date(task.estimatedTime || Date.now()).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})
+        }));
+        
+        setUpcomingTasks(formattedTasks);
+      } else {
+        setUpcomingTasks([]);
+      }
+    } catch (err) {
+      console.error('Error refreshing dashboard data:', err);
+      // Don't change the existing data on refresh error
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  if (!isAuthenticated || !user) {
+    return null;
+  }
+  
+  return (
+    <Box sx={{ flexGrow: 1, p: 3 }}>
+      {/* Header with greeting and refresh button */}
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          mb: 3
+        }}
+      >
+        <Box>
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            sx={{ 
+              fontWeight: 700,
+              fontSize: { xs: '1.5rem', sm: '2rem' }
+            }}
+          >
+            Xin chào, {user?.name || 'Nhân viên'}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {new Date().toLocaleDateString('vi-VN', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </Typography>
+        </Box>
+        
+        <IconButton 
+          onClick={handleRefresh} 
+          disabled={loading}
+          sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
+        >
+          <RefreshIcon 
+            sx={{ 
+              animation: loading ? 'spin 1s linear infinite' : 'none',
+              '@keyframes spin': {
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg)' }
+              }
+            }} 
+          />
+        </IconButton>
+      </Box>
+      
+      {/* Error alert if needed */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+      
+      {/* Quick Access Cards */}
+      <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+        Truy Cập Nhanh
+      </Typography>
+      <Grid container spacing={3} mb={4}>
+        {quickAccessItems.map((item) => (
+          <Grid item xs={6} sm={3} key={item.id}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                textAlign: 'center',
+                borderRadius: 2,
+                height: '100%',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.12)'
+                }
+              }}
+              onClick={item.onClick}
+            >
+              <Avatar
+                sx={{
+                  bgcolor: item.color,
+                  mx: 'auto',
+                  mb: 1,
+                  width: 56,
+                  height: 56
+                }}
+              >
+                {item.icon}
+              </Avatar>
+              <Typography variant="h4" fontWeight="bold" sx={{ mb: 0.5 }}>
+                {item.count}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                {item.title}
+              </Typography>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
+      
+      {/* Tasks and Overview */}
+      <Grid container spacing={3}>
+        {/* Today Tasks */}
+        <Grid item xs={12} md={4}>
+          <Card 
+            elevation={0} 
+            sx={{ 
+              borderRadius: 2,
+              height: '100%',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}
+          >
+            <CardHeader
+              title="Nhiệm vụ hôm nay"
+              titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
+              action={
+                <Button 
+                  size="small" 
+                  onClick={() => navigate('/staff/housekeeping')}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Xem tất cả
+                </Button>
+              }
+            />
+            <Divider />
+            <CardContent sx={{ px: 2, py: 0 }}>
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress size={30} />
+                </Box>
+              ) : upcomingTasks.length === 0 ? (
+                <Box sx={{ py: 4, textAlign: 'center' }}>
+                  <Typography color="text.secondary">
+                    Không có nhiệm vụ nào cho hôm nay
+                  </Typography>
+                </Box>
+              ) : (
+                <Box>
+                  {upcomingTasks.map((task, index) => (
+                    <React.Fragment key={task.id}>
+                      <Box sx={{ py: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <Box
+                            sx={{
+                              bgcolor: 
+                                task.priority === 'high' ? '#ffebee' : 
+                                task.priority === 'medium' ? '#fff3e0' : 
+                                '#e8f5e9',
+                              color: 
+                                task.priority === 'high' ? '#d32f2f' : 
+                                task.priority === 'medium' ? '#ef6c00' : 
+                                '#2e7d32',
+                              borderRadius: '50%',
+                              width: 40,
+                              height: 40,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              mr: 1.5,
+                              '& svg': {
+                                fontSize: '1.25rem'
+                              }
+                            }}
+                          >
+                            {task.type === 'cleaning' ? (
+                              <DoneAllIcon />
+                            ) : (
+                              <AssignmentIcon />
+                            )}
+                          </Box>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="body2" fontWeight={500}>
+                              {task.title}
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                mt: 0.5
+                              }}
+                            >
+                              <CalendarTodayIcon
+                                sx={{ fontSize: '0.875rem', mr: 0.5, color: 'text.secondary' }}
+                              />
+                              <Typography
+                                variant="caption"
+                                sx={{ color: 'text.secondary' }}
+                              >
+                                {task.eta}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip 
+                            label={
+                              task.priority === 'high' ? 'Cao' : 
+                              task.priority === 'medium' ? 'Trung bình' : 
+                              'Thấp'
+                            } 
+                            size="small"
+                            sx={{ 
+                              bgcolor: 
+                                task.priority === 'high' ? '#ffebee' : 
+                                task.priority === 'medium' ? '#fff3e0' : 
+                                '#e8f5e9',
+                              color: 
+                                task.priority === 'high' ? '#d32f2f' : 
+                                task.priority === 'medium' ? '#ef6c00' : 
+                                '#2e7d32',
+                              fontWeight: 500
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                      {index < upcomingTasks.length - 1 && <Divider />}
+                    </React.Fragment>
+                  ))}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        {/* Hotel Status */}
+        <Grid item xs={12} md={8}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              borderRadius: 2,
+              height: '100%',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}
+          >
+            <CardHeader
+              title="Tình Trạng Khách Sạn"
+              titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
+            />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Tổng số phòng
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <HotelIcon sx={{ color: 'primary.main', mr: 1 }} />
+                      <Typography variant="h5" fontWeight="bold">
+                        {stats.rooms.total}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Phòng trống
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box sx={{ 
+                        width: '100%', 
+                        height: 8, 
+                        bgcolor: '#e0e0e0',
+                        borderRadius: 4
+                      }}>
+                        <Box sx={{ 
+                          width: `${stats.rooms.total > 0 ? (stats.rooms.available / stats.rooms.total) * 100 : 0}%`, 
+                          height: '100%', 
+                          bgcolor: 'success.main',
+                          borderRadius: 4
+                        }} />
+                      </Box>
+                    </Box>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      mt: 0.5
+                    }}>
+                      <Typography variant="caption">
+                        {stats.rooms.available} phòng trống
+                      </Typography>
+                      <Typography variant="caption">
+                        {stats.rooms.total - stats.rooms.available} phòng đang sử dụng
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Nhiệm vụ dọn phòng
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <DoneAllIcon sx={{ color: 'warning.main', mr: 1 }} />
+                      <Typography variant="h5" fontWeight="bold">
+                        {stats.tasks.rooms || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                        / {stats.tasks.total || 0} tổng
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Khách đang lưu trú
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <PersonIcon sx={{ color: 'info.main', mr: 1 }} />
+                      <Typography variant="h5" fontWeight="bold">
+                        {stats.activeGuests || stats.bookings.checkedIn || 0}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        {/* Activity Log */}
+        <Grid item xs={12}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}
+          >
+            <ActivityLog title="Hoạt Động Gần Đây" activities={recentBookings} />
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
+export default withDashboardLayout(StaffDashboard, "Tổng Quan");

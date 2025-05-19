@@ -253,12 +253,15 @@ const ActionModal = ({
                 data.status === 'pending' ? 'Chờ xác nhận' :
                 data.status === 'checked-in' ? 'Đã check-in' :
                 data.status === 'checked-out' ? 'Đã check-out' :
-                data.status === 'cancelled' ? 'Đã hủy' : 
+                data.status === 'cancelled' ? 'Đã hủy' :
+                data.status === 'completed' ? 'Hoàn thành' :
+                data.status === 'in-progress' ? 'Đang xử lý' :
                 data.status
               }
               color={
-                data.status === 'confirmed' || data.status === 'checked-in' ? 'success' :
+                data.status === 'confirmed' || data.status === 'checked-in' || data.status === 'completed' ? 'success' :
                 data.status === 'pending' ? 'warning' :
+                data.status === 'in-progress' ? 'info' :
                 data.status === 'cancelled' ? 'error' :
                 'default'
               }
@@ -268,7 +271,7 @@ const ActionModal = ({
         )}
         
         <form onSubmit={handleSubmit} id="action-form">
-          {data.description && (
+          {data && data.description && (
             <Typography variant="body2" color="text.secondary" paragraph>
               {data.description}
             </Typography>

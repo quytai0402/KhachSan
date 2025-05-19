@@ -16,6 +16,7 @@ const serviceRoutes = require('./routes/services');
 const promotionRoutes = require('./routes/promotions');
 const staffRoutes = require('./routes/staff');
 const adminRoutes = require('./routes/admin');
+const taskRoutes = require('./routes/tasks');
 
 // Config
 dotenv.config();
@@ -98,6 +99,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // CORS test route
 app.get('/api/cors-test', (req, res) => {

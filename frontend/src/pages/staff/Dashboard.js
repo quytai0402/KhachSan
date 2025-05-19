@@ -33,122 +33,64 @@ import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { StatsCard, QuickAccessCard, DashboardLayout } from '../../components/dashboard';
 import dashboardService from '../../services/dashboardService';
+import taskService from '../../services/taskService';
 import { useActivityTracker, ACTION_TYPES } from '../../utils/activityTracker';
 import ActivityLog from '../../components/ActivityLog';
 import { withDashboardLayout } from '../../utils/layoutHelpers';
 
-// Sample realistic data for staff dashboard
-const sampleRealisticData = {
+// Empty data structure for staff dashboard
+const emptyDashboardData = {
   rooms: { 
-    total: 48, 
-    available: 12, 
-    booked: 33, 
-    maintenance: 3 
+    total: 0, 
+    available: 0, 
+    booked: 0, 
+    maintenance: 0 
   },
   bookings: { 
-    total: 64, 
-    pending: 7, 
-    confirmed: 43, 
-    checkedIn: 14, 
+    total: 0, 
+    pending: 0, 
+    confirmed: 0, 
+    checkedIn: 0, 
     cancelled: 0 
   },
   users: { 
-    total: 127, 
-    active: 14 
+    total: 0, 
+    active: 0 
   },
   revenue: { 
-    today: 12500000, 
-    thisWeek: 78600000, 
-    thisMonth: 256700000 
+    today: 0, 
+    thisWeek: 0, 
+    thisMonth: 0 
   },
-  totalRooms: 48,
-  availableRooms: 12,
-  todayBookings: 8,
-  activeGuests: 14,
-  todayCheckins: 5,
-  todayCheckouts: 3,
+  totalRooms: 0,
+  availableRooms: 0,
+  todayBookings: 0,
+  activeGuests: 0,
+  todayCheckins: 0,
+  todayCheckouts: 0,
   tasks: { 
-    total: 17, 
-    rooms: 8, 
-    services: 9 
+    total: 0, 
+    rooms: 0, 
+    services: 0 
   }
 };
 
-// Sample realistic bookings for activity log
-const sampleRecentBookings = [
-  {
-    _id: 'book1',
+// Helper function to format booking activities
+const formatBookingActivity = (booking) => {
+  return {
+    _id: booking._id,
     type: 'booking',
-    roomNumber: '301',
-    guestName: 'Nguyễn Văn An',
-    status: 'checked-in',
-    checkInDate: new Date().toISOString(),
-    checkOutDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString()
-  },
-  {
-    _id: 'book2',
-    type: 'booking',
-    roomNumber: '205',
-    guestName: 'Trần Thị Bình',
-    status: 'confirmed',
-    checkInDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    checkOutDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    _id: 'task1',
-    type: 'service',
-    title: 'Dọn phòng',
-    roomNumber: '408',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString()
-  },
-  {
-    _id: 'task2',
-    type: 'service',
-    title: 'Dịch vụ phòng',
-    roomNumber: '512',
-    guestName: 'Lê Hoàng Châu',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString()
-  },
-  {
-    _id: 'checkin1',
-    type: 'booking',
-    roomNumber: '607',
-    guestName: 'Phạm Minh Dương',
-    status: 'checked-in',
-    checkInDate: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    checkOutDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
-  }
-];
+    roomNumber: booking.room?.roomNumber || 'N/A',
+    guestName: booking.guestName || (booking.user && booking.user.name) || 'N/A',
+    status: booking.status,
+    checkInDate: booking.checkInDate,
+    checkOutDate: booking.checkOutDate,
+    createdAt: booking.createdAt
+  };
+};
 
-// Tasks for staff
-const staffTasks = [
-  {
-    id: 'task1',
-    title: 'Dọn phòng 408',
-    priority: 'high',
-    type: 'cleaning',
-    eta: '10:30'
-  },
-  {
-    id: 'task2',
-    title: 'Dịch vụ ăn sáng phòng 512',
-    priority: 'medium',
-    type: 'service',
-    eta: '08:15'
-  },
-  {
-    id: 'task3',
-    title: 'Kiểm tra minibar phòng 301',
-    priority: 'normal',
-    type: 'maintenance',
-    eta: '11:45'
-  }
-];
+// Empty array for staff tasks
+const emptyTasks = [];
 
 const StaffDashboard = () => {
   const navigate = useNavigate();
@@ -239,40 +181,59 @@ const StaffDashboard = () => {
         // Get data through dashboard service
         const dashboardData = await dashboardService.getStats('staff');
         
+        // Get tasks data
+        const taskStats = await taskService.getTaskStats();
+        const tasksList = await taskService.getTasks({ status: 'pending,in-progress' });
+        
         if (!dashboardData) {
           setError('Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.');
           return;
         }
         
-        // In development/testing environment, use sample data if real data is empty or not available
-        const useRealData = dashboardData && dashboardData.rooms?.total > 0;
+        // Always use real data, but provide fallbacks when fields are missing
+        const combinedStats = {
+          ...dashboardData,
+          tasks: {
+            total: taskStats ? taskStats.total : (dashboardData.tasks?.total || 0),
+            rooms: taskStats ? taskStats.cleaning : (dashboardData.tasks?.rooms || 0),
+            services: taskStats ? taskStats.service : (dashboardData.tasks?.services || 0)
+          }
+        };
 
         // Update state with the data
-        setStats(useRealData ? {
-          ...dashboardData,
-          rooms: dashboardData.rooms || {
-            total: dashboardData.totalRooms || 0,
-            available: dashboardData.availableRooms || 0,
-            booked: (dashboardData.totalRooms || 0) - (dashboardData.availableRooms || 0),
+        setStats({
+          ...combinedStats,
+          rooms: combinedStats.rooms || {
+            total: combinedStats.totalRooms || 0,
+            available: combinedStats.availableRooms || 0,
+            booked: (combinedStats.totalRooms || 0) - (combinedStats.availableRooms || 0),
             maintenance: 0
           },
-          bookings: dashboardData.bookings || {
-            total: dashboardData.bookings?.total || dashboardData.todayBookings || 0,
-            pending: dashboardData.bookings?.pending || 0,
-            confirmed: dashboardData.bookings?.confirmed || 0,
-            checkedIn: dashboardData.bookings?.checkedIn || dashboardData.activeGuests || 0
+          bookings: combinedStats.bookings || {
+            total: combinedStats.bookings?.total || combinedStats.todayBookings || 0,
+            pending: combinedStats.bookings?.pending || 0,
+            confirmed: combinedStats.bookings?.confirmed || 0,
+            checkedIn: combinedStats.bookings?.checkedIn || combinedStats.activeGuests || 0
           },
-          tasks: dashboardData.tasks || {
-            total: 0,
-            rooms: 0,
-            services: 0
-          }
-        } : sampleRealisticData);
+          tasks: combinedStats.tasks
+        });
         
-        setRecentBookings(useRealData && dashboardData.bookingsData && dashboardData.bookingsData.length > 0 ? 
-          dashboardData.bookingsData : sampleRecentBookings);
+        setRecentBookings(combinedStats.bookingsData && combinedStats.bookingsData.length > 0 ? 
+          combinedStats.bookingsData : []);
         
-        setTasks(staffTasks);
+        // Format tasks data for display
+        const formattedTasks = tasksList && tasksList.length > 0 ? 
+          tasksList.slice(0, 3).map(task => ({
+            id: task._id,
+            title: `${task.taskType === 'cleaning' ? 'Dọn phòng' : 
+                    task.taskType === 'maintenance' ? 'Bảo trì' : 'Dịch vụ'} phòng ${task.roomNumber}`,
+            priority: task.priority,
+            type: task.taskType,
+            eta: new Date(task.estimatedTime || Date.now()).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})
+          })) : 
+          emptyTasks;
+        
+        setTasks(formattedTasks);
         
         // Track activity (with rate limiting) - only when component first mounts
         if (!dashboardLoaded.current) {
@@ -306,25 +267,56 @@ const StaffDashboard = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
+      // Fetch both dashboard stats and tasks data
       const dashboardData = await dashboardService.getStats('staff');
+      const taskStats = await taskService.getTaskStats();
+      const tasksList = await taskService.getTasks({ status: 'pending,in-progress' });
+      
       if (dashboardData) {
-        setStats({
+        // Combine data before updating state
+        const combinedStats = {
           ...dashboardData,
-          // Keep the same structure as in the useEffect hook
-          rooms: dashboardData.rooms || {
-            total: dashboardData.totalRooms || 0,
-            available: dashboardData.availableRooms || 0,
-            booked: (dashboardData.totalRooms || 0) - (dashboardData.availableRooms || 0),
+          tasks: {
+            total: taskStats ? taskStats.total : (dashboardData.tasks?.total || 0),
+            rooms: taskStats ? taskStats.cleaning : (dashboardData.tasks?.rooms || 0),
+            services: taskStats ? taskStats.service : (dashboardData.tasks?.services || 0)
+          }
+        };
+        
+        setStats({
+          ...combinedStats,
+          rooms: combinedStats.rooms || {
+            total: combinedStats.totalRooms || 0,
+            available: combinedStats.availableRooms || 0,
+            booked: (combinedStats.totalRooms || 0) - (combinedStats.availableRooms || 0),
             maintenance: 0
           },
-          bookings: dashboardData.bookings || {
-            total: dashboardData.bookings?.total || dashboardData.todayBookings || 0,
-            pending: dashboardData.bookings?.pending || 0,
-            confirmed: dashboardData.bookings?.confirmed || 0,
-            checkedIn: dashboardData.bookings?.checkedIn || dashboardData.activeGuests || 0
-          }
+          bookings: combinedStats.bookings || {
+            total: combinedStats.bookings?.total || combinedStats.todayBookings || 0,
+            pending: combinedStats.bookings?.pending || 0,
+            confirmed: combinedStats.bookings?.confirmed || 0,
+            checkedIn: combinedStats.bookings?.checkedIn || combinedStats.activeGuests || 0
+          },
+          tasks: combinedStats.tasks
         });
-        setRecentBookings(dashboardData.bookingsData || sampleRecentBookings);
+        
+        setRecentBookings(combinedStats.bookingsData && combinedStats.bookingsData.length > 0 ? 
+          combinedStats.bookingsData : []);
+          
+        // Format tasks data for display
+        // Format tasks data for display
+        const formattedTasks = tasksList && tasksList.length > 0 ? 
+          tasksList.slice(0, 3).map(task => ({
+            id: task._id,
+            title: `${task.taskType === 'cleaning' ? 'Dọn phòng' : 
+                    task.taskType === 'maintenance' ? 'Bảo trì' : 'Dịch vụ'} phòng ${task.roomNumber}`,
+            priority: task.priority,
+            type: task.taskType,
+            eta: new Date(task.estimatedTime || Date.now()).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})
+          })) : 
+          emptyTasks;
+        
+        setTasks(formattedTasks);
       }
     } catch (err) {
       console.error('Error refreshing data:', err);
