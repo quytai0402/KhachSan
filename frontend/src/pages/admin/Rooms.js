@@ -411,14 +411,23 @@ const Rooms = () => {
     
     try {
       setSubmitting(true);
-      await roomAPI.deleteRoom(selectedRoom._id);
-      setRooms(prev => prev.filter(room => room._id !== selectedRoom._id));
-      handleCloseDialogs();
-      setError(null);
-      toastService.success(`Room ${selectedRoom.roomNumber} has been deleted.`);
+      // Make API call with error handling
+      const response = await roomAPI.deleteRoom(selectedRoom._id);
+      
+      // Check if deletion was successful
+      if (response && response.data) {
+        // Update local state to remove the deleted room
+        setRooms(prev => prev.filter(room => room._id !== selectedRoom._id));
+        handleCloseDialogs();
+        setError(null);
+        toastService.success(`Phòng ${selectedRoom.roomNumber} đã được xóa thành công.`);
+      } else {
+        throw new Error('No response from server');
+      }
     } catch (err) {
       console.error('Error deleting room:', err);
-      const errorMsg = 'Failed to delete room. Please try again.';
+      // Extract error message from response if available
+      const errorMsg = err.response?.data?.message || 'Không thể xóa phòng. Vui lòng thử lại.';
       setError(errorMsg);
       toastService.error(errorMsg);
     } finally {

@@ -69,36 +69,36 @@ const Register = () => {
   const validateForm = () => {
     // Check for empty fields
     if (!formData.name.trim()) {
-      setFormError('Name is required');
+      setFormError('Tên là bắt buộc');
       return false;
     }
     
     if (!formData.email.trim()) {
-      setFormError('Email is required');
+      setFormError('Email là bắt buộc');
       return false;
     }
     
     if (!formData.password) {
-      setFormError('Password is required');
+      setFormError('Mật khẩu là bắt buộc');
       return false;
     }
     
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setFormError('Please enter a valid email address');
+      setFormError('Vui lòng nhập địa chỉ email hợp lệ');
       return false;
     }
     
     // Validate password strength
     if (formData.password.length < 6) {
-      setFormError('Password must be at least 6 characters long');
+      setFormError('Mật khẩu phải có ít nhất 6 ký tự');
       return false;
     }
     
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      setFormError('Passwords do not match');
+      setFormError('Mật khẩu không khớp');
       return false;
     }
     
@@ -123,7 +123,7 @@ const Register = () => {
         setIsSubmitting(false);
       }
     } catch (err) {
-      setFormError('An error occurred during registration');
+      setFormError('Đã xảy ra lỗi trong quá trình đăng ký');
       setIsSubmitting(false);
     }
   };
@@ -177,10 +177,10 @@ const Register = () => {
           >
             <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
               <Typography variant="h3" component="h1" gutterBottom fontWeight={600}>
-                Join Us Today
+                Tham Gia Ngay Hôm Nay
               </Typography>
               <Typography variant="body1" sx={{ mb: 4, opacity: 0.9, fontSize: '1.1rem' }}>
-                Create an account to enjoy exclusive benefits, special rates, and personalized service at our luxury hotel
+                Tạo tài khoản để tận hưởng quyền lợi độc quyền, mức giá đặc biệt và dịch vụ cá nhân hóa tại khách sạn sang trọng của chúng tôi
               </Typography>
               <Box sx={{ 
                 display: 'flex', 
@@ -237,7 +237,7 @@ const Register = () => {
                   mb: 1,
                 }}
               >
-                Create Account
+                Tạo Tài Khoản
               </Typography>
               
               <Typography 
@@ -246,7 +246,7 @@ const Register = () => {
                 align="center" 
                 sx={{ mb: 4 }}
               >
-                Enter your details to create your account and start your journey with us.
+                Nhập thông tin chi tiết của bạn để tạo tài khoản và bắt đầu hành trình cùng chúng tôi.
               </Typography>
               
               {formError && (
@@ -285,7 +285,7 @@ const Register = () => {
                   required
                   fullWidth
                   id="name"
-                  label="Full Name"
+                  label="Họ và tên"
                   name="name"
                   autoComplete="name"
                   autoFocus
@@ -305,7 +305,7 @@ const Register = () => {
                   required
                   fullWidth
                   id="email"
-                  label="Email Address"
+                  label="Địa chỉ Email"
                   name="email"
                   autoComplete="email"
                   value={formData.email}
@@ -323,7 +323,7 @@ const Register = () => {
                 <TextField
                   fullWidth
                   id="phone"
-                  label="Phone (optional)"
+                  label="Điện thoại (tùy chọn)"
                   name="phone"
                   autoComplete="tel"
                   value={formData.phone}
@@ -342,14 +342,14 @@ const Register = () => {
                   required
                   fullWidth
                   name="password"
-                  label="Password"
+                  label="Mật khẩu"
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
                   variant="outlined"
-                  helperText="Password must be at least 6 characters"
+                  helperText="Mật khẩu phải có ít nhất 6 ký tự"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -374,7 +374,7 @@ const Register = () => {
                   required
                   fullWidth
                   name="confirmPassword"
-                  label="Confirm Password"
+                  label="Xác nhận mật khẩu"
                   type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
                   autoComplete="new-password"
@@ -425,14 +425,14 @@ const Register = () => {
                   {isSubmitting ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
-                    'Create Account'
+                    'Tạo tài khoản'
                   )}
                 </Button>
                 
                 <Grid container justifyContent="center">
                   <Grid item>
                     <Typography variant="body2" align="center" color="text.secondary">
-                      Already have an account?{' '}
+                      Đã có tài khoản?{' '}
                       <Link 
                         component={RouterLink} 
                         to="/login" 
@@ -444,7 +444,7 @@ const Register = () => {
                           }
                         }}
                       >
-                        Sign in
+                        Đăng nhập
                       </Link>
                     </Typography>
                   </Grid>

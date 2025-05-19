@@ -12,7 +12,19 @@ import {
   Tooltip,
   IconButton
 } from '@mui/material';
-import { TrendingUp, TrendingDown, InfoOutlined } from '@mui/icons-material';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  InfoOutlined,
+  Hotel as HotelIcon,
+  EventNote as EventNoteIcon,
+  People as PeopleIcon,
+  Payments as PaymentsIcon,
+  Assignment as AssignmentIcon,
+  LocalOffer as LocalOfferIcon,
+  CalendarToday as CalendarTodayIcon,
+  CleaningServices as CleaningServicesIcon
+} from '@mui/icons-material';
 
 /**
  * Thẻ hiển thị thống kê thông tin sử dụng cho cả Admin và Staff
@@ -58,6 +70,43 @@ const StatsCard = ({
   
   const total = calculateTotal();
   
+  // Xử lý icon - có thể là string hoặc component React
+  const renderIcon = () => {
+    // Để theo dõi style chung cho icon
+    const iconStyle = { 
+      color: color, 
+      fontSize: 28 
+    };
+    
+    // Nếu icon là React element, trả về nguyên icon
+    if (React.isValidElement(icon)) {
+      return React.cloneElement(icon, { sx: iconStyle });
+    }
+    
+    // Nếu icon là string, map sang component tương ứng
+    switch (icon) {
+      case 'hotel':
+        return <HotelIcon sx={iconStyle} />;
+      case 'event_note':
+        return <EventNoteIcon sx={iconStyle} />;
+      case 'people':
+        return <PeopleIcon sx={iconStyle} />;
+      case 'payments':
+        return <PaymentsIcon sx={iconStyle} />;
+      case 'assignment':
+        return <AssignmentIcon sx={iconStyle} />;
+      case 'local_offer':
+        return <LocalOfferIcon sx={iconStyle} />;
+      case 'calendar_today':
+        return <CalendarTodayIcon sx={iconStyle} />;
+      case 'cleaning_services':
+        return <CleaningServicesIcon sx={iconStyle} />;
+      default:
+        // Fallback sử dụng Material UI Icon font
+        return <Icon sx={iconStyle}>{icon}</Icon>;
+    }
+  };
+
   const renderTrendIndicator = () => {
     if (trend === null) return null;
     
@@ -132,7 +181,7 @@ const StatsCard = ({
               transform: isHovered ? 'scale(1.05)' : 'scale(1)',
             }}
           >
-            <Icon sx={{ color: color, fontSize: 28 }}>{icon}</Icon>
+            {renderIcon()}
           </Box>
         </Box>
         

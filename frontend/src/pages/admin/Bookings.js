@@ -187,7 +187,7 @@ const Bookings = () => {
   
   // Format date
   const formatDate = (dateString) => {
-    return format(new Date(dateString), 'MMM dd, yyyy');
+    return format(new Date(dateString), 'dd/MM/yyyy');
   };
   
   // Render loading state
@@ -203,14 +203,14 @@ const Bookings = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
-          Booking Management
+          Quản Lý Đặt Phòng
         </Typography>
         <Button 
           variant="outlined" 
           startIcon={<RefreshIcon />} 
           onClick={handleRefreshBookings}
         >
-          Refresh
+          Làm Mới
         </Button>
       </Box>
       
@@ -224,13 +224,13 @@ const Bookings = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Booking ID</TableCell>
-              <TableCell>Guest</TableCell>
-              <TableCell>Room</TableCell>
-              <TableCell>Check In</TableCell>
-              <TableCell>Check Out</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>Mã Đặt Phòng</TableCell>
+              <TableCell>Khách Hàng</TableCell>
+              <TableCell>Phòng</TableCell>
+              <TableCell>Nhận Phòng</TableCell>
+              <TableCell>Trả Phòng</TableCell>
+              <TableCell>Trạng Thái</TableCell>
+              <TableCell align="right">Thao Tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -285,7 +285,7 @@ const Bookings = () => {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} align="center">
-                  No bookings found.
+                  Không tìm thấy đặt phòng nào.
                 </TableCell>
               </TableRow>
             )}
@@ -295,64 +295,64 @@ const Bookings = () => {
       
       {/* View Booking Details Dialog */}
       <Dialog open={openDetailDialog} onClose={handleCloseDialogs} maxWidth="sm" fullWidth>
-        <DialogTitle>Booking Details</DialogTitle>
+        <DialogTitle>Chi Tiết Đặt Phòng</DialogTitle>
         <DialogContent>
           {selectedBooking && (
             <Box sx={{ pt: 1 }}>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Booking ID:</strong> {selectedBooking._id}
+                <strong>Mã đặt phòng:</strong> {selectedBooking._id}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Guest:</strong> {selectedBooking.user?.name || 'Unknown'}
+                <strong>Khách hàng:</strong> {selectedBooking.user?.name || 'Không xác định'}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Email:</strong> {selectedBooking.user?.email || 'Unknown'}
+                <strong>Email:</strong> {selectedBooking.user?.email || 'Không xác định'}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Room:</strong> {selectedBooking.room?.roomNumber || 'Unknown'} ({selectedBooking.room?.type || 'Unknown'})
+                <strong>Phòng:</strong> {selectedBooking.room?.roomNumber || 'Không xác định'} ({selectedBooking.room?.type || 'Không xác định'})
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Check In:</strong> {formatDate(selectedBooking.checkInDate)}
+                <strong>Nhận phòng:</strong> {formatDate(selectedBooking.checkInDate)}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Check Out:</strong> {formatDate(selectedBooking.checkOutDate)}
+                <strong>Trả phòng:</strong> {formatDate(selectedBooking.checkOutDate)}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Guests:</strong> {selectedBooking.numberOfGuests}
+                <strong>Số khách:</strong> {selectedBooking.numberOfGuests}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Total Price:</strong> ${selectedBooking.totalPrice}
+                <strong>Tổng tiền:</strong> ${selectedBooking.totalPrice}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Status:</strong> {selectedBooking.status}
+                <strong>Trạng thái:</strong> {selectedBooking.status}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Special Requests:</strong> {selectedBooking.specialRequests || 'None'}
+                <strong>Yêu cầu đặc biệt:</strong> {selectedBooking.specialRequests || 'Không'}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Created At:</strong> {formatDate(selectedBooking.createdAt)}
+                <strong>Ngày tạo:</strong> {formatDate(selectedBooking.createdAt)}
               </Typography>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs}>
-            Close
+            Đóng
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Cancel Booking Dialog */}
       <Dialog open={openCancelDialog} onClose={handleCloseDialogs}>
-        <DialogTitle>Cancel Booking</DialogTitle>
+        <DialogTitle>Hủy Đặt Phòng</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to cancel this booking? This action cannot be undone.
+            Bạn có chắc chắn muốn hủy đặt phòng này? Hành động này không thể hoàn tác.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            No, Keep It
+            Không, Giữ Lại
           </Button>
           <Button 
             onClick={handleCancelBooking} 
@@ -360,22 +360,22 @@ const Bookings = () => {
             variant="contained"
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Yes, Cancel'}
+            {submitting ? <CircularProgress size={24} /> : 'Có, Hủy Bỏ'}
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Confirm Booking Dialog */}
       <Dialog open={openConfirmDialog} onClose={handleCloseDialogs}>
-        <DialogTitle>Confirm Booking</DialogTitle>
+        <DialogTitle>Xác Nhận Đặt Phòng</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to confirm this booking?
+            Bạn có chắc chắn muốn xác nhận đặt phòng này?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleConfirmBooking} 
@@ -383,7 +383,7 @@ const Bookings = () => {
             variant="contained"
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Confirm'}
+            {submitting ? <CircularProgress size={24} /> : 'Xác Nhận'}
           </Button>
         </DialogActions>
       </Dialog>

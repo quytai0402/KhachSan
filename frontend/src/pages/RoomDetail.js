@@ -43,29 +43,29 @@ import { useAuth } from '../context/AuthContext';
 const amenityIcons = {
   'Wi-Fi': <WifiIcon />,
   'TV': <TvIcon />,
-  'Air Conditioning': <AcUnitIcon />,
-  'Parking': <LocalParkingIcon />,
-  'Breakfast': <RestaurantIcon />,
-  'Laundry': <DryCleaningIcon />,
-  'Gym': <FitnessCenterIcon />,
-  'Pool': <PoolIcon />,
+  'Điều hòa': <AcUnitIcon />,
+  'Bãi đậu xe': <LocalParkingIcon />,
+  'Bữa sáng': <RestaurantIcon />,
+  'Giặt ủi': <DryCleaningIcon />,
+  'Phòng tập': <FitnessCenterIcon />,
+  'Hồ bơi': <PoolIcon />,
   'Spa': <SpaIcon />
 };
 
 const getRoomTypeLabel = (type) => {
   switch (type) {
     case 'single':
-      return 'Single Room';
+      return 'Phòng Đơn';
     case 'double':
-      return 'Double Room';
+      return 'Phòng Đôi';
     case 'twin':
-      return 'Twin Room';
+      return 'Phòng Twin';
     case 'suite':
       return 'Suite';
     case 'family':
-      return 'Family Room';
+      return 'Phòng Gia Đình';
     case 'deluxe':
-      return 'Deluxe Room';
+      return 'Phòng Deluxe';
     default:
       return type;
   }
@@ -140,7 +140,7 @@ const RoomDetail = () => {
   if (!room) {
     return (
       <Container sx={{ py: 4 }}>
-        <Alert severity="info">Room not found.</Alert>
+        <Alert severity="info">Không tìm thấy phòng.</Alert>
       </Container>
     );
   }
@@ -154,10 +154,10 @@ const RoomDetail = () => {
         sx={{ mb: 3 }}
       >
         <Link component={RouterLink} to="/" color="inherit">
-          Home
+          Trang chủ
         </Link>
         <Link component={RouterLink} to="/rooms" color="inherit">
-          Rooms
+          Phòng
         </Link>
         <Typography color="text.primary">{typeof room.type === 'object' ? 
           getRoomTypeLabel(room.type.name) : 
@@ -219,26 +219,26 @@ const RoomDetail = () => {
           
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
             <Chip 
-              label={`Floor ${room.floor || 1}`} 
+              label={`Tầng ${room.floor || 1}`} 
               size="small" 
               color="primary" 
               variant="outlined" 
             />
             <Chip 
-              label={`${room.capacity} ${room.capacity > 1 ? 'Guests' : 'Guest'}`} 
+              label={`${room.capacity} ${room.capacity > 1 ? 'Khách' : 'Khách'}`} 
               size="small" 
               color="primary" 
               variant="outlined" 
             />
             <Chip 
-              label={room.status} 
+              label={room.status === 'available' ? 'Còn trống' : 'Không có sẵn'} 
               size="small" 
               color={room.status === 'available' ? 'success' : 'error'} 
             />
             <Chip 
               label={typeof room.type === 'object' ? 
-                (room.type.name === 'double' || room.type.name === 'twin' ? '2 Beds' : '1 Bed') : 
-                (room.type === 'double' || room.type === 'twin' ? '2 Beds' : '1 Bed')} 
+                (room.type.name === 'double' || room.type.name === 'twin' ? '2 Giường' : '1 Giường') : 
+                (room.type === 'double' || room.type === 'twin' ? '2 Giường' : '1 Giường')} 
               size="small" 
               color="primary" 
               variant="outlined" 
@@ -253,7 +253,7 @@ const RoomDetail = () => {
           
           {/* Amenities */}
           <Typography variant="h6" gutterBottom>
-            Amenities
+            Tiện Nghi
           </Typography>
           
           <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -273,32 +273,32 @@ const RoomDetail = () => {
           
           {/* Room Policies */}
           <Typography variant="h6" gutterBottom>
-            Room Policies
+            Quy Định Phòng
           </Typography>
           
           <List>
             <ListItem>
               <ListItemText
-                primary="Check-in Time"
-                secondary="From 14:00"
+                primary="Giờ nhận phòng"
+                secondary="Từ 14:00"
               />
             </ListItem>
             <ListItem>
               <ListItemText
-                primary="Check-out Time"
-                secondary="Until 12:00"
+                primary="Giờ trả phòng"
+                secondary="Đến 12:00"
               />
             </ListItem>
             <ListItem>
               <ListItemText
-                primary="Cancellation"
-                secondary="Free cancellation up to 24 hours before check-in"
+                primary="Hủy phòng"
+                secondary="Miễn phí hủy phòng đến 24 giờ trước khi nhận phòng"
               />
             </ListItem>
             <ListItem>
               <ListItemText
-                primary="Payment"
-                secondary="Pay at the property or in advance"
+                primary="Thanh toán"
+                secondary="Thanh toán tại khách sạn hoặc trả trước"
               />
             </ListItem>
           </List>
@@ -310,14 +310,14 @@ const RoomDetail = () => {
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
               ${room.price}
               <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                per night
+                mỗi đêm
               </Typography>
             </Typography>
             
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Rating value={4.5} precision={0.5} readOnly size="small" />
               <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                4.5/5 (28 reviews)
+                4.5/5 (28 đánh giá)
               </Typography>
             </Box>
             
@@ -325,7 +325,7 @@ const RoomDetail = () => {
             
             <Stack spacing={3}>
               <Typography variant="body2">
-                Reserve now to secure your booking at this price.
+                Đặt ngay để đảm bảo phòng với mức giá này.
               </Typography>
               
               <Button
@@ -337,31 +337,31 @@ const RoomDetail = () => {
                 disabled={room.status !== 'available'}
                 startIcon={<BookmarkAddIcon />}
               >
-                Book Now
+                Đặt Ngay
               </Button>
               
               {room.status !== 'available' && (
                 <Alert severity="warning">
-                  This room is currently not available for booking.
+                  Phòng này hiện không khả dụng để đặt.
                 </Alert>
               )}
               
               <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  Price includes:
+                  Giá bao gồm:
                 </Typography>
                 <List dense>
                   <ListItem disablePadding>
                     <ListItemIcon sx={{ minWidth: 24 }}>
                       <CheckIcon color="success" fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText primary="Free Wi-Fi" />
+                    <ListItemText primary="Wi-Fi miễn phí" />
                   </ListItem>
                   <ListItem disablePadding>
                     <ListItemIcon sx={{ minWidth: 24 }}>
                       <CheckIcon color="success" fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText primary="Free cancellation (24h before)" />
+                    <ListItemText primary="Hủy miễn phí (trước 24h)" />
                   </ListItem>
                   {typeof room.type === 'object' ? 
                     (room.type.name !== 'single' && (
@@ -369,7 +369,7 @@ const RoomDetail = () => {
                         <ListItemIcon sx={{ minWidth: 24 }}>
                           <CheckIcon color="success" fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText primary="Breakfast for 2" />
+                        <ListItemText primary="Bữa sáng cho 2 người" />
                       </ListItem>
                     )) : (
                     room.type !== 'single' && (
@@ -377,7 +377,7 @@ const RoomDetail = () => {
                         <ListItemIcon sx={{ minWidth: 24 }}>
                           <CheckIcon color="success" fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText primary="Breakfast for 2" />
+                        <ListItemText primary="Bữa sáng cho 2 người" />
                       </ListItem>
                     ))}
                 </List>

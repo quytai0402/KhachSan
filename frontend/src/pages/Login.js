@@ -55,12 +55,12 @@ const Login = () => {
     
     // Basic validation
     if (!email) {
-      setFormError('Email is required');
+      setFormError('Email là bắt buộc');
       return;
     }
     
     if (!password) {
-      setFormError('Password is required');
+      setFormError('Mật khẩu là bắt buộc');
       return;
     }
     
@@ -75,7 +75,7 @@ const Login = () => {
         setIsSubmitting(false);
       }
     } catch (err) {
-      setFormError('An error occurred during login');
+      setFormError('Đã xảy ra lỗi trong quá trình đăng nhập');
       setIsSubmitting(false);
     }
   };
@@ -125,10 +125,10 @@ const Login = () => {
           >
             <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
               <Typography variant="h3" component="h1" gutterBottom fontWeight={600}>
-                Welcome Back
+                Chào Mừng Trở Lại
               </Typography>
               <Typography variant="body1" sx={{ mb: 4, opacity: 0.9, fontSize: '1.1rem' }}>
-                Sign in to continue your luxury hotel experience with exclusive benefits and personalized service
+                Đăng nhập để tiếp tục trải nghiệm khách sạn sang trọng với những quyền lợi độc quyền và dịch vụ cá nhân hóa
               </Typography>
               <Box sx={{ 
                 display: 'flex', 
@@ -185,7 +185,7 @@ const Login = () => {
                   mb: 1,
                 }}
               >
-                Sign In
+                Đăng Nhập
               </Typography>
               
               <Typography 
@@ -194,7 +194,7 @@ const Login = () => {
                 align="center" 
                 sx={{ mb: 4 }}
               >
-                Welcome back! Please enter your credentials to continue.
+                Chào mừng trở lại! Vui lòng nhập thông tin đăng nhập để tiếp tục.
               </Typography>
               
               {formError && (
@@ -233,7 +233,7 @@ const Login = () => {
                   required
                   fullWidth
                   id="email"
-                  label="Email Address"
+                  label="Địa chỉ Email"
                   name="email"
                   autoComplete="email"
                   autoFocus
@@ -253,7 +253,7 @@ const Login = () => {
                   required
                   fullWidth
                   name="password"
-                  label="Password"
+                  label="Mật khẩu"
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   autoComplete="current-password"
@@ -282,7 +282,7 @@ const Login = () => {
                 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                   <Link component={RouterLink} to="/forgot-password" variant="body2" color="primary.main">
-                    Forgot password?
+                    Quên mật khẩu?
                   </Link>
                 </Box>
                 
@@ -310,13 +310,13 @@ const Login = () => {
                   {isSubmitting ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
-                    'Sign In'
+                    'Đăng Nhập'
                   )}
                 </Button>
                 
                 <Divider sx={{ my: 3 }}>
                   <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
-                    OR
+                    HOẶC
                   </Typography>
                 </Divider>
                 
@@ -374,7 +374,7 @@ const Login = () => {
                 <Grid container justifyContent="center">
                   <Grid item>
                     <Typography variant="body2" align="center" color="text.secondary">
-                      Don't have an account?{' '}
+                      Chưa có tài khoản?{' '}
                       <Link 
                         component={RouterLink} 
                         to="/register" 
@@ -386,7 +386,7 @@ const Login = () => {
                           }
                         }}
                       >
-                        Register now
+                        Đăng ký ngay
                       </Link>
                     </Typography>
                   </Grid>

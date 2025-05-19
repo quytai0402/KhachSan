@@ -36,7 +36,7 @@ const Services = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching services:', err);
-        setError('Failed to load services');
+        setError('Không thể tải dịch vụ');
         setLoading(false);
       }
     };
@@ -88,11 +88,11 @@ const Services = () => {
     <Container maxWidth="lg" sx={{ py: 6 }}>
       <Box sx={{ textAlign: 'center', mb: 6 }}>
         <Typography variant="h3" component="h1" gutterBottom>
-          Our Services
+          Dịch Vụ Của Chúng Tôi
         </Typography>
         <Typography variant="subtitle1" color="text.secondary" sx={{ maxWidth: 700, mx: 'auto' }}>
-          Experience the finest amenities and services designed to make your stay truly exceptional.
-          From relaxing spa treatments to exquisite dining, we offer everything you need for a memorable experience.
+          Trải nghiệm các tiện nghi và dịch vụ tuyệt vời được thiết kế để làm cho kỳ nghỉ của bạn thực sự đặc biệt.
+          Từ các liệu pháp spa thư giãn đến ẩm thực tinh tế, chúng tôi cung cấp mọi thứ bạn cần cho một trải nghiệm đáng nhớ.
         </Typography>
       </Box>
 
@@ -132,7 +132,7 @@ const Services = () => {
                 </Typography>
                 <Box sx={{ mt: 'auto' }}>
                   <Button size="small" color="primary">
-                    Learn More
+                    Tìm Hiểu Thêm
                   </Button>
                 </Box>
               </CardContent>
@@ -143,13 +143,13 @@ const Services = () => {
       
       <Box sx={{ textAlign: 'center', mt: 6 }}>
         <Typography variant="h5" gutterBottom>
-          Need Something Special?
+          Bạn Cần Điều Gì Đặc Biệt?
         </Typography>
         <Typography variant="body1" sx={{ mb: 3 }}>
-          We're happy to accommodate special requests to make your stay perfect.
+          Chúng tôi luôn sẵn sàng đáp ứng các yêu cầu đặc biệt để làm cho kỳ nghỉ của bạn hoàn hảo.
         </Typography>
         <Button variant="contained" size="large" href="/contact">
-          Contact Us
+          Liên Hệ Chúng Tôi
         </Button>
       </Box>
     </Container>

@@ -108,7 +108,7 @@ const UserMenu = () => {
       {/* Notification Icon - Only for authenticated users */}
       {user && <SystemNotification />}
       
-      <Tooltip title="Open profile">
+      <Tooltip title="Mở hồ sơ">
         <IconButton 
           onClick={handleOpenUserMenu} 
           sx={{ 
@@ -122,7 +122,7 @@ const UserMenu = () => {
           }}
         >
           <Avatar 
-            alt={user?.name || "User"} 
+            alt={user?.name || "Người dùng"} 
             src={user?.profileImage} 
             sx={{ 
               width: 32, 
@@ -186,13 +186,13 @@ const UserMenu = () => {
         {/* Show appropriate dashboard link based on user role */}
         {user?.role === ROLES.ADMIN && (
           <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/admin/dashboard'); }}>
-            <Typography textAlign="center">Dashboard Admin</Typography>
+            <Typography textAlign="center">Bảng điều khiển Admin</Typography>
           </MenuItem>
         )}
         
         {user?.role === ROLES.STAFF && (
           <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/staff/dashboard'); }}>
-            <Typography textAlign="center">Dashboard Nhân viên</Typography>
+            <Typography textAlign="center">Bảng điều khiển Nhân viên</Typography>
           </MenuItem>
         )}
         
@@ -276,22 +276,21 @@ const Header = () => {
 
   const drawer = (
     <Box sx={{ width: 280, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography
-          variant="h6"
-          component={RouterLink}
-          to="/"
-          sx={{
-            fontFamily: 'Poppins, sans-serif',
-            fontWeight: 600,
-            textDecoration: 'none',
-            color: 'primary.main',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          LUXURY HOTEL
-        </Typography>
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>            <Typography
+              variant="h6"
+              component={RouterLink}
+              to="/"
+              sx={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 600,
+                textDecoration: 'none',
+                color: 'primary.main',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              KHÁCH SẠN SANG TRỌNG
+            </Typography>
         <IconButton onClick={handleDrawerToggle}>
           <CloseIcon />
         </IconButton>
@@ -419,7 +418,7 @@ const Header = () => {
                 }
               }}
             >
-              LUXURY HOTEL
+              KHÁCH SẠN SANG TRỌNG
             </Typography>
             
             {/* Desktop navigation */}

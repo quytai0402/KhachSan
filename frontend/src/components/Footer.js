@@ -44,10 +44,10 @@ const Footer = () => {
               display: 'inline-block',
               mb: 2
             }}>
-              LUXURY HOTEL
+              KHÁCH SẠN SANG TRỌNG
             </Typography>
             <Typography variant="body2" sx={{ mt: 2, lineHeight: 1.7 }}>
-              Luxury and comfort at affordable prices. Experience the best hospitality with us.
+              Sang trọng và tiện nghi với giá cả hợp lý. Trải nghiệm dịch vụ khách sạn tốt nhất cùng chúng tôi.
             </Typography>
             <Box sx={{ mt: 3, display: 'flex', gap: 1.5 }}>
               <IconButton size="small" sx={{ 
@@ -110,7 +110,7 @@ const Footer = () => {
                 backgroundColor: 'secondary.main'
               }
             }}>
-              Quick Links
+              Liên Kết Nhanh
             </Typography>
             <Stack spacing={1.5}>
               <Link 
@@ -128,7 +128,7 @@ const Footer = () => {
                   }
                 }}
               >
-                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Home
+                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Trang Chủ
               </Link>
               <Link 
                 component={RouterLink} 
@@ -145,7 +145,7 @@ const Footer = () => {
                   }
                 }}
               >
-                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Rooms & Suites
+                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Phòng & Suites
               </Link>
               <Link 
                 component={RouterLink} 
@@ -162,7 +162,7 @@ const Footer = () => {
                   }
                 }}
               >
-                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Services
+                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Dịch Vụ
               </Link>
               <Link 
                 component={RouterLink} 
@@ -179,7 +179,7 @@ const Footer = () => {
                   }
                 }}
               >
-                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Promotions
+                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Khuyến Mãi
               </Link>
               <Link 
                 component={RouterLink} 
@@ -196,7 +196,7 @@ const Footer = () => {
                   }
                 }}
               >
-                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Contact Us
+                <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Liên Hệ
               </Link>
             </Stack>
           </Grid>
@@ -218,7 +218,7 @@ const Footer = () => {
                 backgroundColor: 'secondary.main'
               }
             }}>
-              Contact Us
+              Liên Hệ
             </Typography>
             <Stack spacing={2.5}>
               <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -239,7 +239,7 @@ const Footer = () => {
                   <LocationOnIcon sx={{ fontSize: '1.2rem' }} />
                 </Box>
                 <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-                  123 Hotel Street, City Name, Country
+                  123 Đường Khách Sạn, Thành Phố, Quốc Gia
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -261,7 +261,7 @@ const Footer = () => {
                 </Box>
                 <Box>
                   <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-                    Support Hotline:
+                    Đường dây nóng:
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     +1 234 567 890
@@ -287,7 +287,7 @@ const Footer = () => {
                 </Box>
                 <Box>
                   <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-                    Email us:
+                    Email:
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     info@luxuryhotel.com
@@ -314,15 +314,15 @@ const Footer = () => {
                 backgroundColor: 'secondary.main'
               }
             }}>
-              Newsletter
+              Đăng Ký Tin
             </Typography>
             <Typography variant="body2" sx={{ mb: 2.5, lineHeight: 1.7 }}>
-              Subscribe to our newsletter to receive exclusive offers and the latest news on our services.
+              Đăng ký nhận bản tin của chúng tôi để nhận các ưu đãi độc quyền và tin tức mới nhất về dịch vụ.
             </Typography>
             <Box component="form" noValidate sx={{ mt: 1 }}>
               <TextField
                 fullWidth
-                placeholder="Your Email Address"
+                placeholder="Địa chỉ Email của bạn"
                 variant="outlined"
                 size="small"
                 sx={{ 
@@ -358,7 +358,7 @@ const Footer = () => {
                   }
                 }}
               >
-                Subscribe Now
+                Đăng Ký Ngay
               </Button>
             </Box>
           </Grid>
@@ -368,15 +368,15 @@ const Footer = () => {
         
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', pt: 2 }}>
           <Typography variant="body2" sx={{ mb: { xs: 2, sm: 0 }, opacity: 0.7 }}>
-            © {new Date().getFullYear()} Luxury Hotel. All rights reserved.
+            © {new Date().getFullYear()} Khách Sạn Sang Trọng. Tất cả các quyền được bảo lưu.
           </Typography>
           
           <Box sx={{ display: 'flex', gap: 3 }}>
             <Link component={RouterLink} to="/terms" color="inherit" underline="hover" sx={{ fontSize: '0.875rem', opacity: 0.7, '&:hover': { opacity: 1 } }}>
-              Terms & Conditions
+              Điều khoản & Điều kiện
             </Link>
             <Link component={RouterLink} to="/privacy" color="inherit" underline="hover" sx={{ fontSize: '0.875rem', opacity: 0.7, '&:hover': { opacity: 1 } }}>
-              Privacy Policy
+              Chính sách Bảo mật
             </Link>
           </Box>
         </Box>

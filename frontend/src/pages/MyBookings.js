@@ -104,7 +104,7 @@ const MyBookings = () => {
         setBookings(response.data);
       } catch (err) {
         console.error('Error fetching bookings:', err);
-        setError('Failed to load your bookings. Please try again later.');
+        setError('Không thể tải thông tin đặt phòng của bạn. Vui lòng thử lại sau.');
       } finally {
         setLoading(false);
       }
@@ -157,7 +157,7 @@ const MyBookings = () => {
       handleCloseCancelDialog();
     } catch (err) {
       console.error('Error cancelling booking:', err);
-      setError('Failed to cancel booking. Please try again later.');
+      setError('Không thể hủy đặt phòng. Vui lòng thử lại sau.');
     } finally {
       setCancelling(false);
     }
@@ -202,7 +202,7 @@ const MyBookings = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        My Bookings
+        Đặt Phòng Của Tôi
       </Typography>
       
       {error && (
@@ -218,9 +218,9 @@ const MyBookings = () => {
             onChange={handleTabChange}
             variant="fullWidth"
           >
-            <Tab label="All Bookings" />
-            <Tab label="Upcoming" />
-            <Tab label="Past" />
+            <Tab label="Tất Cả" />
+            <Tab label="Sắp Tới" />
+            <Tab label="Đã Qua" />
           </Tabs>
         </Box>
         
@@ -228,17 +228,17 @@ const MyBookings = () => {
           {filteredBookings.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="h6" gutterBottom>
-                No bookings found
+                Không tìm thấy đặt phòng nào
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                You haven't made any bookings yet.
+                Bạn chưa có đặt phòng nào.
               </Typography>
               <Button 
                 variant="contained" 
                 component={RouterLink} 
                 to="/rooms"
               >
-                Browse Rooms
+                Xem Các Phòng
               </Button>
             </Box>
           ) : (
@@ -260,17 +260,17 @@ const MyBookings = () => {
           {filteredBookings.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="h6" gutterBottom>
-                No upcoming bookings
+                Không có đặt phòng sắp tới
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                You don't have any upcoming bookings.
+                Bạn không có đặt phòng sắp tới nào.
               </Typography>
               <Button 
                 variant="contained" 
                 component={RouterLink} 
                 to="/rooms"
               >
-                Book a Room
+                Đặt Phòng
               </Button>
             </Box>
           ) : (
@@ -292,17 +292,17 @@ const MyBookings = () => {
           {filteredBookings.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="h6" gutterBottom>
-                No past bookings
+                Không có đặt phòng đã qua
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                You don't have any past bookings.
+                Bạn không có đặt phòng đã qua nào.
               </Typography>
               <Button 
                 variant="contained" 
                 component={RouterLink} 
                 to="/rooms"
               >
-                Book a Room
+                Đặt Phòng
               </Button>
             </Box>
           ) : (
@@ -327,25 +327,25 @@ const MyBookings = () => {
         onClose={handleCloseCancelDialog}
       >
         <DialogTitle>
-          Cancel Booking
+          Hủy Đặt Phòng
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to cancel this booking? This action cannot be undone.
+            Bạn có chắc chắn muốn hủy đặt phòng này? Hành động này không thể hoàn tác.
           </DialogContentText>
           {bookingToCancel && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle2">
-                Booking Details:
+                Chi tiết đặt phòng:
               </Typography>
               <Typography variant="body2">
-                Check-in: {format(new Date(bookingToCancel.checkInDate), 'MMM dd, yyyy')}
+                Nhận phòng: {format(new Date(bookingToCancel.checkInDate), 'MMM dd, yyyy')}
               </Typography>
               <Typography variant="body2">
-                Check-out: {format(new Date(bookingToCancel.checkOutDate), 'MMM dd, yyyy')}
+                Trả phòng: {format(new Date(bookingToCancel.checkOutDate), 'MMM dd, yyyy')}
               </Typography>
               <Typography variant="body2">
-                Room: {bookingToCancel.room.roomNumber}
+                Phòng: {bookingToCancel.room.roomNumber}
               </Typography>
             </Box>
           )}
@@ -355,7 +355,7 @@ const MyBookings = () => {
             onClick={handleCloseCancelDialog} 
             disabled={cancelling}
           >
-            Keep Booking
+            Giữ Đặt Phòng
           </Button>
           <Button 
             onClick={handleCancelBooking} 
@@ -364,7 +364,7 @@ const MyBookings = () => {
             disabled={cancelling}
             startIcon={cancelling ? <CircularProgress size={20} /> : <CancelIcon />}
           >
-            {cancelling ? 'Cancelling...' : 'Cancel Booking'}
+            {cancelling ? 'Đang hủy...' : 'Hủy Đặt Phòng'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -383,7 +383,7 @@ const BookingCard = ({ booking, onCancel, canCancel }) => {
       <CardContent sx={{ flexGrow: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" component="div">
-            Booking #{booking._id.substring(booking._id.length - 6).toUpperCase()}
+            Đặt phòng #{booking._id.substring(booking._id.length - 6).toUpperCase()}
           </Typography>
           <Chip 
             label={booking.status} 
@@ -397,36 +397,36 @@ const BookingCard = ({ booking, onCancel, canCancel }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <LocationOnIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="body2">
-            Room {booking.room.roomNumber}, {booking.room.type} Room
+            Phòng {booking.room.roomNumber}, {booking.room.type} Room
           </Typography>
         </Box>
         
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <DateRangeIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="body2">
-            {checkInDate} to {checkOutDate}
+            {checkInDate} đến {checkOutDate}
           </Typography>
         </Box>
         
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <PersonIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="body2">
-            {booking.numberOfGuests.adults} {booking.numberOfGuests.adults === 1 ? 'Adult' : 'Adults'}
-            {booking.numberOfGuests.children > 0 && `, ${booking.numberOfGuests.children} ${booking.numberOfGuests.children === 1 ? 'Child' : 'Children'}`}
+            {booking.numberOfGuests.adults} {booking.numberOfGuests.adults === 1 ? 'Người lớn' : 'Người lớn'}
+            {booking.numberOfGuests.children > 0 && `, ${booking.numberOfGuests.children} ${booking.numberOfGuests.children === 1 ? 'Trẻ em' : 'Trẻ em'}`}
           </Typography>
         </Box>
         
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <ReceiptIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="body2">
-            Total: ${booking.totalPrice}
+            Tổng: ${booking.totalPrice}
           </Typography>
         </Box>
         
         {booking.specialRequests && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              <strong>Special Requests:</strong> {booking.specialRequests}
+              <strong>Yêu cầu đặc biệt:</strong> {booking.specialRequests}
             </Typography>
           </Box>
         )}
@@ -440,7 +440,7 @@ const BookingCard = ({ booking, onCancel, canCancel }) => {
           to={`/booking-details/${booking._id}`}
           startIcon={<CheckCircleIcon />}
         >
-          View Details
+          Xem Chi Tiết
         </Button>
         
         {canCancel(booking) ? (
@@ -449,14 +449,14 @@ const BookingCard = ({ booking, onCancel, canCancel }) => {
             startIcon={<CancelIcon />}
             onClick={() => onCancel(booking)}
           >
-            Cancel
+            Hủy
           </Button>
         ) : (
           <Button 
             startIcon={<EditIcon />}
             disabled={booking.status === 'cancelled' || booking.status === 'checked-out'}
           >
-            Modify
+            Chỉnh Sửa
           </Button>
         )}
       </CardActions>

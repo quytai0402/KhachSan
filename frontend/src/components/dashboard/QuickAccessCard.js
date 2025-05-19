@@ -6,10 +6,20 @@ import {
   Typography,
   Box,
   Icon,
-  Chip,
-  Avatar
+  Chip
 } from '@mui/material';
-import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
+import { 
+  ArrowForward as ArrowForwardIcon,
+  Hotel as HotelIcon,
+  EventNote as EventNoteIcon,
+  People as PeopleIcon,
+  Payments as PaymentsIcon,
+  Settings as SettingsIcon,
+  Assessment as AssessmentIcon,
+  LocalOffer as LocalOfferIcon,
+  CalendarToday as CalendarTodayIcon,
+  Assignment as AssignmentIcon
+} from '@mui/icons-material';
 
 /**
  * Card hiển thị menu truy cập nhanh
@@ -34,6 +44,46 @@ const QuickAccessCard = ({
 }) => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Xử lý icon - có thể là string hoặc component React
+  const renderIcon = () => {
+    // Để theo dõi style chung cho icon
+    const iconStyle = { 
+      color: isHovered ? 'white' : color, 
+      fontSize: 28,
+      transition: 'all 0.3s ease'
+    };
+    
+    // Nếu icon là React element, trả về nguyên icon
+    if (React.isValidElement(icon)) {
+      return React.cloneElement(icon, { sx: iconStyle });
+    }
+    
+    // Nếu icon là string, map sang component tương ứng
+    switch (icon) {
+      case 'hotel':
+        return <HotelIcon sx={iconStyle} />;
+      case 'event_note':
+        return <EventNoteIcon sx={iconStyle} />;
+      case 'people':
+        return <PeopleIcon sx={iconStyle} />;
+      case 'payments':
+        return <PaymentsIcon sx={iconStyle} />;
+      case 'settings':
+        return <SettingsIcon sx={iconStyle} />;
+      case 'assessment':
+        return <AssessmentIcon sx={iconStyle} />;
+      case 'local_offer':
+        return <LocalOfferIcon sx={iconStyle} />;
+      case 'calendar_today':
+        return <CalendarTodayIcon sx={iconStyle} />;
+      case 'assignment':
+        return <AssignmentIcon sx={iconStyle} />;
+      default:
+        // Fallback sử dụng Material UI Icon font
+        return <Icon sx={iconStyle}>{icon}</Icon>;
+    }
+  };
 
   return (
     <Card 
@@ -88,13 +138,7 @@ const QuickAccessCard = ({
               transform: isHovered ? 'scale(1.05)' : 'scale(1)',
             }}
           >
-            <Icon sx={{ 
-              color: isHovered ? 'white' : color, 
-              fontSize: 28,
-              transition: 'all 0.3s ease',
-            }}>
-              {icon}
-            </Icon>
+            {renderIcon()}
           </Box>
           
           {count !== undefined && (

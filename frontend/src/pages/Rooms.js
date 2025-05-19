@@ -61,13 +61,13 @@ const Rooms = () => {
         setRooms(response.data);
         setFilteredRooms(response.data);
         if (response.data.length === 0) {
-          toastService.info('No rooms are currently available.');
+          toastService.info('Hiện không có phòng nào khả dụng.');
         } else {
-          toastService.success(`Found ${response.data.length} rooms for your stay.`);
+          toastService.success(`Tìm thấy ${response.data.length} phòng cho kỳ nghỉ của bạn.`);
         }
       } catch (err) {
         console.error('Error fetching rooms:', err);
-        const errorMsg = 'Failed to load rooms. Please try again later.';
+        const errorMsg = 'Không thể tải thông tin phòng. Vui lòng thử lại sau.';
         setError(errorMsg);
         toastService.error(errorMsg);
       } finally {
@@ -132,9 +132,9 @@ const Rooms = () => {
     
     // Show toast notification when filter changes yield significantly different results
     if (result.length === 0) {
-      toastService.warning('No rooms match your current filters. Try adjusting your criteria.');
+      toastService.warning('Không có phòng nào phù hợp với bộ lọc hiện tại. Hãy điều chỉnh tiêu chí của bạn.');
     } else if (result.length < 3 && rooms.length > 5) {
-      toastService.info(`Only ${result.length} rooms match your filters.`);
+      toastService.info(`Chỉ có ${result.length} phòng phù hợp với bộ lọc của bạn.`);
     }
   }, [rooms, filters, sortOption]);
 
@@ -180,25 +180,25 @@ const Rooms = () => {
       amenities: []
     });
     setSortOption('recommended');
-    toastService.info('Filters have been reset.');
+    toastService.info('Bộ lọc đã được đặt lại.');
   };
 
   // Common amenities options
   const amenitiesOptions = [
     'Wi-Fi',
     'TV',
-    'Air Conditioning',
-    'Breakfast',
+    'Điều hòa',
+    'Bữa sáng',
     'Minibar',
-    'Balcony',
-    'Sea View',
-    'Bathtub'
+    'Ban công',
+    'Hướng biển',
+    'Bồn tắm'
   ];
   
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-        Rooms & Suites
+        Phòng & Suite
       </Typography>
       
       <Grid container spacing={4}>
@@ -214,19 +214,19 @@ const Rooms = () => {
             }}
           >
             <Typography variant="h6" gutterBottom>
-              Filters
+              Bộ lọc
             </Typography>
             <Divider sx={{ mb: 3 }} />
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
-                Check-in / Check-out
+                Nhận phòng / Trả phòng
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <DatePicker
-                      label="Check-in Date"
+                      label="Ngày nhận phòng"
                       value={filters.checkIn}
                       onChange={(newValue) => handleFilterChange('checkIn', newValue)}
                       disablePast
@@ -238,7 +238,7 @@ const Rooms = () => {
                 <Grid item xs={12}>
                   <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <DatePicker
-                      label="Check-out Date"
+                      label="Ngày trả phòng"
                       value={filters.checkOut}
                       onChange={(newValue) => handleFilterChange('checkOut', newValue)}
                       disablePast
@@ -253,11 +253,11 @@ const Rooms = () => {
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
-                Guests
+                Khách
               </Typography>
               <TextField
                 fullWidth
-                label="Number of Guests"
+                label="Số lượng khách"
                 type="number"
                 variant="outlined"
                 size="small"
@@ -269,29 +269,29 @@ const Rooms = () => {
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
-                Room Type
+                Loại phòng
               </Typography>
               <FormControl fullWidth size="small">
-                <InputLabel>Type</InputLabel>
+                <InputLabel>Loại</InputLabel>
                 <Select
                   value={filters.type}
                   onChange={(e) => handleFilterChange('type', e.target.value)}
-                  label="Type"
+                  label="Loại"
                 >
-                  <MenuItem value="">Any</MenuItem>
-                  <MenuItem value="single">Single Room</MenuItem>
-                  <MenuItem value="double">Double Room</MenuItem>
-                  <MenuItem value="twin">Twin Room</MenuItem>
-                  <MenuItem value="suite">Suite</MenuItem>
-                  <MenuItem value="family">Family Room</MenuItem>
-                  <MenuItem value="deluxe">Deluxe Room</MenuItem>
+                  <MenuItem value="">Tất cả</MenuItem>
+                  <MenuItem value="single">Phòng Đơn</MenuItem>
+                  <MenuItem value="double">Phòng Đôi</MenuItem>
+                  <MenuItem value="twin">Phòng Twin</MenuItem>
+                  <MenuItem value="suite">Phòng Suite</MenuItem>
+                  <MenuItem value="family">Phòng Gia Đình</MenuItem>
+                  <MenuItem value="deluxe">Phòng Deluxe</MenuItem>
                 </Select>
               </FormControl>
             </Box>
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
-                Price Range (per night)
+                Khoảng giá (mỗi đêm)
               </Typography>
               <Box sx={{ px: 1 }}>
                 <Slider
@@ -320,7 +320,7 @@ const Rooms = () => {
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
-                Amenities
+                Tiện nghi
               </Typography>
               <FormGroup>
                 {amenitiesOptions.map((amenity, index) => (
@@ -345,7 +345,7 @@ const Rooms = () => {
               onClick={clearFilters}
               sx={{ mt: 2 }}
             >
-              Clear All Filters
+              Xóa tất cả bộ lọc
             </Button>
           </Paper>
         </Grid>
@@ -354,20 +354,20 @@ const Rooms = () => {
         <Grid item xs={12} md={9}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography>
-              {filteredRooms.length} {filteredRooms.length === 1 ? 'room' : 'rooms'} found
+              Đã tìm thấy {filteredRooms.length} {filteredRooms.length === 1 ? 'phòng' : 'phòng'}
             </Typography>
             
             <FormControl sx={{ minWidth: 200 }} size="small">
-              <InputLabel>Sort by</InputLabel>
+              <InputLabel>Sắp xếp theo</InputLabel>
               <Select
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value)}
-                label="Sort by"
+                label="Sắp xếp theo"
               >
-                <MenuItem value="recommended">Recommended</MenuItem>
-                <MenuItem value="price-low">Price: Low to High</MenuItem>
-                <MenuItem value="price-high">Price: High to Low</MenuItem>
-                <MenuItem value="capacity">Capacity</MenuItem>
+                <MenuItem value="recommended">Đề xuất</MenuItem>
+                <MenuItem value="price-low">Giá: Thấp đến Cao</MenuItem>
+                <MenuItem value="price-high">Giá: Cao đến Thấp</MenuItem>
+                <MenuItem value="capacity">Sức chứa</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -376,12 +376,12 @@ const Rooms = () => {
           {(filters.type || filters.amenities.length > 0 || filters.priceRange[0] > 0 || filters.priceRange[1] < 500 || filters.guests > 1) && (
             <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="body2" sx={{ mr: 1, alignSelf: 'center' }}>
-                Active Filters:
+                Bộ lọc đang áp dụng:
               </Typography>
               
               {filters.type && (
                 <Chip 
-                  label={`Type: ${filters.type.charAt(0).toUpperCase() + filters.type.slice(1)}`}
+                  label={`Loại: ${filters.type.charAt(0).toUpperCase() + filters.type.slice(1)}`}
                   onDelete={() => handleFilterChange('type', '')}
                   size="small"
                 />
@@ -389,7 +389,7 @@ const Rooms = () => {
               
               {filters.guests > 1 && (
                 <Chip 
-                  label={`Guests: ${filters.guests}`}
+                  label={`Khách: ${filters.guests}`}
                   onDelete={() => handleFilterChange('guests', 1)}
                   size="small"
                 />
@@ -397,7 +397,7 @@ const Rooms = () => {
               
               {(filters.priceRange[0] > 0 || filters.priceRange[1] < 500) && (
                 <Chip 
-                  label={`Price: $${filters.priceRange[0]} - $${filters.priceRange[1]}`}
+                  label={`Giá: $${filters.priceRange[0]} - $${filters.priceRange[1]}`}
                   onDelete={() => handleFilterChange('priceRange', [0, 500])}
                   size="small"
                 />
@@ -424,17 +424,17 @@ const Rooms = () => {
           ) : filteredRooms.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" gutterBottom>
-                No rooms matching your criteria
+                Không có phòng nào phù hợp với tiêu chí của bạn
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Try adjusting your filters to find available rooms
+                Hãy điều chỉnh bộ lọc để tìm phòng khả dụng
               </Typography>
               <Button 
                 variant="contained" 
                 sx={{ mt: 3 }}
                 onClick={clearFilters}
               >
-                Clear All Filters
+                Xóa tất cả bộ lọc
               </Button>
             </Box>
           ) : (

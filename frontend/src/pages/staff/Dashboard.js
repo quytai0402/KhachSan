@@ -35,6 +35,7 @@ import { StatsCard, QuickAccessCard, DashboardLayout } from '../../components/da
 import dashboardService from '../../services/dashboardService';
 import { useActivityTracker, ACTION_TYPES } from '../../utils/activityTracker';
 import ActivityLog from '../../components/ActivityLog';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 
 // Sample realistic data for staff dashboard
 const sampleRealisticData = {
@@ -340,28 +341,23 @@ const StaffDashboard = () => {
   // Render loading state
   if (loading) {
     return (
-      <DashboardLayout title="Dashboard">
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-          <CircularProgress />
-        </Box>
-      </DashboardLayout>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+        <CircularProgress />
+      </Box>
     );
   }
 
   // Render error state
   if (error) {
     return (
-      <DashboardLayout title="Dashboard">
-        <Box mt={3}>
-          <Alert severity="error">{error}</Alert>
-        </Box>
-      </DashboardLayout>
+      <Box mt={3}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
     );
   }
 
   return (
-    <DashboardLayout title="Dashboard">
-      <Box sx={{ flexGrow: 1, pb: 3 }}>
+    <Box sx={{ flexGrow: 1, pb: 3 }}>
         {/* Welcome section with refresh button */}
         <Box mb={4} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
@@ -556,8 +552,7 @@ const StaffDashboard = () => {
           </Grid>
         </Grid>
       </Box>
-    </DashboardLayout>
   );
 };
 
-export default StaffDashboard;
+export default withDashboardLayout(StaffDashboard, "Dashboard");

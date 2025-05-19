@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import socketService from '../services/socketService';
 import { useAuth } from './AuthContext';
 import * as socketEvents from '../utils/socketEvents';
@@ -17,11 +17,13 @@ export const SocketProvider = ({ children }) => {
   const [systemAlerts, setSystemAlerts] = useState([]);
   const [staffActivity, setStaffActivity] = useState([]);
   const [adminActivity, setAdminActivity] = useState([]);
+  const socketInitialized = useRef(false);
 
   // Connect to socket when user logs in
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // Connect to socket
+    if (isAuthenticated && user && !socketInitialized.current) {
+      // Connect to socket only once
+      socketInitialized.current = true;
       const socket = socketService.connect(user.token, user._id, user.role);
       
       // Update connection status
@@ -41,9 +43,16 @@ export const SocketProvider = ({ children }) => {
         setNotifications(prev => [notification, ...prev].slice(0, 50));
       });
       
-      // Handle room status changes
+      // Handle room status changes without triggering excessive re-renders
       socketService.on(socketEvents.ROOM_STATUS_CHANGED, (update) => {
-        setRoomUpdates(prev => [update, ...prev].slice(0, 20));
+        // Only add update if we don't already have one with the same roomId
+        setRoomUpdates(prev => {
+          const exists = prev.some(item => item.roomId === update.roomId);
+          if (exists) {
+            return prev.map(item => item.roomId === update.roomId ? update : item);
+          }
+          return [update, ...prev].slice(0, 20);
+        });
       });
       
       // Handle booking updates
@@ -81,10 +90,12 @@ export const SocketProvider = ({ children }) => {
       // Cleanup on unmount
       return () => {
         socketService.disconnect();
+        socketInitialized.current = false;
       };
     } else {
       // Disconnect if no user
       socketService.disconnect();
+      socketInitialized.current = false;
       setConnected(false);
     }
   }, [isAuthenticated, user]);

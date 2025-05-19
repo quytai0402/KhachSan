@@ -30,7 +30,7 @@ const Promotions = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching promotions:', err);
-        setError('Failed to load promotions');
+        setError('Không thể tải khuyến mãi');
         setLoading(false);
       }
     };
@@ -58,11 +58,11 @@ const Promotions = () => {
     <Container maxWidth="lg" sx={{ py: 6 }}>
       <Box sx={{ textAlign: 'center', mb: 6 }}>
         <Typography variant="h3" component="h1" gutterBottom>
-          Special Offers & Promotions
+          Ưu Đãi & Khuyến Mãi Đặc Biệt
         </Typography>
         <Typography variant="subtitle1" color="text.secondary" sx={{ maxWidth: 700, mx: 'auto' }}>
-          Take advantage of our exclusive deals and promotions to enhance your stay with us.
-          Book directly for the best rates and special perks.
+          Tận dụng các ưu đãi và khuyến mãi độc quyền của chúng tôi để nâng cao kỳ nghỉ của bạn.
+          Đặt phòng trực tiếp để có mức giá tốt nhất và ưu đãi đặc biệt.
         </Typography>
       </Box>
 
@@ -105,7 +105,7 @@ const Promotions = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <AccessTimeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                   <Typography variant="body2" color="text.secondary">
-                    Valid until: {promo.validUntil}
+                    Có hiệu lực đến: {promo.validUntil}
                   </Typography>
                 </Box>
                 
@@ -113,7 +113,7 @@ const Promotions = () => {
                 
                 <Box sx={{ bgcolor: 'grey.100', p: 1, borderRadius: 1, textAlign: 'center' }}>
                   <Typography variant="subtitle2" gutterBottom>
-                    Promo Code:
+                    Mã Khuyến Mãi:
                   </Typography>
                   <Typography 
                     variant="h6" 
@@ -134,7 +134,7 @@ const Promotions = () => {
                   fullWidth
                   href="/rooms"
                 >
-                  Book Now
+                  Đặt Ngay
                 </Button>
               </CardActions>
             </Card>
@@ -151,10 +151,10 @@ const Promotions = () => {
         borderRadius: 2
       }}>
         <Typography variant="h5" gutterBottom>
-          Subscribe for Exclusive Offers
+          Đăng Ký Nhận Ưu Đãi Độc Quyền
         </Typography>
         <Typography variant="body1" sx={{ mb: 3, maxWidth: 700, mx: 'auto' }}>
-          Join our mailing list to receive updates on special promotions, seasonal offers, and exclusive deals available only to subscribers.
+          Tham gia danh sách nhận thông báo của chúng tôi để nhận thông tin về các khuyến mãi đặc biệt, ưu đãi theo mùa và các ưu đãi độc quyền chỉ dành cho người đăng ký.
         </Typography>
         <Button 
           variant="contained" 
@@ -162,7 +162,7 @@ const Promotions = () => {
           size="large"
           href="/contact"
         >
-          Subscribe Now
+          Đăng Ký Ngay
         </Button>
       </Box>
     </Container>

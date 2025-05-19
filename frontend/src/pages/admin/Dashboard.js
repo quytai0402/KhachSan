@@ -42,6 +42,7 @@ import { useSocket } from '../../context/SocketContext';
 import { StatsCard, QuickAccessCard, DashboardLayout } from '../../components/dashboard';
 import dashboardService from '../../services/dashboardService';
 import { useActivityTracker, ACTION_TYPES } from '../../utils/activityTracker';
+import { withDashboardLayout } from '../../utils/layoutHelpers';
 
 // Add sample data for realistic presentation
 const sampleStats = {
@@ -603,28 +604,23 @@ const AdminDashboard = () => {
   // Render loading state
   if (loading) {
     return (
-      <DashboardLayout title="Tổng Quan">
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-          <CircularProgress />
-        </Box>
-      </DashboardLayout>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+        <CircularProgress />
+      </Box>
     );
   }
 
   // Render error state  
   if (error) {
     return (
-      <DashboardLayout title="Tổng Quan">
-        <Box mt={3}>
-          <Alert severity="error">{error}</Alert>
-        </Box>
-      </DashboardLayout>
+      <Box mt={3}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
     );
   }
 
   return (
-    <DashboardLayout title="Tổng Quan">
-      <Box sx={{ flexGrow: 1, pb: 3 }}>
+    <Box sx={{ flexGrow: 1, pb: 3 }}>
         {/* Header with welcome and refresh button */}
         <Box 
           sx={{
@@ -998,8 +994,7 @@ const AdminDashboard = () => {
           </Grid>
         </Grid>
       </Box>
-    </DashboardLayout>
   );
 };
 
-export default AdminDashboard;
+export default withDashboardLayout(AdminDashboard, "Tổng Quan");
