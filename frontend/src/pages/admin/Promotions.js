@@ -236,7 +236,7 @@ const Promotions = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
-          Promotion Management
+          Quản Lý Khuyến Mãi
         </Typography>
         <Box>
           <Button 
@@ -245,14 +245,14 @@ const Promotions = () => {
             onClick={handleRefreshPromotions}
             sx={{ mr: 2 }}
           >
-            Refresh
+            Làm Mới
           </Button>
           <Button 
             variant="contained" 
             startIcon={<AddIcon />} 
             onClick={handleOpenAddDialog}
           >
-            Add Promotion
+            Thêm Khuyến Mãi
           </Button>
         </Box>
       </Box>
@@ -304,7 +304,7 @@ const Promotions = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                       <AccessTimeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                       <Typography variant="body2" color={expired ? 'error.main' : 'text.secondary'}>
-                        {expired ? 'Expired: ' : 'Valid until: '}{promotion.validUntil}
+                        {expired ? 'Đã hết hạn: ' : 'Có hiệu lực đến: '}{promotion.validUntil}
                       </Typography>
                     </Box>
                     
@@ -312,7 +312,7 @@ const Promotions = () => {
                     
                     <Box sx={{ bgcolor: 'grey.100', p: 1, borderRadius: 1, textAlign: 'center' }}>
                       <Typography variant="subtitle2">
-                        Promo Code: <strong>{promotion.code}</strong>
+                        Mã khuyến mãi: <strong>{promotion.code}</strong>
                       </Typography>
                     </Box>
                   </CardContent>
@@ -349,7 +349,7 @@ const Promotions = () => {
                       fontSize: '0.75rem',
                       fontWeight: 'bold'
                     }}>
-                      Expired
+                      Đã hết hạn
                     </Box>
                   )}
                 </Card>
@@ -360,7 +360,7 @@ const Promotions = () => {
           <Grid item xs={12}>
             <Paper sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body1">
-                No promotions found. Add a promotion to get started.
+                Không tìm thấy khuyến mãi nào. Thêm khuyến mãi để bắt đầu.
               </Typography>
             </Paper>
           </Grid>
@@ -539,15 +539,15 @@ const Promotions = () => {
       
       {/* Delete Promotion Dialog */}
       <Dialog open={openDeleteDialog} onClose={handleCloseDialogs}>
-        <DialogTitle>Delete Promotion</DialogTitle>
+        <DialogTitle>Xóa Khuyến Mãi</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete the promotion "{selectedPromotion?.title}"? This action cannot be undone.
+            Bạn có chắc chắn muốn xóa khuyến mãi "{selectedPromotion?.title}"? Hành động này không thể hoàn tác.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleDeletePromotion} 
@@ -555,7 +555,7 @@ const Promotions = () => {
             variant="contained"
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Delete'}
+            {submitting ? <CircularProgress size={24} /> : 'Xóa'}
           </Button>
         </DialogActions>
       </Dialog>

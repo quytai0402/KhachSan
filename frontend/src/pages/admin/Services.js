@@ -226,7 +226,7 @@ const Services = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
-          Service Management
+          Quản Lý Dịch Vụ
         </Typography>
         <Box>
           <Button 
@@ -235,14 +235,14 @@ const Services = () => {
             onClick={handleRefreshServices}
             sx={{ mr: 2 }}
           >
-            Refresh
+            Làm Mới
           </Button>
           <Button 
             variant="contained" 
             startIcon={<AddIcon />} 
             onClick={handleOpenAddDialog}
           >
-            Add Service
+            Thêm Dịch Vụ
           </Button>
         </Box>
       </Box>
@@ -319,7 +319,7 @@ const Services = () => {
           <Grid item xs={12}>
             <Paper sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body1">
-                No services found. Add a service to get started.
+                Không tìm thấy dịch vụ nào. Thêm một dịch vụ để bắt đầu.
               </Typography>
             </Paper>
           </Grid>
@@ -328,12 +328,12 @@ const Services = () => {
       
       {/* Add Service Dialog */}
       <Dialog open={openAddDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
-        <DialogTitle>Add New Service</DialogTitle>
+        <DialogTitle>Thêm Dịch Vụ Mới</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
-                label="Service Title"
+                label="Tiêu Đề Dịch Vụ"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
@@ -343,7 +343,7 @@ const Services = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Description"
+                label="Mô Tả"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
@@ -355,49 +355,49 @@ const Services = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Icon Name (Material Icon)"
+                label="Tên Biểu Tượng (Material Icon)"
                 name="icon"
                 value={formData.icon}
                 onChange={handleChange}
                 fullWidth
-                helperText="e.g. SpaOutlined, RestaurantOutlined"
+                helperText="VD: SpaOutlined, RestaurantOutlined"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Image URL"
+                label="URL Hình Ảnh"
                 name="image"
                 value={formData.image}
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Enter a valid image URL"
+                helperText="Nhập URL hình ảnh hợp lệ"
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleAddService} 
             variant="contained" 
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Add Service'}
+            {submitting ? <CircularProgress size={24} /> : 'Thêm Dịch Vụ'}
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Edit Service Dialog */}
       <Dialog open={openEditDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
-        <DialogTitle>Edit Service</DialogTitle>
+        <DialogTitle>Chỉnh Sửa Dịch Vụ</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
-                label="Service Title"
+                label="Tiêu Đề Dịch Vụ"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
@@ -407,7 +407,7 @@ const Services = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Description"
+                label="Mô Tả"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
@@ -419,52 +419,52 @@ const Services = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Icon Name (Material Icon)"
+                label="Tên Biểu Tượng (Material Icon)"
                 name="icon"
                 value={formData.icon}
                 onChange={handleChange}
                 fullWidth
-                helperText="e.g. SpaOutlined, RestaurantOutlined"
+                helperText="VD: SpaOutlined, RestaurantOutlined"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Image URL"
+                label="URL Hình Ảnh"
                 name="image"
                 value={formData.image}
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Enter a valid image URL"
+                helperText="Nhập URL hình ảnh hợp lệ"
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleUpdateService} 
             variant="contained" 
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Update Service'}
+            {submitting ? <CircularProgress size={24} /> : 'Cập Nhật Dịch Vụ'}
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Delete Service Dialog */}
       <Dialog open={openDeleteDialog} onClose={handleCloseDialogs}>
-        <DialogTitle>Delete Service</DialogTitle>
+        <DialogTitle>Xóa Dịch Vụ</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete the service "{selectedService?.title}"? This action cannot be undone.
+            Bạn có chắc chắn muốn xóa dịch vụ "{selectedService?.title}"? Hành động này không thể hoàn tác.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleDeleteService} 
@@ -472,7 +472,7 @@ const Services = () => {
             variant="contained"
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Delete'}
+            {submitting ? <CircularProgress size={24} /> : 'Xóa'}
           </Button>
         </DialogActions>
       </Dialog>

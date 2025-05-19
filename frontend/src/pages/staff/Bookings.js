@@ -190,15 +190,15 @@ const StaffBookings = () => {
   const getStatusChip = (status) => {
     switch (status) {
       case 'confirmed':
-        return <Chip label="Confirmed" color="primary" size="small" />;
+        return <Chip label="Đã xác nhận" color="primary" size="small" />;
       case 'checked-in':
-        return <Chip label="Checked In" color="success" size="small" icon={<CheckCircleIcon />} />;
+        return <Chip label="Đã nhận phòng" color="success" size="small" icon={<CheckCircleIcon />} />;
       case 'checked-out':
-        return <Chip label="Checked Out" color="default" size="small" icon={<LogoutIcon />} />;
+        return <Chip label="Đã trả phòng" color="default" size="small" icon={<LogoutIcon />} />;
       case 'cancelled':
-        return <Chip label="Cancelled" color="error" size="small" icon={<CancelIcon />} />;
+        return <Chip label="Đã hủy" color="error" size="small" icon={<CancelIcon />} />;
       case 'pending':
-        return <Chip label="Pending" color="warning" size="small" />;
+        return <Chip label="Đang chờ" color="warning" size="small" />;
       default:
         return <Chip label={status} size="small" />;
     }
@@ -207,9 +207,9 @@ const StaffBookings = () => {
   const getPaymentChip = (status) => {
     switch (status) {
       case 'paid':
-        return <Chip label="Paid" color="success" size="small" />;
+        return <Chip label="Đã thanh toán" color="success" size="small" />;
       case 'pending':
-        return <Chip label="Pending" color="warning" size="small" />;
+        return <Chip label="Chưa thanh toán" color="warning" size="small" />;
       default:
         return <Chip label={status} size="small" />;
     }
@@ -233,7 +233,7 @@ const StaffBookings = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        Booking Management
+        Quản Lý Đặt Phòng
       </Typography>
 
       {/* Filters */}
@@ -242,7 +242,7 @@ const StaffBookings = () => {
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              label="Search guest, email, phone or room"
+              label="Tìm khách, email, điện thoại hoặc phòng"
               variant="outlined"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -253,24 +253,24 @@ const StaffBookings = () => {
           </Grid>
           <Grid item xs={12} md={3}>
             <FormControl fullWidth variant="outlined">
-              <InputLabel>Status</InputLabel>
+              <InputLabel>Trạng thái</InputLabel>
               <Select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                label="Status"
+                label="Trạng thái"
               >
-                <MenuItem value="all">All Statuses</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="confirmed">Confirmed</MenuItem>
-                <MenuItem value="checked-in">Checked In</MenuItem>
-                <MenuItem value="checked-out">Checked Out</MenuItem>
-                <MenuItem value="cancelled">Cancelled</MenuItem>
+                <MenuItem value="all">Tất cả trạng thái</MenuItem>
+                <MenuItem value="pending">Đang chờ</MenuItem>
+                <MenuItem value="confirmed">Đã xác nhận</MenuItem>
+                <MenuItem value="checked-in">Đã nhận phòng</MenuItem>
+                <MenuItem value="checked-out">Đã trả phòng</MenuItem>
+                <MenuItem value="cancelled">Đã hủy</MenuItem>
               </Select>
             </FormControl>
           </Grid>
           <Grid item xs={12} md={3}>
             <DatePicker
-              label="Filter by Date"
+              label="Lọc theo ngày"
               value={dateFilter}
               onChange={(newValue) => setDateFilter(newValue)}
               slotProps={{ textField: { fullWidth: true, variant: 'outlined' } }}
@@ -286,7 +286,7 @@ const StaffBookings = () => {
                 setDateFilter(null);
               }}
             >
-              Clear Filters
+              Xóa bộ lọc
             </Button>
           </Grid>
         </Grid>
@@ -299,13 +299,13 @@ const StaffBookings = () => {
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Guest</TableCell>
-                <TableCell>Room</TableCell>
-                <TableCell>Check In</TableCell>
-                <TableCell>Check Out</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Payment</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>Khách</TableCell>
+                <TableCell>Phòng</TableCell>
+                <TableCell>Nhận phòng</TableCell>
+                <TableCell>Trả phòng</TableCell>
+                <TableCell>Trạng thái</TableCell>
+                <TableCell>Thanh toán</TableCell>
+                <TableCell>Thao tác</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -324,7 +324,7 @@ const StaffBookings = () => {
                       {booking.roomNumber ? (
                         <Chip 
                           icon={<HotelIcon />} 
-                          label={`Room ${booking.roomNumber}`}
+                          label={`Phòng ${booking.roomNumber}`}
                           size="small" 
                           color="primary"
                         />
@@ -345,7 +345,7 @@ const StaffBookings = () => {
                           handleOpenDialog(booking);
                         }}
                       >
-                        Manage
+                        Quản lý
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -354,7 +354,7 @@ const StaffBookings = () => {
                 <TableRow>
                   <TableCell colSpan={8} align="center">
                     <Typography variant="body1" sx={{ py: 2 }}>
-                      No bookings found
+                      Không tìm thấy đặt phòng nào
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -379,68 +379,68 @@ const StaffBookings = () => {
           <>
             <DialogTitle>
               <Typography variant="h6">
-                Booking #{selectedBooking.id} - {selectedBooking.guestName}
+                Đặt phòng #{selectedBooking.id} - {selectedBooking.guestName}
               </Typography>
             </DialogTitle>
             <DialogContent dividers>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" gutterBottom>Guest Information</Typography>
+                  <Typography variant="subtitle2" gutterBottom>Thông tin khách hàng</Typography>
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="body2">
-                      <strong>Name:</strong> {selectedBooking.guestName}
+                      <strong>Tên:</strong> {selectedBooking.guestName}
                     </Typography>
                     <Typography variant="body2">
                       <strong>Email:</strong> {selectedBooking.email}
                     </Typography>
                     <Typography variant="body2">
-                      <strong>Phone:</strong> {selectedBooking.phone}
+                      <strong>Điện thoại:</strong> {selectedBooking.phone}
                     </Typography>
                   </Box>
 
-                  <Typography variant="subtitle2" gutterBottom>Booking Details</Typography>
+                  <Typography variant="subtitle2" gutterBottom>Chi tiết đặt phòng</Typography>
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="body2">
-                      <strong>Check In:</strong> {format(parseISO(selectedBooking.checkIn), 'EEEE, MMMM dd, yyyy')}
+                      <strong>Nhận phòng:</strong> {format(parseISO(selectedBooking.checkIn), 'EEEE, MMMM dd, yyyy')}
                     </Typography>
                     <Typography variant="body2">
-                      <strong>Check Out:</strong> {format(parseISO(selectedBooking.checkOut), 'EEEE, MMMM dd, yyyy')}
+                      <strong>Trả phòng:</strong> {format(parseISO(selectedBooking.checkOut), 'EEEE, MMMM dd, yyyy')}
                     </Typography>
                     <Typography variant="body2">
-                      <strong>Room Type:</strong> {selectedBooking.roomType}
+                      <strong>Loại phòng:</strong> {selectedBooking.roomType}
                     </Typography>
                     <Typography variant="body2">
-                      <strong>Guests:</strong> {selectedBooking.guests}
+                      <strong>Số khách:</strong> {selectedBooking.guests}
                     </Typography>
                     {selectedBooking.specialRequests && (
                       <Typography variant="body2">
-                        <strong>Special Requests:</strong> {selectedBooking.specialRequests}
+                        <strong>Yêu cầu đặc biệt:</strong> {selectedBooking.specialRequests}
                       </Typography>
                     )}
                   </Box>
                 </Grid>
                 
                 <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" gutterBottom>Manage Booking</Typography>
+                  <Typography variant="subtitle2" gutterBottom>Quản lý đặt phòng</Typography>
                   
                   <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                    <InputLabel>Booking Status</InputLabel>
+                    <InputLabel>Trạng thái đặt phòng</InputLabel>
                     <Select
                       value={statusUpdate}
                       onChange={(e) => setStatusUpdate(e.target.value)}
-                      label="Booking Status"
+                      label="Trạng thái đặt phòng"
                     >
-                      <MenuItem value="pending">Pending</MenuItem>
-                      <MenuItem value="confirmed">Confirmed</MenuItem>
-                      <MenuItem value="checked-in">Checked In</MenuItem>
-                      <MenuItem value="checked-out">Checked Out</MenuItem>
-                      <MenuItem value="cancelled">Cancelled</MenuItem>
+                      <MenuItem value="pending">Đang chờ</MenuItem>
+                      <MenuItem value="confirmed">Đã xác nhận</MenuItem>
+                      <MenuItem value="checked-in">Đã nhận phòng</MenuItem>
+                      <MenuItem value="checked-out">Đã trả phòng</MenuItem>
+                      <MenuItem value="cancelled">Đã hủy</MenuItem>
                     </Select>
                   </FormControl>
                   
                   <TextField
                     fullWidth
-                    label="Room Number"
+                    label="Số phòng"
                     variant="outlined"
                     value={roomAssigned}
                     onChange={(e) => setRoomAssigned(e.target.value)}
@@ -449,14 +449,14 @@ const StaffBookings = () => {
                   />
                   
                   <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                    <InputLabel>Payment Status</InputLabel>
+                    <InputLabel>Trạng thái thanh toán</InputLabel>
                     <Select
                       value={paymentStatus}
                       onChange={(e) => setPaymentStatus(e.target.value)}
-                      label="Payment Status"
+                      label="Trạng thái thanh toán"
                     >
-                      <MenuItem value="pending">Pending</MenuItem>
-                      <MenuItem value="paid">Paid</MenuItem>
+                      <MenuItem value="pending">Chưa thanh toán</MenuItem>
+                      <MenuItem value="paid">Đã thanh toán</MenuItem>
                     </Select>
                   </FormControl>
                   
@@ -464,7 +464,7 @@ const StaffBookings = () => {
                     fullWidth
                     multiline
                     rows={4}
-                    label="Notes"
+                    label="Ghi chú"
                     variant="outlined"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
@@ -474,7 +474,7 @@ const StaffBookings = () => {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleCloseDialog} color="inherit">Cancel</Button>
+              <Button onClick={handleCloseDialog} color="inherit">Hủy</Button>
               
               {selectedBooking.status !== 'checked-in' && selectedBooking.status !== 'checked-out' && (
                 <Button 
@@ -483,7 +483,7 @@ const StaffBookings = () => {
                   color="success"
                   disabled={!roomAssigned}
                 >
-                  Check In
+                  Nhận phòng
                 </Button>
               )}
               
@@ -493,12 +493,12 @@ const StaffBookings = () => {
                   variant="contained" 
                   color="secondary"
                 >
-                  Check Out
+                  Trả phòng
                 </Button>
               )}
               
               <Button onClick={handleUpdateBooking} variant="contained" color="primary">
-                Update Booking
+                Cập nhật đặt phòng
               </Button>
             </DialogActions>
           </>

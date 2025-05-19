@@ -53,25 +53,25 @@ import { withDashboardLayout } from '../../utils/layoutHelpers';
 // Room type options will now come from backend
 // Status options
 const roomStatuses = [
-  { value: 'available', label: 'Available' },
-  { value: 'booked', label: 'Booked' },
-  { value: 'maintenance', label: 'Maintenance' }
+  { value: 'available', label: 'Còn trống' },
+  { value: 'booked', label: 'Đã đặt' },
+  { value: 'maintenance', label: 'Bảo trì' }
 ];
 
 // Common amenities
 const commonAmenities = [
   "Wi-Fi",
-  "Air conditioning",
-  "Flat-screen TV",
-  "Private bathroom",
+  "Điều hòa",
+  "TV màn hình phẳng",
+  "Phòng tắm riêng",
   "Minibar",
-  "Coffee maker",
-  "Safe",
-  "Hairdryer",
-  "Iron",
-  "Desk",
-  "Wardrobe",
-  "Room service"
+  "Máy pha cà phê",
+  "Két sắt",
+  "Máy sấy tóc",
+  "Bàn là",
+  "Bàn làm việc",
+  "Tủ quần áo",
+  "Dịch vụ phòng"
 ];
 
 const Rooms = () => {
@@ -442,10 +442,10 @@ const Rooms = () => {
       const response = await roomAPI.getAllRooms();
       setRooms(response.data);
       setError(null);
-      toastService.info('Room list has been refreshed.');
+      toastService.info('Danh sách phòng đã được làm mới.');
     } catch (err) {
       console.error('Error refreshing rooms:', err);
-      const errorMsg = 'Failed to refresh rooms. Please try again.';
+      const errorMsg = 'Không thể làm mới danh sách phòng. Vui lòng thử lại.';
       setError(errorMsg);
       toastService.error(errorMsg);
     } finally {
@@ -519,13 +519,13 @@ const Rooms = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Room Number</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Price</TableCell>
-              <TableCell>Capacity</TableCell>
-              <TableCell>Floor</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>Số Phòng</TableCell>
+              <TableCell>Loại</TableCell>
+              <TableCell>Giá</TableCell>
+              <TableCell>Sức Chứa</TableCell>
+              <TableCell>Tầng</TableCell>
+              <TableCell>Trạng Thái</TableCell>
+              <TableCell align="right">Thao Tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -571,7 +571,7 @@ const Rooms = () => {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} align="center">
-                  No rooms found. Add a room to get started.
+                  Không tìm thấy phòng nào. Thêm phòng để bắt đầu.
                 </TableCell>
               </TableRow>
             )}
@@ -581,7 +581,7 @@ const Rooms = () => {
       
       {/* Add Room Dialog */}
       <Dialog open={openAddDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
-        <DialogTitle>Add New Room</DialogTitle>
+        <DialogTitle>Thêm Phòng Mới</DialogTitle>
         <DialogContent>
           {roomTypesLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
@@ -589,13 +589,13 @@ const Rooms = () => {
             </Box>
           ) : roomTypes.length === 0 ? (
             <Alert severity="error" sx={{ my: 2 }}>
-              No room types found. Please create room types first.
+              Không tìm thấy loại phòng nào. Vui lòng tạo loại phòng trước.
             </Alert>
           ) : (
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Room Number"
+                  label="Số Phòng"
                   name="roomNumber"
                   value={formData.roomNumber}
                   onChange={handleChange}
@@ -608,12 +608,12 @@ const Rooms = () => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required error={Boolean(errors.type)}>
-                  <InputLabel>Room Type</InputLabel>
+                  <InputLabel>Loại Phòng</InputLabel>
                   <Select
                     name="type"
                     value={formData.type}
                     onChange={handleChange}
-                    label="Room Type"
+                    label="Loại Phòng"
                   >
                     {roomTypes.map((type) => (
                       <MenuItem key={type._id} value={type._id}>
@@ -626,7 +626,7 @@ const Rooms = () => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Price per Night"
+                  label="Giá Mỗi Đêm"
                   name="price"
                   type="number"
                   value={formData.price}
@@ -969,14 +969,14 @@ const Rooms = () => {
                   </Box>
                 ) : (
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    No images uploaded yet
+                    Chưa có ảnh nào được tải lên
                   </Typography>
                 )}
               </Grid>
               
               <Grid item xs={12}>
                 <TextField
-                  label="Description"
+                  label="Mô tả"
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
@@ -993,7 +993,7 @@ const Rooms = () => {
         {Object.keys(errors).length > 0 && (
           <Box sx={{ mt: 2, p: 2, bgcolor: 'error.lighter', borderRadius: 1 }}>
             <Typography variant="subtitle2" color="error" gutterBottom>
-              Please correct the following errors:
+              Vui lòng sửa các lỗi sau:
             </Typography>
             <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
               {Object.values(errors).map((error, index) => (
@@ -1008,29 +1008,29 @@ const Rooms = () => {
         )}
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleUpdateRoom} 
             variant="contained" 
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Update Room'}
+            {submitting ? <CircularProgress size={24} /> : 'Cập Nhật Phòng'}
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Delete Room Dialog */}
       <Dialog open={openDeleteDialog} onClose={handleCloseDialogs}>
-        <DialogTitle>Delete Room</DialogTitle>
+        <DialogTitle>Xóa Phòng</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete Room {selectedRoom?.roomNumber}? This action cannot be undone.
+            Bạn có chắc chắn muốn xóa Phòng {selectedRoom?.roomNumber}? Hành động này không thể hoàn tác.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleDeleteRoom} 
@@ -1038,7 +1038,7 @@ const Rooms = () => {
             variant="contained"
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Delete'}
+            {submitting ? <CircularProgress size={24} /> : 'Xóa'}
           </Button>
         </DialogActions>
       </Dialog>

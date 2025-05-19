@@ -204,7 +204,7 @@ const Reports = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
-        Analytics & Reports
+        Phân Tích & Báo Cáo
       </Typography>
       
       {error && (
@@ -218,38 +218,38 @@ const Reports = () => {
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={8}>
             <Typography variant="h6" sx={{ mb: 2 }}>
-              Filter Reports
+              Lọc Báo Cáo
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
-                  label="Start Date"
+                  label="Ngày Bắt Đầu"
                   value={startDate}
                   onChange={(newValue) => setStartDate(newValue)}
                   slotProps={{ textField: { variant: 'outlined', size: 'small' } }}
                 />
                 <DatePicker
-                  label="End Date"
+                  label="Ngày Kết Thúc"
                   value={endDate}
                   onChange={(newValue) => setEndDate(newValue)}
                   slotProps={{ textField: { variant: 'outlined', size: 'small' } }}
                 />
               </LocalizationProvider>
               <Button variant="contained" onClick={handleDateChange}>
-                Apply
+                Áp Dụng
               </Button>
             </Box>
           </Grid>
           <Grid item xs={12} md={4}>
             <FormControl fullWidth size="small">
-              <InputLabel>Report Type</InputLabel>
+              <InputLabel>Loại Báo Cáo</InputLabel>
               <Select
                 value="all"
-                label="Report Type"
+                label="Loại Báo Cáo"
               >
-                <MenuItem value="all">All Reports</MenuItem>
-                <MenuItem value="bookings">Booking Reports</MenuItem>
-                <MenuItem value="revenue">Revenue Reports</MenuItem>
+                <MenuItem value="all">Tất Cả Báo Cáo</MenuItem>
+                <MenuItem value="bookings">Báo Cáo Đặt Phòng</MenuItem>
+                <MenuItem value="revenue">Báo Cáo Doanh Thu</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -260,15 +260,15 @@ const Reports = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard 
-            title="Total Revenue" 
-            value={`$${reportData.totalRevenue.toLocaleString()}`} 
+            title="Tổng Doanh Thu" 
+            value={`${reportData.totalRevenue.toLocaleString()} VNĐ`} 
             icon={<AttachMoneyIcon />}
             color="success"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard 
-            title="Total Bookings" 
+            title="Tổng Đặt Phòng" 
             value={reportData.totalBookings} 
             icon={<EventAvailableIcon />}
             color="primary"
@@ -276,7 +276,7 @@ const Reports = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard 
-            title="Total Guests" 
+            title="Tổng Khách" 
             value={reportData.totalGuests} 
             icon={<PeopleIcon />}
             color="secondary"
@@ -284,7 +284,7 @@ const Reports = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard 
-            title="Occupancy Rate" 
+            title="Tỷ Lệ Lấp Đầy" 
             value={`${reportData.occupancyRate}%`} 
             icon={<TrendingUpIcon />}
             color="info"
@@ -300,10 +300,10 @@ const Reports = () => {
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab label="Overview" />
-          <Tab label="Revenue" />
-          <Tab label="Bookings" />
-          <Tab label="Guests" />
+          <Tab label="Tổng Quan" />
+          <Tab label="Doanh Thu" />
+          <Tab label="Đặt Phòng" />
+          <Tab label="Khách Hàng" />
         </Tabs>
         <Divider />
         
@@ -312,16 +312,16 @@ const Reports = () => {
           {activeTab === 0 && (
             <Box>
               <Typography variant="h6" gutterBottom>
-                Overview Report
+                Báo Cáo Tổng Quan
               </Typography>
               <Typography paragraph>
-                This dashboard provides an overview of your hotel's performance. 
-                Use the filters above to adjust the date range for more detailed analysis.
+                Bảng điều khiển này cung cấp tổng quan về hiệu suất khách sạn của bạn. 
+                Sử dụng bộ lọc ở trên để điều chỉnh phạm vi ngày để phân tích chi tiết hơn.
               </Typography>
               
               <Alert severity="info" sx={{ mt: 2 }}>
-                In a production environment, this page would include interactive charts and detailed analytics
-                for booking trends, revenue forecasts, and occupancy rates.
+                Trong môi trường sản xuất, trang này sẽ bao gồm các biểu đồ tương tác và phân tích chi tiết
+                về xu hướng đặt phòng, dự báo doanh thu và tỷ lệ lấp đầy.
               </Alert>
             </Box>
           )}
@@ -329,11 +329,11 @@ const Reports = () => {
           {activeTab === 1 && (
             <Box>
               <Typography variant="h6" gutterBottom>
-                Revenue Report
+                Báo Cáo Doanh Thu
               </Typography>
               <Typography paragraph>
-                Revenue analytics would be displayed here with charts showing monthly trends,
-                revenue by room type, and other financial metrics.
+                Phân tích doanh thu sẽ được hiển thị ở đây với các biểu đồ thể hiện xu hướng hàng tháng,
+                doanh thu theo loại phòng, và các chỉ số tài chính khác.
               </Typography>
             </Box>
           )}
@@ -341,11 +341,11 @@ const Reports = () => {
           {activeTab === 2 && (
             <Box>
               <Typography variant="h6" gutterBottom>
-                Bookings Report
+                Báo Cáo Đặt Phòng
               </Typography>
               <Typography paragraph>
-                Booking analytics would be displayed here with information about
-                booking sources, cancellation rates, and popular booking periods.
+                Phân tích đặt phòng sẽ được hiển thị ở đây với thông tin về
+                nguồn đặt phòng, tỷ lệ hủy và thời gian đặt phòng phổ biến.
               </Typography>
             </Box>
           )}
@@ -353,11 +353,11 @@ const Reports = () => {
           {activeTab === 3 && (
             <Box>
               <Typography variant="h6" gutterBottom>
-                Guest Report
+                Báo Cáo Khách Hàng
               </Typography>
               <Typography paragraph>
-                Guest analytics would be displayed here with demographics, 
-                returning guest rates, and guest satisfaction metrics.
+                Phân tích khách hàng sẽ được hiển thị ở đây với thông tin nhân khẩu học, 
+                tỷ lệ khách hàng quay lại và các chỉ số hài lòng của khách hàng.
               </Typography>
             </Box>
           )}
