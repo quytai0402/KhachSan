@@ -92,17 +92,17 @@ const SystemNotification = () => {
       >
         <Box sx={{ width: 320, p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">Notifications</Typography>
+            <Typography variant="h6">Thông báo</Typography>
             <IconButton onClick={handleDrawerToggle}>
               <CloseIcon />
             </IconButton>
           </Box>
 
           <Tabs value={activeTab} onChange={handleTabChange} variant="fullWidth" sx={{ mb: 2 }}>
-            <Tab label="All" />
-            {isAdmin && <Tab label="Staff Activity" />}
-            {isStaff && <Tab label="Admin Updates" />}
-            <Tab label="Bookings" />
+            <Tab label="Tất cả" />
+            {isAdmin && <Tab label="Hoạt động nhân viên" />}
+            {isStaff && <Tab label="Cập nhật từ quản trị" />}
+            <Tab label="Đặt phòng" />
           </Tabs>
 
           {activeTab === 0 && (
@@ -110,7 +110,7 @@ const SystemNotification = () => {
               {systemAlerts.length > 0 && (
                 <>
                   <Typography variant="subtitle2" color="primary" sx={{ mt: 1, mb: 1 }}>
-                    System Alerts
+                    Thông báo hệ thống
                   </Typography>
                   {systemAlerts.map((alert, index) => (
                     <ListItem key={`alert-${index}`} divider>
@@ -151,7 +151,7 @@ const SystemNotification = () => {
 
               {notifications.length === 0 && systemAlerts.length === 0 && (
                 <Typography variant="body2" sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }}>
-                  No notifications to display
+                  Không có thông báo nào
                 </Typography>
               )}
             </List>
@@ -177,7 +177,7 @@ const SystemNotification = () => {
               ))}
               {staffActivity.length === 0 && (
                 <Typography variant="body2" sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }}>
-                  No staff activity to display
+                  Không có hoạt động nhân viên nào để hiển thị
                 </Typography>
               )}
             </List>
@@ -203,7 +203,7 @@ const SystemNotification = () => {
               ))}
               {adminActivity.length === 0 && (
                 <Typography variant="body2" sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }}>
-                  No admin updates to display
+                  Không có cập nhật từ quản trị viên
                 </Typography>
               )}
             </List>
@@ -214,11 +214,14 @@ const SystemNotification = () => {
               {bookingUpdates.map((update, index) => (
                 <ListItem key={`booking-${index}`} divider>
                   <ListItemText 
-                    primary={`Booking ${update.type}: Room ${update.booking.room?.roomNumber || 'N/A'}`}
+                    primary={`Đặt phòng ${update.type === 'updated' ? 'cập nhật' : 
+                                          update.type === 'created' ? 'mới' : 
+                                          update.type === 'canceled' ? 'đã hủy' : 
+                                          update.type}: Phòng ${update.booking.room?.roomNumber || 'N/A'}`}
                     secondary={
                       <>
                         <Typography variant="body2">
-                          Guest: {update.booking.guestName || update.booking.user?.name || 'N/A'}
+                          Khách: {update.booking.guestName || update.booking.user?.name || 'N/A'}
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <AccessTimeIcon fontSize="small" />
@@ -231,7 +234,7 @@ const SystemNotification = () => {
               ))}
               {bookingUpdates.length === 0 && (
                 <Typography variant="body2" sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }}>
-                  No booking updates to display
+                  Không có cập nhật đặt phòng nào
                 </Typography>
               )}
             </List>

@@ -23,6 +23,7 @@ import {
   Divider
 } from '@mui/material';
 import { withDashboardLayout } from '../../utils/layoutHelpers';
+import { toast } from 'react-toastify';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -225,17 +226,28 @@ const Promotions = () => {
   
   // Delete promotion
   const handleDeletePromotion = async () => {
-    if (!selectedPromotion) return;
+    if (!selectedPromotion) {
+      setError("Không tìm thấy khuyến mãi để xóa");
+      return;
+    }
     
     try {
       setSubmitting(true);
-      await promotionAPI.deletePromotion(selectedPromotion._id);
-      setPromotions(prev => prev.filter(promotion => promotion._id !== selectedPromotion._id));
-      setError(null);
-      handleCloseDialogs();
+      const response = await promotionAPI.deletePromotion(selectedPromotion._id);
+      
+      if (response && response.data) {
+        setPromotions(prev => prev.filter(promotion => promotion._id !== selectedPromotion._id));
+        setError(null);
+        toast.success(`Đã xóa khuyến mãi ${selectedPromotion.name} thành công`);
+        handleCloseDialogs();
+      } else {
+        throw new Error("Không nhận được phản hồi từ máy chủ");
+      }
     } catch (err) {
       console.error('Error deleting promotion:', err);
-      setError(err.response?.data?.message || 'Failed to delete promotion. Please try again.');
+      const errorMsg = err.response?.data?.message || 'Failed to delete promotion. Please try again.';
+      setError(errorMsg);
+      toast.error(`Không thể xóa khuyến mãi: ${errorMsg}`);
     } finally {
       setSubmitting(false);
     }

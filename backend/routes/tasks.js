@@ -163,11 +163,16 @@ router.put('/:id', auth, async (req, res) => {
     // Handle assignment update
     if (assignedTo !== undefined) {
       if (assignedTo) {
-        const user = await User.findById(assignedTo);
-        if (!user) {
-          return res.status(404).json({ msg: 'Không tìm thấy nhân viên' });
+        try {
+          const user = await User.findById(assignedTo);
+          if (!user) {
+            return res.status(404).json({ msg: 'Không tìm thấy nhân viên' });
+          }
+          task.assignedTo = user._id;
+        } catch (error) {
+          console.error('Error finding staff member:', error);
+          return res.status(400).json({ msg: 'ID nhân viên không hợp lệ' });
         }
-        task.assignedTo = user._id;
         
         // If assigned for the first time, change status to in-progress
         if (!task.assignedTo && task.status === 'pending') {

@@ -28,6 +28,7 @@ import { format, addDays, parseISO } from 'date-fns';
 import RoomCard from '../components/RoomCard';
 import { roomAPI } from '../services/api';
 import toastService from '../services/toastService';
+import { formatVND, getVietnameseRoomType } from '../utils/formatCurrency';
 
 const Rooms = () => {
   const location = useLocation();
@@ -38,7 +39,7 @@ const Rooms = () => {
     checkIn: searchParams.get('checkIn') ? parseISO(searchParams.get('checkIn')) : new Date(),
     checkOut: searchParams.get('checkOut') ? parseISO(searchParams.get('checkOut')) : addDays(new Date(), 1),
     guests: searchParams.get('guests') ? parseInt(searchParams.get('guests')) : 1,
-    priceRange: [0, 500],
+    priceRange: [0, 500], // Giá trị thanh trượt (0-500) tương ứng với 0-5.000.000 VND
     type: searchParams.get('type') || '',
     amenities: []
   });
@@ -94,9 +95,9 @@ const Rooms = () => {
       result = result.filter(room => room.capacity >= filters.guests);
     }
     
-    // Filter by price range
+    // Filter by price range - chuyển đổi giá trị thanh trượt thành VND
     result = result.filter(
-      room => room.price >= filters.priceRange[0] && room.price <= filters.priceRange[1]
+      room => room.price >= filters.priceRange[0] * 10000 && room.price <= filters.priceRange[1] * 10000
     );
     
     // Filter by amenities
@@ -145,6 +146,7 @@ const Rooms = () => {
     }));
   };
 
+  // Cập nhật hàm xử lý thay đổi giá để chuyển đổi từ giá trị thanh trượt sang giá tiền VND
   const handlePriceChange = (event, newValue) => {
     setFilters(prev => ({
       ...prev,
@@ -175,7 +177,7 @@ const Rooms = () => {
       checkIn: new Date(),
       checkOut: addDays(new Date(), 1),
       guests: 1,
-      priceRange: [0, 500],
+      priceRange: [0, 500], // Reset về khoảng giá 0-5.000.000 VND
       type: '',
       amenities: []
     });
@@ -279,12 +281,13 @@ const Rooms = () => {
                   label="Loại"
                 >
                   <MenuItem value="">Tất cả</MenuItem>
-                  <MenuItem value="single">Phòng Đơn</MenuItem>
-                  <MenuItem value="double">Phòng Đôi</MenuItem>
-                  <MenuItem value="twin">Phòng Twin</MenuItem>
-                  <MenuItem value="suite">Phòng Suite</MenuItem>
-                  <MenuItem value="family">Phòng Gia Đình</MenuItem>
-                  <MenuItem value="deluxe">Phòng Deluxe</MenuItem>
+                  <MenuItem value="standard">{getVietnameseRoomType('standard')}</MenuItem>
+                  <MenuItem value="deluxe">{getVietnameseRoomType('deluxe')}</MenuItem>
+                  <MenuItem value="suite">{getVietnameseRoomType('suite')}</MenuItem>
+                  <MenuItem value="family">{getVietnameseRoomType('family')}</MenuItem>
+                  <MenuItem value="single">{getVietnameseRoomType('single')}</MenuItem>
+                  <MenuItem value="double">{getVietnameseRoomType('double')}</MenuItem>
+                  <MenuItem value="twin">{getVietnameseRoomType('twin')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -302,18 +305,18 @@ const Rooms = () => {
                   max={500}
                   step={10}
                   marks={[
-                    { value: 0, label: '$0' },
-                    { value: 250, label: '$250' },
-                    { value: 500, label: '$500' }
+                    { value: 0, label: '0₫' },
+                    { value: 250, label: '2.500.000₫' },
+                    { value: 500, label: '5.000.000₫' }
                   ]}
                 />
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="body2" color="text.secondary">
-                  ${filters.priceRange[0]}
+                  {formatVND(filters.priceRange[0] * 10000)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  ${filters.priceRange[1]}
+                  {formatVND(filters.priceRange[1] * 10000)}
                 </Typography>
               </Box>
             </Box>

@@ -171,14 +171,14 @@ router.post('/', [auth, admin, upload.array('images', 5)], async (req, res) => {
     }
 
     // Validate room type exists
-    const roomType = await mongoose.model('RoomType').findById(type);
-    if (!roomType) {
+    const roomTypeExists = await RoomType.findById(type);
+    if (!roomTypeExists) {
       console.error('Invalid room type:', type);
       return res.status(400).json({ message: 'Invalid room type' });
     }
 
     // Process amenities (convert from string to array if needed)
-    const amenitiesArray = typeof amenities === 'string' ? amenities.split(',') : amenities;
+    const amenitiesArray = typeof amenities === 'string' ? amenities.split(',').map(item => item.trim()) : amenities;
 
     // Create new room
     const newRoom = new Room({
@@ -186,9 +186,10 @@ router.post('/', [auth, admin, upload.array('images', 5)], async (req, res) => {
       type,
       description,
       price,
-      capacity: capacity || 2,
+      capacity: capacity || 2, // Default capacity to 2 if not provided
       amenities: amenitiesArray || [],
-      floor: floor || 1
+      floor: floor || 1, // Default floor to 1 if not provided
+      lastUpdatedBy: req.user.id // Set lastUpdatedBy to the logged-in admin user
     });
 
     // Add image paths if uploaded
@@ -200,7 +201,7 @@ router.post('/', [auth, admin, upload.array('images', 5)], async (req, res) => {
     // Save room to database
     const room = await newRoom.save();
     console.log('Room created successfully:', room._id);
-    res.json(room);
+    res.status(201).json(room); // Changed to 201 for resource creation
   } catch (err) {
     console.error('Error creating room:', err.message);
     if (err.name === 'ValidationError') {
@@ -214,7 +215,7 @@ router.post('/', [auth, admin, upload.array('images', 5)], async (req, res) => {
 // @desc    Update a room
 // @access  Private (Admin only)
 router.put('/:id', [auth, admin, upload.array('images', 5)], async (req, res) => {
-  const { roomNumber, type, description, price, capacity, amenities, status, floor } = req.body;
+  const { roomNumber, type, description, price, capacity, amenities, status, floor, cleaningStatus, notes } = req.body;
 
   // Build room object
   const roomFields = {};
@@ -224,10 +225,13 @@ router.put('/:id', [auth, admin, upload.array('images', 5)], async (req, res) =>
   if (price) roomFields.price = price;
   if (capacity) roomFields.capacity = capacity;
   if (amenities) {
-    roomFields.amenities = typeof amenities === 'string' ? amenities.split(',') : amenities;
+    roomFields.amenities = typeof amenities === 'string' ? amenities.split(',').map(item => item.trim()) : amenities;
   }
   if (status) roomFields.status = status;
   if (floor) roomFields.floor = floor;
+  if (cleaningStatus) roomFields.cleaningStatus = cleaningStatus;
+  if (notes) roomFields.notes = notes;
+  roomFields.lastUpdatedBy = req.user.id; // Set lastUpdatedBy to the logged-in admin user
 
   try {
     // Check if room exists
@@ -236,8 +240,27 @@ router.put('/:id', [auth, admin, upload.array('images', 5)], async (req, res) =>
       return res.status(404).json({ message: 'Room not found' });
     }
 
+    // If room number is being changed, check if the new room number already exists
+    if (roomNumber && roomNumber !== room.roomNumber) {
+        const existingRoom = await Room.findOne({ roomNumber });
+        if (existingRoom) {
+            return res.status(400).json({ message: 'Room number already exists' });
+        }
+    }
+
+    // Validate room type exists if it's being updated
+    if (type) {
+        const roomTypeExists = await RoomType.findById(type);
+        if (!roomTypeExists) {
+            return res.status(400).json({ message: 'Invalid room type' });
+        }
+    }
+
     // Add image paths if uploaded
     if (req.files && req.files.length > 0) {
+      // Optionally, remove old images if new ones are uploaded and you want to replace them
+      // This would require more logic to handle specific image deletions or appending new ones.
+      // For simplicity, this example replaces all images if new ones are provided.
       roomFields.images = req.files.map(file => `/uploads/rooms/${file.filename}`);
     }
 
@@ -245,14 +268,17 @@ router.put('/:id', [auth, admin, upload.array('images', 5)], async (req, res) =>
     room = await Room.findByIdAndUpdate(
       req.params.id,
       { $set: roomFields },
-      { new: true }
-    );
+      { new: true, runValidators: true } // Added runValidators to ensure schema validation on update
+    ).populate('type').populate('lastUpdatedBy', 'name email'); // Populate referenced fields
 
     res.json(room);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error updating room:', err.message);
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Room not found' });
+    }
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation Error', errors: err.errors });
     }
     res.status(500).send('Server error');
   }
@@ -269,11 +295,23 @@ router.delete('/:id', [auth, admin], async (req, res) => {
       return res.status(404).json({ message: 'Room not found' });
     }
 
-    // Delete room
-    await Room.findByIdAndRemove(req.params.id);
-    res.json({ message: 'Room removed' });
+    // TODO: Add logic to check if the room has any active bookings before deleting.
+    // If it does, prevent deletion or offer an option to reassign bookings.
+
+    // Delete room images from the server
+    if (room.images && room.images.length > 0) {
+      room.images.forEach(imagePath => {
+        const fullPath = path.join(__dirname, '..', imagePath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      });
+    }
+
+    await Room.findByIdAndDelete(req.params.id); // Changed from findByIdAndRemove
+    res.json({ message: 'Room removed successfully' });
   } catch (err) {
-    console.error(err.message);
+    console.error('Error deleting room:', err.message);
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Room not found' });
     }
@@ -281,4 +319,4 @@ router.delete('/:id', [auth, admin], async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

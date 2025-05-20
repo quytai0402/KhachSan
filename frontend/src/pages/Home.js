@@ -100,7 +100,7 @@ const TestimonialCard = styled(Card)(({ theme }) => ({
     left: 20,
     width: 40,
     height: 40,
-    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%231e4e8c15\'%3E%3Cpath d=\'M6.5 10c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.692-.604.213-.21.492-.315.714-.463.232-.133.434-.28.65-.35.208-.086.39-.16.539-.222.302-.125.474-.197.474-.197L9.758 4.03c0 0-.218.052-.597.144-.377.13-.892.354-1.432.623-.543.226-1.193.478-1.813.894-.344.209-.645.473-.952.754-.239.29-.527.526-.739.876-.255.325-.537.612-.754.976-.219.323-.376.684-.513 1.037-.148.353-.29.684-.36 1.037-.107.348-.168.635-.168.635l.003.021c-.17.21-.03.43-.03.653 0 2.306 1.794 4.1 4.1 4.1 2.306 0 4.1-1.794 4.1-4.1S8.806 10 6.5 10zM17.5 10c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.692-.604.213-.21.492-.315.714-.463.232-.133.434-.28.65-.35.208-.086.39-.16.539-.222.302-.125.474-.197.474-.197L19.758 4.03c0 0-.218.052-.597.144-.377.13-.892.354-1.432.623-.543.226-1.193.478-1.813.894-.344.209-.645.473-.952.754-.239.29-.527.526-.739.876-.255.325-.537.612-.754.976-.219.323-.376.684-.513 1.037-.148.353-.29.684-.36 1.037-.107.348-.168.635-.168.635l.003.021c-.17.21-.03.43-.03.653 0 2.306 1.794 4.1 4.1 4.1 2.306 0 4.1-1.794 4.1-4.1S19.806 10 17.5 10z\'/%3E%3C/svg%3E")',
+    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%231e4e8c15\'%3E%3Cpath d=\'M6.5 10c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.692-.604.213-.21.492-.315.714-.463.232-.133.434-.28.65-.35.208-.086.39-.16.539-.222.302-.125.474-.197.474-.197L9.758 4.03c0 0-.218.052-.597.144-.377.13-.892.354-1.432.623-.543.226-1.193.478-1.813.894-.344.209-.645.473-.952.754-.239.29-.527.526-.739.876-.255.325-.537.612-.754.976-.219.323-.376.684-.513 1.037-.148.353-.29.684-.36 1.037-.107.348-.168.635-.168.635l.003.021c-.17.21-.03.43-.03.653 0 2.306 1.794 4.1 4.1 4.1 2.306 0 4.1-1.794 4.1-4.1S8.806 10 6.5 10zM17.5 10c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.714-.463.232-.133.434-.28.65-.35.208-.086.39-.16.539-.222.302-.125.474-.197.474-.197L19.758 4.03c0 0-.218.052-.597.144-.377.13-.892.354-1.432.623-.543.226-1.193.478-1.813.894-.344.209-.645.473-.952.754-.239.29-.527.526-.739.876-.255.325-.537.612-.754.976-.219.323-.376.684-.513 1.037-.148.353-.29.684-.36 1.037-.107.348-.168.635-.168.635l.003.021c-.17.21-.03.43-.03.653 0 2.306 1.794 4.1 4.1 4.1 2.306 0 4.1-1.794 4.1-4.1S19.806 10 17.5 10z\'/%3E%3C/svg%3E")',
     backgroundRepeat: 'no-repeat',
     backgroundSize: 'contain',
     opacity: 0.5,
@@ -138,56 +138,6 @@ const Home = () => {
   const [checkOut, setCheckOut] = useState(addDays(new Date(), 1));
   const [guests, setGuests] = useState(2);
   const [roomType, setRoomType] = useState('');
-
-  // Generate realistic example rooms if no real rooms are found
-  const generateExampleRooms = () => {
-    return [
-      {
-        _id: 'example1',
-        roomNumber: '101',
-        type: 'deluxe',
-        status: 'available',
-        capacity: 2,
-        price: 1800000,
-        size: 32,
-        amenities: ['Wifi', 'TV', 'Điều hòa', 'Mini bar', 'Két sắt'],
-        description: 'Phòng Deluxe sang trọng với không gian rộng rãi, thiết kế hiện đại và ban công riêng nhìn ra thành phố.',
-      },
-      {
-        _id: 'example2',
-        roomNumber: '205',
-        type: 'suite',
-        status: 'available',
-        capacity: 4,
-        price: 3500000,
-        size: 55,
-        amenities: ['Wifi', 'TV', 'Điều hòa', 'Mini bar', 'Bồn tắm', 'Phòng khách'],
-        description: 'Phòng Suite cao cấp với phòng khách riêng biệt, phòng ngủ rộng rãi và tầm nhìn panorama đẹp mắt.',
-      },
-      {
-        _id: 'example3',
-        roomNumber: '308',
-        type: 'family',
-        status: 'available',
-        capacity: 5,
-        price: 2500000,
-        size: 45,
-        amenities: ['Wifi', 'TV', 'Điều hòa', 'Tủ lạnh', '2 phòng ngủ'],
-        description: 'Phòng Gia Đình lý tưởng với 2 phòng ngủ liền kề, thích hợp cho gia đình có trẻ em.',
-      },
-      {
-        _id: 'example4',
-        roomNumber: '412',
-        type: 'twin',
-        status: 'available',
-        capacity: 2,
-        price: 1500000,
-        size: 30,
-        amenities: ['Wifi', 'TV', 'Điều hòa', 'Bàn làm việc', '2 giường đơn'],
-        description: 'Phòng Twin với hai giường đơn tiện nghi, trang bị đầy đủ tiện nghi hiện đại.',
-      }
-    ];
-  };
   
   useEffect(() => {
     const fetchData = async () => {
@@ -204,21 +154,28 @@ const Home = () => {
             .sort((a, b) => b.price - a.price)
             .slice(0, 4);
           
-          setFeaturedRooms(sortedRooms.length > 0 ? sortedRooms : generateExampleRooms());
+          setFeaturedRooms(sortedRooms);
         } else {
-          // If no real rooms found, use example rooms
-          setFeaturedRooms(generateExampleRooms());
+          // Nếu không có phòng, hiển thị danh sách trống
+          setFeaturedRooms([]);
+          setError('Không có phòng khả dụng vào lúc này.');
         }
         
         // Load promotions
         const promotionsResponse = await axios.get(`${API_URL}/api/promotions`);
         setPromotions(promotionsResponse.data || []);
         
+        // Load hotel features/services
+        const featuresResponse = await axios.get(`${API_URL}/api/services/features`);
+        if (featuresResponse.data && featuresResponse.data.length > 0) {
+          setHotelFeatures(featuresResponse.data);
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error('Error fetching homepage data:', err);
         setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
-        setFeaturedRooms(generateExampleRooms()); // Use example rooms on error
+        setFeaturedRooms([]); // Hiển thị danh sách trống khi có lỗi
         setLoading(false);
       }
     };
@@ -236,29 +193,24 @@ const Home = () => {
     navigate(`/rooms?${searchParams.toString()}`);
   };
 
-  // Example services data
-  const hotelServices = [
-    { 
-      icon: <HotelIcon />, 
-      title: 'Phòng Cao Cấp', 
-      description: 'Các loại phòng nghỉ sang trọng với nội thất hiện đại, đem đến trải nghiệm lưu trú tuyệt vời.' 
-    },
-    { 
-      icon: <LocalDiningIcon />, 
-      title: 'Nhà Hàng', 
-      description: 'Thưởng thức ẩm thực đa dạng từ các đầu bếp hàng đầu trong không gian tinh tế.' 
-    },
-    { 
-      icon: <SpaIcon />, 
-      title: 'Spa & Wellness', 
-      description: 'Dịch vụ spa chất lượng cao giúp thư giãn và phục hồi năng lượng tuyệt vời.' 
-    },
-    { 
-      icon: <PoolIcon />, 
-      title: 'Hồ Bơi', 
-      description: 'Hồ bơi vô cực với tầm nhìn tuyệt đẹp, mang đến trải nghiệm nghỉ dưỡng hoàn hảo.' 
-    },
-  ];
+  // Services state
+  const [hotelFeatures, setHotelFeatures] = useState([]);
+  
+  // Function to get the appropriate icon for a service type
+  const getServiceIcon = (type) => {
+    switch (type) {
+      case 'room':
+        return <HotelIcon />;
+      case 'dining':
+        return <LocalDiningIcon />;
+      case 'spa':
+        return <SpaIcon />;
+      case 'pool':
+        return <PoolIcon />;
+      default:
+        return <HotelIcon />;
+    }
+  };
 
   // Example testimonials
   const testimonials = [
@@ -593,18 +545,18 @@ const Home = () => {
             </Typography>
           </Box>
 
-          <Grid container spacing={4}>
-            {hotelServices.map((service, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
+          <Grid container spacing={isMobileView ? 2 : 4} justifyContent="center">
+            {hotelFeatures.map((feature) => (
+              <Grid item xs={12} sm={6} md={3} key={feature._id || feature.title}> {/* Use feature._id or feature.title as key */}
                 <ServiceCard>
                   <IconWrapper>
-                    {service.icon}
+                    {getServiceIcon(feature.type)}
                   </IconWrapper>
                   <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1, textAlign: 'center' }}>
-                    {service.title}
+                    {feature.title}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-                    {service.description}
+                    {feature.description}
                   </Typography>
                 </ServiceCard>
               </Grid>

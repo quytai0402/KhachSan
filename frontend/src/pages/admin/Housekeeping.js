@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -26,9 +26,9 @@ import {
   Alert,
   IconButton,
   Tooltip,
-  Divider,
   Tab,
-  Tabs
+  Tabs,
+  CircularProgress
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -37,8 +37,7 @@ import {
   Assignment as AssignmentIcon,
   Add as AddIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon,
-  FilterList as FilterListIcon
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
@@ -49,6 +48,8 @@ import { DashboardLayout } from '../../components/dashboard';
 const AdminHousekeeping = () => {
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -91,30 +92,58 @@ const AdminHousekeeping = () => {
     
     const fetchStaff = async () => {
       try {
-        // Ideally this would call a staffService.getStaff() method
-        // For now we'll use sample data
-        setStaffMembers([
-          { _id: 'staff1', name: 'Nguyễn Thị Hương', role: 'housekeeper' },
-          { _id: 'staff2', name: 'Lê Văn Minh', role: 'housekeeper' },
-          { _id: 'staff3', name: 'Trần Văn Lực', role: 'maintenance' },
-          { _id: 'staff4', name: 'Phạm Thị Mai', role: 'housekeeper' },
-          { _id: 'staff5', name: 'Hoàng Văn Bình', role: 'maintenance' }
-        ]);
+        // Fetch staff from users API - only get staff/maintenance roles
+        const response = await fetch('/api/users?role=staff,maintenance');
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          // Filter out admin users and map to required format
+          const staffData = data
+            .filter(user => user.role === 'staff' || user.role === 'maintenance' || user.role === 'housekeeper')
+            .map(user => ({
+              _id: user._id,
+              name: user.name,
+              role: user.role === 'staff' ? 'housekeeper' : user.role
+            }));
+          
+          setStaffMembers(staffData);
+        } else {
+          console.error("Invalid staff data format:", data);
+          // Fallback to empty array
+          setStaffMembers([]);
+        }
       } catch (error) {
         console.error("Error fetching staff:", error);
+        toast.error("Không thể tải danh sách nhân viên");
+      }
+    };
+    
+    const fetchRooms = async () => {
+      setLoadingRooms(true);
+      try {
+        // Fetch rooms from your API
+        const response = await fetch('/api/rooms');
+        const data = await response.json();
+        if (data.success) {
+          setRooms(data.data);
+        } else {
+          console.error("Failed to fetch rooms:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching rooms:", error);
+      } finally {
+        setLoadingRooms(false);
       }
     };
     
     fetchTasks();
     fetchStaff();
+    fetchRooms();
   }, []);
 
   // Filter tasks based on search/filter criteria
   useEffect(() => {
-    filterTasks();
-  }, [tasks, searchTerm, statusFilter, typeFilter, tabValue]);
-
-  const filterTasks = () => {
+    // Filter tasks based on all criteria
     let filtered = [...tasks];
 
     // Apply tab filter first
@@ -125,7 +154,7 @@ const AdminHousekeeping = () => {
     } else if (tabValue === 3) {
       filtered = filtered.filter(task => task.status === 'completed');
     }
-
+    
     // Filter by search term (room number or notes)
     if (searchTerm) {
       const lowerSearchTerm = searchTerm.toLowerCase();
@@ -152,7 +181,7 @@ const AdminHousekeeping = () => {
     }
 
     setFilteredTasks(filtered);
-  };
+  }, [tasks, searchTerm, statusFilter, typeFilter, tabValue]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -229,13 +258,30 @@ const AdminHousekeeping = () => {
   };
 
   const handleAssignTask = async () => {
+    if (!selectedTask) {
+      toast.error("Không tìm thấy thông tin nhiệm vụ");
+      return;
+    }
+    
+    if (!assignedStaff && assignedStaff !== '') {
+      toast.error("Vui lòng chọn nhân viên phân công");
+      return;
+    }
+    
     try {
       const result = await taskService.assignTask(selectedTask._id, assignedStaff);
       if (result) {
+        // Find the staff member object for display
+        const staffMember = staffMembers.find(staff => staff._id === assignedStaff);
+        
         // Update the task in the local state
         const updatedTasks = tasks.map(task => 
           task._id === selectedTask._id 
-            ? { ...task, assignedTo: assignedStaff, status: 'in-progress' } 
+            ? { 
+                ...task, 
+                assignedTo: staffMember || assignedStaff, 
+                status: 'in-progress' 
+              } 
             : task
         );
         setTasks(updatedTasks);
@@ -243,7 +289,10 @@ const AdminHousekeeping = () => {
       }
     } catch (error) {
       console.error("Error assigning task:", error);
-      toast.error("Không thể phân công nhiệm vụ");
+      const errorMessage = error.msg || error.message || "Không thể phân công nhiệm vụ";
+      toast.error(errorMessage);
+      // Don't close dialog on error so user can try again
+      return;
     }
     handleCloseDialog();
   };
@@ -635,14 +684,33 @@ const AdminHousekeeping = () => {
             
             {(dialogMode === 'create' || dialogMode === 'edit') && (
               <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TextField
-                  name="roomNumber"
-                  label="Số phòng"
-                  fullWidth
-                  required
-                  value={taskFormData.roomNumber}
-                  onChange={handleFormChange}
-                />
+                <FormControl fullWidth>
+                  <InputLabel>Số Phòng *</InputLabel>
+                  <Select
+                    name="roomNumber"
+                    value={taskFormData.roomNumber}
+                    onChange={handleFormChange}
+                    label="Số Phòng *"
+                    required
+                  >
+                    {loadingRooms ? (
+                      <MenuItem value="">
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <CircularProgress size={20} sx={{ mr: 1 }} />
+                          Đang tải danh sách phòng...
+                        </Box>
+                      </MenuItem>
+                    ) : rooms.length > 0 ? (
+                      rooms.map((room) => (
+                        <MenuItem key={room._id} value={room.roomNumber}>
+                          {room.roomNumber} - {room.type?.name || 'Không xác định'}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="">Không có phòng</MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
                 
                 <FormControl fullWidth>
                   <InputLabel>Loại nhiệm vụ</InputLabel>

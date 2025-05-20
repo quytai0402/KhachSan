@@ -31,6 +31,7 @@ import {
   Switch,
   FormControlLabel
 } from '@mui/material';
+import { formatVND, getVietnameseRoomType } from '../../utils/formatCurrency';
 import {
   Search as SearchIcon,
   CleaningServices as CleaningServicesIcon,
@@ -745,7 +746,7 @@ const StaffRooms = () => {
                           Loại phòng
                         </Typography>
                         <Typography variant="body1" gutterBottom>
-                          {room.type}
+                          {getVietnameseRoomType(room.type)}
                         </Typography>
                         
                         <Typography variant="body2" color="text.secondary">

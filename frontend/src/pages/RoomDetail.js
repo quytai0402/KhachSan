@@ -55,7 +55,6 @@ const amenityIcons = {
 
 const getRoomTypeLabel = (type) => {
   return getVietnameseRoomType(type);
-  }
 };
 
 const RoomDetail = () => {
@@ -377,4 +376,4 @@ const RoomDetail = () => {
   );
 };
 
-export default RoomDetail; 
+export default RoomDetail;

@@ -177,11 +177,14 @@ router.delete('/:id', [auth, admin], async (req, res) => {
       return res.status(400).json({ message: 'Cannot delete your own account' });
     }
 
+    // TODO: Add logic to check if the user has any critical associated data (e.g., active bookings as a guest, or assigned tasks as staff) before deleting.
+    // If so, prevent deletion or offer an option to reassign/archive data.
+
     // Delete user
-    await User.findByIdAndRemove(req.params.id);
-    res.json({ message: 'User removed' });
+    await User.findByIdAndDelete(req.params.id); // Changed from findByIdAndRemove
+    res.json({ message: 'User removed successfully' }); // Added 'successfully' for clarity
   } catch (err) {
-    console.error(err.message);
+    console.error('Error deleting user:', err.message); // Added context to console error
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -189,4 +192,4 @@ router.delete('/:id', [auth, admin], async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

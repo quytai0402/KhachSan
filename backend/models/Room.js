@@ -43,21 +43,13 @@ const RoomSchema = new mongoose.Schema({
   floor: {
     type: Number
   },
-  lastUpdated: {
-    type: Date,
-    default: Date.now
-  },
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
   notes: {
     type: String
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
-});
+}, { timestamps: true });
 
-module.exports = mongoose.model('Room', RoomSchema); 
+module.exports = mongoose.model('Room', RoomSchema);

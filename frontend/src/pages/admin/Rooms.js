@@ -579,7 +579,10 @@ const Rooms = () => {
                   <TableCell>{room.floor || 1}</TableCell>
                   <TableCell>
                     <Chip 
-                      label={room.status} 
+                      label={room.status === 'available' ? 'Trống' : 
+                             room.status === 'booked' ? 'Đã đặt' : 
+                             room.status === 'occupied' ? 'Đang ở' :
+                             room.status === 'maintenance' ? 'Bảo trì' : room.status} 
                       color={getStatusColor(room.status)} 
                       size="small" 
                     />
@@ -668,7 +671,7 @@ const Rooms = () => {
                   >
                     {roomTypes.map((type) => (
                       <MenuItem key={type._id} value={type._id}>
-                        {type.name} - ${type.basePrice}
+                        {getVietnameseRoomType(type.name)} - {formatVND(type.basePrice)}
                       </MenuItem>
                     ))}
                   </Select>
@@ -756,13 +759,14 @@ const Rooms = () => {
               </Grid>
               
               <Grid item xs={12}>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>Room Images</Typography>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>Hình Ảnh Phòng</Typography>
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   component="label"
                   startIcon={<PhotoCameraIcon />}
+                  color="primary"
                 >
-                  Upload Images
+                  Tải lên hình ảnh
                   <input
                     type="file"
                     hidden

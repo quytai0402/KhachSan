@@ -41,6 +41,8 @@ import {
   AccountCircle as AccountCircleIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
+import { format } from 'date-fns';
 
 const drawerWidth = 240;
 
@@ -73,15 +75,32 @@ const DashboardLayout = ({ children, title }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
-
-  const notifications = [
-    { id: 1, text: 'Có 5 đơn đặt phòng mới', time: '10 phút trước', read: false },
-    { id: 2, text: 'Phòng 203 cần được dọn dẹp', time: '30 phút trước', read: false },
-    { id: 3, text: 'Khách hàng đã check-out khỏi phòng 105', time: '2 giờ trước', read: true },
-    { id: 4, text: 'Có yêu cầu dịch vụ phòng mới', time: '3 giờ trước', read: true }
-  ];
+  const { notifications, systemAlerts, bookingUpdates } = useSocket();
   
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Hợp nhất các loại thông báo để hiển thị
+  const allNotifications = [
+    ...notifications.map(n => ({
+      id: n.id || Math.random().toString(36).substr(2, 9),
+      text: n.message || n.text,
+      time: n.timestamp ? format(new Date(n.timestamp), 'dd/MM/yyyy HH:mm') : 'Mới',
+      read: n.read || false
+    })),
+    ...systemAlerts.map(n => ({
+      id: n.id || Math.random().toString(36).substr(2, 9),
+      text: n.message || n.text,
+      time: n.timestamp ? format(new Date(n.timestamp), 'dd/MM/yyyy HH:mm') : 'Mới',
+      read: n.read || false,
+      isSystemAlert: true
+    })),
+    ...bookingUpdates.map(n => ({
+      id: n.id || Math.random().toString(36).substr(2, 9),
+      text: `Đặt phòng ${n.type === 'updated' ? 'được cập nhật' : n.type === 'canceled' ? 'đã bị hủy' : 'mới'}: ${n.booking?.roomNumber || ''}`,
+      time: n.timestamp ? format(new Date(n.timestamp), 'dd/MM/yyyy HH:mm') : 'Mới',
+      read: false
+    }))
+  ].sort((a, b) => new Date(b.time) - new Date(a.time));
+  
+  const unreadCount = allNotifications.filter(n => !n.read).length;
   
   // Always keep the drawer open, regardless of screen size
   // This ensures sidebar is always visible in admin and staff panels
@@ -245,30 +264,38 @@ const DashboardLayout = ({ children, title }) => {
       >
         <Box sx={{ p: 2, borderBottom: '1px solid #eee' }}>
           <Typography variant="h6" fontSize="1rem" fontWeight={600}>
-            Thông Báo ({notifications.length})
+            Thông Báo ({allNotifications.length})
           </Typography>
         </Box>
-        {notifications.map(notification => (
-          <MenuItem 
-            key={notification.id}
-            onClick={handleNotificationsClose}
-            sx={{ 
-              borderLeft: notification.read ? 'none' : '3px solid #1e4e8c',
-              py: 1.5,
-              px: 2,
-              bgcolor: notification.read ? 'inherit' : 'rgba(30, 78, 140, 0.04)'
-            }}
-          >
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: notification.read ? 400 : 600 }}>
-                {notification.text}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {notification.time}
-              </Typography>
-            </Box>
-          </MenuItem>
-        ))}
+        {allNotifications.length > 0 ? (
+          allNotifications.map(notification => (
+            <MenuItem 
+              key={notification.id}
+              onClick={handleNotificationsClose}
+              sx={{ 
+                borderLeft: notification.read ? 'none' : (notification.isSystemAlert ? '3px solid #d32f2f' : '3px solid #1e4e8c'),
+                py: 1.5,
+                px: 2,
+                bgcolor: notification.read ? 'inherit' : (notification.isSystemAlert ? 'rgba(211, 47, 47, 0.04)' : 'rgba(30, 78, 140, 0.04)')
+              }}
+            >
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: notification.read ? 400 : 600 }}>
+                  {notification.text}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {notification.time}
+                </Typography>
+              </Box>
+            </MenuItem>
+          ))
+        ) : (
+          <Box p={2}>
+            <Typography variant="body2" color="text.secondary" align="center">
+              Không có thông báo mới
+            </Typography>
+          </Box>
+        )}
         <Divider />
         <MenuItem 
           onClick={handleNotificationsClose}

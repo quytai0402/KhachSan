@@ -40,6 +40,7 @@ import {
   Search as SearchIcon,
   FilterList as FilterListIcon
 } from '@mui/icons-material';
+import { toast } from 'react-toastify';
 import { userAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
@@ -229,12 +230,21 @@ const Users = () => {
     
     try {
       setSubmitting(true);
-      await userAPI.deleteUser(selectedUser._id);
-      setUsers(prev => prev.filter(user => user._id !== selectedUser._id));
-      handleCloseDialogs();
+      const response = await userAPI.deleteUser(selectedUser._id);
+      
+      if (response && response.data) {
+        setUsers(prev => prev.filter(user => user._id !== selectedUser._id));
+        toast.success(`Đã xóa người dùng ${selectedUser.name} thành công`);
+        handleCloseDialogs();
+      } else {
+        throw new Error('Phản hồi từ máy chủ không hợp lệ');
+      }
     } catch (err) {
       console.error('Error deleting user:', err);
-      setError('Không thể xóa người dùng. Vui lòng thử lại.');
+      // Extract error message from response if available
+      const errorMsg = err.response?.data?.message || 'Không thể xóa người dùng. Vui lòng thử lại.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
