@@ -333,10 +333,36 @@ router.post('/guest', async (req, res) => {
     if (checkInDateOnly.getTime() === today.getTime()) {
       room.status = 'booked';
       await room.save();
+      
+      // Emit room status change event if socket is available
+      if (req.io) {
+        req.io.emit(socketEvents.ROOM_STATUS_CHANGED, {
+          roomId: room._id,
+          status: room.status
+        });
+        
+        // Also emit booking created event
+        const populatedBooking = await Booking.findById(booking._id)
+          .populate('room', ['roomNumber', 'type', 'price']);
+        
+        socketEvents.emitToRoles(req.io, socketEvents.BOOKING_CREATED, populatedBooking);
+        
+        // Send notification
+        const notification = {
+          message: `New guest booking created for Room ${room.roomNumber}`,
+          type: 'booking',
+          data: {
+            bookingId: booking._id,
+            roomNumber: room.roomNumber,
+            checkInDate,
+            checkOutDate
+          },
+          timestamp: new Date()
+        };
+        
+        socketEvents.emitToRoles(req.io, socketEvents.NOTIFICATION, notification);
+      }
     }
-
-    // We could also send confirmation email to guest
-    // sendGuestBookingConfirmation(booking, room, guestInfo).catch(err => ...);
 
     res.json(booking);
   } catch (err) {
@@ -348,7 +374,7 @@ router.post('/guest', async (req, res) => {
   }
 });
 
-// @route   PUT api/bookings/:id
+// @route   PUT api/bookings/:id/status
 // @desc    Update booking status
 // @access  Private (Admin only)
 router.put('/:id/status', [auth, admin], async (req, res) => {
@@ -561,4 +587,30 @@ router.put('/:id/cancel', auth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+// @route   GET api/bookings/phone/:phoneNumber
+// @desc    Get bookings by guest phone number
+// @access  Public (for guest booking lookup)
+router.get('/phone/:phoneNumber', async (req, res) => {
+  try {
+    const { phoneNumber } = req.params;
+    
+    // Find all bookings with the given phone number
+    const bookings = await Booking.find({ 
+      isGuestBooking: true,
+      guestPhone: phoneNumber 
+    })
+    .populate('room', ['roomNumber', 'type', 'price', 'images'])
+    .sort({ createdAt: -1 });
+    
+    if (!bookings || bookings.length === 0) {
+      return res.status(404).json({ message: 'No bookings found for this phone number' });
+    }
+    
+    res.json(bookings);
+  } catch (err) {
+    console.error('Error fetching bookings by phone:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+module.exports = router;

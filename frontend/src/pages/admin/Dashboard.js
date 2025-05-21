@@ -68,6 +68,10 @@ const emptyStats = {
     today: 0, 
     thisWeek: 0, 
     thisMonth: 0 
+  },
+  guestStatistics: {
+    totalUniqueGuests: 0,
+    frequentGuests: []
   }
 };
 
@@ -482,6 +486,10 @@ const AdminDashboard = () => {
             today: Number(dashboardData?.revenue?.today || 0),
             thisWeek: Number(dashboardData?.revenue?.thisWeek || 0),
             thisMonth: Number(dashboardData?.revenue?.thisMonth || 0)
+          },
+          guestStatistics: {
+            totalUniqueGuests: Number(dashboardData?.guestStatistics?.totalUniqueGuests || 0),
+            frequentGuests: dashboardData?.guestStatistics?.frequentGuests || []
           }
         };
         
@@ -580,6 +588,10 @@ const AdminDashboard = () => {
               today: Number(dashboardData.revenue?.today || 0) || stats.revenue.today,
               thisWeek: Number(dashboardData.revenue?.thisWeek || 0) || stats.revenue.thisWeek,
               thisMonth: Number(dashboardData.revenue?.thisMonth || 0) || stats.revenue.thisMonth
+            },
+            guestStatistics: {
+              totalUniqueGuests: Number(dashboardData.guestStatistics?.totalUniqueGuests || 0) || stats.guestStatistics.totalUniqueGuests,
+              frequentGuests: dashboardData.guestStatistics?.frequentGuests || stats.guestStatistics.frequentGuests
             }
           };
         
@@ -758,6 +770,74 @@ const AdminDashboard = () => {
               linkText="Xem báo cáo"
               linkUrl="/admin/reports"
             />
+          </Grid>
+        </Grid>
+
+        {/* Guest Statistics */}
+        <Grid container spacing={3} mb={4}>
+          <Grid item xs={12}>
+            <Paper 
+              sx={{ 
+                p: 3, 
+                height: '100%', 
+                borderRadius: 3, 
+                boxShadow: '0 2px 12px rgba(0,0,0,0.06)' 
+              }}
+              elevation={0}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="h6" fontWeight={600}>
+                    Khách Vãng Lai
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Thống kê khách đặt phòng không cần tài khoản
+                  </Typography>
+                </Box>
+              </Box>
+              
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight={500}>
+                  Tổng số khách vãng lai: {stats.guestStatistics?.totalUniqueGuests || 0}
+                </Typography>
+              </Box>
+              
+              {stats.guestStatistics?.frequentGuests && stats.guestStatistics.frequentGuests.length > 0 ? (
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={500} mb={1}>
+                    Khách thường xuyên đặt phòng:
+                  </Typography>
+                  <List dense sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                    {stats.guestStatistics.frequentGuests.map((guest, index) => (
+                      <ListItem
+                        key={index}
+                        secondaryAction={
+                          <Chip 
+                            label={`${guest.count} lần đặt`} 
+                            size="small"
+                            color="primary"
+                          />
+                        }
+                      >
+                        <ListItemAvatar>
+                          <Avatar sx={{ bgcolor: '#1e4e8c' }}>
+                            {guest.name?.charAt(0) || "K"}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={guest.name || "Khách"}
+                          secondary={guest.phone}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              ) : (
+                <Typography color="text.secondary">
+                  Chưa có dữ liệu khách vãng lai.
+                </Typography>
+              )}
+            </Paper>
           </Grid>
         </Grid>
 

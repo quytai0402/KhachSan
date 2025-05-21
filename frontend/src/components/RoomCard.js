@@ -217,7 +217,7 @@ const RoomCard = ({ room }) => {
               fontSize: '1.2rem',
             }}
           >
-            Phòng {room.roomNumber}
+            {room.roomNumber ? `Phòng ${room.roomNumber}` : (room.type && room.type.name ? getVietnameseRoomType(room.type.name) : "Phòng Khách Sạn")}
           </Typography>
           
           <Rating 

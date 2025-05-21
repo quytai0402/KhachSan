@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Typography,
   Box,
   Paper,
@@ -37,8 +36,7 @@ import {
   Refresh as RefreshIcon,
   Visibility as VisibilityIcon,
   Add as AddIcon,
-  Search as SearchIcon,
-  FilterList as FilterListIcon
+  Search as SearchIcon
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { userAPI } from '../../services/api';

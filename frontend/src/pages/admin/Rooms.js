@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Typography,
   Box,
   Paper,
   Table,
@@ -10,15 +9,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Button,
   IconButton,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle,
-  TextField,
   MenuItem,
   Grid,
   FormControl,
@@ -29,12 +25,6 @@ import {
   Tooltip,
   ImageList,
   ImageListItem,
-  Card,
-  CardMedia,
-  CardContent,
-  List,
-  ListItem,
-  ListItemText,
   FormHelperText
 } from '@mui/material';
 import { formatVND, getVietnameseRoomType } from '../../utils/formatCurrency';
@@ -50,6 +40,13 @@ import { roomAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toastService from '../../services/toastService';
 import { withDashboardLayout } from '../../utils/layoutHelpers';
+import { useLanguage } from '../../context/LanguageContext';
+import { 
+  Text, 
+  TranslatedButton as Button, 
+  TranslatedDialogTitle as DialogTitle,
+  TranslatedTextField as TextField
+} from '../../components/TranslatedComponents';
 
 // Room type options will now come from backend
 // Status options
@@ -93,6 +90,7 @@ const commonAmenities = [
 const Rooms = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage(); // Add translation function
   
   // Rooms state
   const [rooms, setRooms] = useState([]);
@@ -522,9 +520,9 @@ const Rooms = () => {
     <Box sx={{ flexGrow: 1, pb: 3 }}>
       {/* Page Title and Actions */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1" gutterBottom>
+        <Text variant="h4" component="h1" gutterBottom>
           Quản Lý Phòng
-        </Typography>
+        </Text>
         <Box>
           <Button
             variant="contained"
@@ -744,7 +742,7 @@ const Rooms = () => {
               </Grid>
               
               <Grid item xs={12}>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>Amenities</Typography>
+                <Text variant="subtitle1" sx={{ mb: 1 }}>Amenities</Text>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {commonAmenities.map(amenity => (
                     <Chip
@@ -759,7 +757,7 @@ const Rooms = () => {
               </Grid>
               
               <Grid item xs={12}>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>Hình Ảnh Phòng</Typography>
+                <Text variant="subtitle1" sx={{ mb: 1 }}>Hình Ảnh Phòng</Text>
                 <Button
                   variant="contained"
                   component="label"
@@ -809,7 +807,7 @@ const Rooms = () => {
               
               <Grid item xs={12}>
                 <TextField
-                  label="Description"
+                  label="Mô tả"
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
@@ -825,15 +823,15 @@ const Rooms = () => {
         </DialogContent>
         {Object.keys(errors).length > 0 && (
           <Box sx={{ mt: 2, p: 2, bgcolor: 'error.lighter', borderRadius: 1 }}>
-            <Typography variant="subtitle2" color="error" gutterBottom>
-              Please correct the following errors:
-            </Typography>
+            <Text variant="subtitle2" color="error" gutterBottom>
+              Vui lòng sửa các lỗi sau:
+            </Text>
             <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
               {Object.values(errors).map((error, index) => (
                 <li key={index}>
-                  <Typography variant="body2" color="error.dark">
+                  <Text variant="body2" color="error.dark">
                     {error}
-                  </Typography>
+                  </Text>
                 </li>
               ))}
             </ul>
@@ -841,21 +839,21 @@ const Rooms = () => {
         )}
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleAddRoom} 
             variant="contained" 
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Add Room'}
+            {submitting ? <CircularProgress size={24} /> : 'Thêm Phòng'}
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Edit Room Dialog */}
       <Dialog open={openEditDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
-        <DialogTitle>Edit Room</DialogTitle>
+        <DialogTitle>Chỉnh Sửa Phòng</DialogTitle>
         <DialogContent>
           {roomTypesLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
@@ -863,18 +861,18 @@ const Rooms = () => {
             </Box>
           ) : roomTypes.length === 0 ? (
             <Alert severity="error" sx={{ my: 2 }}>
-              No room types found. Please create room types first.
+              Không tìm thấy loại phòng nào. Vui lòng tạo loại phòng trước.
             </Alert>
           ) : (
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required error={Boolean(errors.roomNumber)}>
-                  <InputLabel>Room Number</InputLabel>
+                  <InputLabel>Số Phòng</InputLabel>
                   <Select
                     name="roomNumber"
                     value={formData.roomNumber}
                     onChange={handleChange}
-                    label="Room Number"
+                    label="Số Phòng"
                     MenuProps={{
                       PaperProps: {
                         style: {
@@ -896,16 +894,16 @@ const Rooms = () => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required error={Boolean(errors.type)}>
-                  <InputLabel>Room Type</InputLabel>
+                  <InputLabel>Loại Phòng</InputLabel>
                   <Select
                     name="type"
                     value={formData.type}
                     onChange={handleChange}
-                    label="Room Type"
+                    label="Loại Phòng"
                   >
                     {roomTypes.map((type) => (
                       <MenuItem key={type._id} value={type._id}>
-                        {type.name} - ${type.basePrice}
+                        {type.name} - {formatVND(type.basePrice)}
                       </MenuItem>
                     ))}
                   </Select>
@@ -914,7 +912,7 @@ const Rooms = () => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Price per Night"
+                  label="Giá mỗi đêm"
                   name="price"
                   type="number"
                   value={formData.price}
@@ -978,7 +976,7 @@ const Rooms = () => {
               </Grid>
               
               <Grid item xs={12}>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>Amenities</Typography>
+                <Text variant="subtitle1" sx={{ mb: 1 }}>Tiện nghi</Text>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {commonAmenities.map(amenity => (
                     <Chip
@@ -993,13 +991,13 @@ const Rooms = () => {
               </Grid>
               
               <Grid item xs={12}>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>Room Images</Typography>
+                <Text variant="subtitle1" sx={{ mb: 1 }}>Hình ảnh phòng</Text>
                 <Button
                   variant="outlined"
                   component="label"
                   startIcon={<PhotoCameraIcon />}
                 >
-                  Upload New Images
+                  Tải hình ảnh mới
                   <input
                     type="file"
                     hidden
@@ -1038,9 +1036,9 @@ const Rooms = () => {
                     </ImageList>
                   </Box>
                 ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  <Text variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                     Chưa có ảnh nào được tải lên
-                  </Typography>
+                  </Text>
                 )}
               </Grid>
               
@@ -1062,15 +1060,15 @@ const Rooms = () => {
         </DialogContent>
         {Object.keys(errors).length > 0 && (
           <Box sx={{ mt: 2, p: 2, bgcolor: 'error.lighter', borderRadius: 1 }}>
-            <Typography variant="subtitle2" color="error" gutterBottom>
+            <Text variant="subtitle2" color="error" gutterBottom>
               Vui lòng sửa các lỗi sau:
-            </Typography>
+            </Text>
             <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
               {Object.values(errors).map((error, index) => (
                 <li key={index}>
-                  <Typography variant="body2" color="error.dark">
+                  <Text variant="body2" color="error.dark">
                     {error}
-                  </Typography>
+                  </Text>
                 </li>
               ))}
             </ul>
@@ -1116,4 +1114,4 @@ const Rooms = () => {
   );
 };
 
-export default withDashboardLayout(Rooms, "Quản Lý Phòng"); 
+export default withDashboardLayout(Rooms, "Quản Lý Phòng");

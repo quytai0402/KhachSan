@@ -369,7 +369,7 @@ const Promotions = () => {
                   </CardContent>
                   
                   <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                    <Tooltip title="Edit">
+                    <Tooltip title="Chỉnh sửa">
                       <IconButton 
                         color="primary" 
                         onClick={() => handleOpenEditDialog(promotion)}
@@ -377,7 +377,7 @@ const Promotions = () => {
                         <EditIcon />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title="Xóa">
                       <IconButton 
                         color="error" 
                         onClick={() => handleOpenDeleteDialog(promotion)}
@@ -420,12 +420,12 @@ const Promotions = () => {
       
       {/* Add Promotion Dialog */}
       <Dialog open={openAddDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
-        <DialogTitle>Add New Promotion</DialogTitle>
+        <DialogTitle>Thêm Khuyến Mãi Mới</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
-                label="Promotion Title"
+                label="Tên Khuyến Mãi"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
@@ -435,7 +435,7 @@ const Promotions = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Description"
+                label="Mô Tả"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
@@ -468,13 +468,13 @@ const Promotions = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Valid Until"
+                label="Có Hiệu Lực Đến"
                 name="validUntil"
                 value={formData.validUntil}
                 onChange={handleChange}
                 fullWidth
                 required
-                placeholder="YYYY-MM-DD or 'Ongoing'"
+                placeholder="Định dạng: YYYY-MM-DD"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -485,7 +485,7 @@ const Promotions = () => {
                 startIcon={<PhotoCameraIcon />}
                 sx={{ height: '56px', textTransform: 'none' }}
               >
-                Upload Image
+                Tải Ảnh Lên
                 <input
                   type="file"
                   hidden
@@ -512,26 +512,26 @@ const Promotions = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleAddPromotion} 
             variant="contained" 
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Add Promotion'}
+            {submitting ? <CircularProgress size={24} /> : 'Thêm Khuyến Mãi'}
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Edit Promotion Dialog */}
       <Dialog open={openEditDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
-        <DialogTitle>Edit Promotion</DialogTitle>
+        <DialogTitle>Chỉnh Sửa Khuyến Mãi</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
-                label="Promotion Title"
+                label="Tên Khuyến Mãi"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
@@ -541,7 +541,7 @@ const Promotions = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Description"
+                label="Mô Tả"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
@@ -574,13 +574,13 @@ const Promotions = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Valid Until"
+                label="Có Hiệu Lực Đến"
                 name="validUntil"
                 value={formData.validUntil}
                 onChange={handleChange}
                 fullWidth
                 required
-                placeholder="YYYY-MM-DD or 'Ongoing'"
+                placeholder="Định dạng: YYYY-MM-DD"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -591,7 +591,7 @@ const Promotions = () => {
                 startIcon={<PhotoCameraIcon />}
                 sx={{ height: '56px', textTransform: 'none' }}
               >
-                Update Image
+                Cập Nhật Ảnh
                 <input
                   type="file"
                   hidden
@@ -618,14 +618,14 @@ const Promotions = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleUpdatePromotion} 
             variant="contained" 
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Update Promotion'}
+            {submitting ? <CircularProgress size={24} /> : 'Cập Nhật Khuyến Mãi'}
           </Button>
         </DialogActions>
       </Dialog>

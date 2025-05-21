@@ -209,8 +209,24 @@ export const bookingAPI = {
   getBookingById: (id) => api.get(`/bookings/${id}`),
   getUserBookings: () => api.get('/bookings/me'),
   getRoomBookings: (roomId) => api.get(`/bookings/room/${roomId}`),
+  getBookingsByPhone: (phoneNumber) => api.get(`/bookings/phone/${phoneNumber}`),
   createBooking: (bookingData) => api.post('/bookings', bookingData),
+  createGuestBooking: (bookingData) => api.post('/bookings/guest', { 
+    roomId: bookingData.roomId, 
+    checkInDate: bookingData.checkInDate,
+    checkOutDate: bookingData.checkOutDate,
+    adults: bookingData.adults,
+    children: bookingData.children,
+    specialRequests: bookingData.specialRequests,
+    guestInfo: {
+      name: bookingData.guestName,
+      email: bookingData.guestEmail,
+      phone: bookingData.guestPhone,
+      address: bookingData.guestAddress
+    }
+  }),
   updateBooking: (id, bookingData) => api.put(`/bookings/${id}`, bookingData),
+  updateBookingStatus: (id, statusData) => api.put(`/bookings/${id}/status`, statusData),
   deleteBooking: (id) => api.delete(`/bookings/${id}`)
 };
 
@@ -305,4 +321,4 @@ export const adminAPI = {
   })
 };
 
-export default api; 
+export default api;

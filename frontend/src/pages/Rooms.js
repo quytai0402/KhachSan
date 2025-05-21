@@ -87,7 +87,9 @@ const Rooms = () => {
     
     // Filter by type
     if (filters.type) {
-      result = result.filter(room => room.type === filters.type);
+      result = result.filter(room => 
+        room.type && room.type._id === filters.type
+      );
     }
     
     // Filter by capacity (guests)
@@ -111,6 +113,10 @@ const Rooms = () => {
     
     // Filter by availability
     result = result.filter(room => room.status === 'available');
+    
+    // Log filtered rooms for debugging
+    console.log('Filtered rooms count:', result.length);
+    console.log('Filters applied:', filters);
     
     // Apply sorting
     switch (sortOption) {

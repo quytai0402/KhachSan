@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Typography,
+import { Typography,
   Box,
   Paper,
   Table,
@@ -20,13 +19,19 @@ import {
   DialogTitle,
   CircularProgress,
   Alert,
-  Tooltip
+  Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
   Cancel as CancelIcon,
   CheckCircle as CheckCircleIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  FilterList as FilterListIcon
 } from '@mui/icons-material';
 import { bookingAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -49,6 +54,11 @@ const Bookings = () => {
   
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [guestFilter, setGuestFilter] = useState('all');
+  const [filteredBookings, setFilteredBookings] = useState([]);
   
   // Check if user is authenticated and is admin
   useEffect(() => {
@@ -82,6 +92,25 @@ const Bookings = () => {
     }
   }, [isAuthenticated, user]);
   
+  // Filter bookings based on status and guest type
+  useEffect(() => {
+    let filtered = bookings;
+    
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(booking => booking.status === statusFilter);
+    }
+    
+    // Filter by guest type
+    if (guestFilter !== 'all') {
+      filtered = filtered.filter(booking => 
+        booking.isGuestBooking === (guestFilter === 'guest')
+      );
+    }
+    
+    setFilteredBookings(filtered);
+  }, [bookings, statusFilter, guestFilter]);
+  
   // Open detail dialog
   const handleOpenDetailDialog = (booking) => {
     setSelectedBooking(booking);
@@ -107,25 +136,36 @@ const Bookings = () => {
     setOpenConfirmDialog(false);
     setSelectedBooking(null);
   };
-  
-  // Cancel booking
+   // Cancel booking
   const handleCancelBooking = async () => {
-    if (!selectedBooking) return;
+    if (!selectedBooking) {
+      console.error('No booking selected for cancellation');
+      return;
+    }
     
     try {
       setSubmitting(true);
-      await bookingAPI.updateBookingStatus(selectedBooking._id, { status: 'cancelled' });
-      setBookings(prev => 
-        prev.map(booking => 
-          booking._id === selectedBooking._id 
-            ? { ...booking, status: 'cancelled' } 
-            : booking
-        )
-      );
-      handleCloseDialogs();
+      console.log('Cancelling booking:', selectedBooking._id);
+      
+      const response = await bookingAPI.updateBookingStatus(selectedBooking._id, { status: 'cancelled' });
+      
+      if (response && response.data) {
+        console.log('Booking cancelled successfully:', response.data);
+        // Update the booking in the local state
+        setBookings(prev => 
+          prev.map(booking => 
+            booking._id === selectedBooking._id 
+              ? { ...booking, status: 'cancelled' }
+              : booking
+          )
+        );
+        handleCloseDialogs();
+      } else {
+        throw new Error('Không nhận được phản hồi hợp lệ từ máy chủ');
+      }
     } catch (err) {
       console.error('Error cancelling booking:', err);
-      setError('Failed to cancel booking. Please try again.');
+      setError('Không thể hủy đặt phòng. Vui lòng thử lại sau.');
     } finally {
       setSubmitting(false);
     }
@@ -133,22 +173,34 @@ const Bookings = () => {
   
   // Confirm booking
   const handleConfirmBooking = async () => {
-    if (!selectedBooking) return;
+    if (!selectedBooking) {
+      console.error('No booking selected for confirmation');
+      return;
+    }
     
     try {
       setSubmitting(true);
-      await bookingAPI.updateBookingStatus(selectedBooking._id, { status: 'confirmed' });
-      setBookings(prev => 
-        prev.map(booking => 
-          booking._id === selectedBooking._id 
-            ? { ...booking, status: 'confirmed' } 
-            : booking
-        )
-      );
-      handleCloseDialogs();
+      console.log('Confirming booking:', selectedBooking._id);
+      
+      const response = await bookingAPI.updateBookingStatus(selectedBooking._id, { status: 'confirmed' });
+      
+      if (response && response.data) {
+        console.log('Booking confirmed successfully:', response.data);
+        // Update the booking in the local state
+        setBookings(prev => 
+          prev.map(booking => 
+            booking._id === selectedBooking._id 
+              ? { ...booking, status: 'confirmed' } 
+              : booking
+          )
+        );
+        handleCloseDialogs();
+      } else {
+        throw new Error('Không nhận được phản hồi hợp lệ từ máy chủ');
+      }
     } catch (err) {
       console.error('Error confirming booking:', err);
-      setError('Failed to confirm booking. Please try again.');
+      setError('Không thể xác nhận đặt phòng. Vui lòng thử lại sau.');
     } finally {
       setSubmitting(false);
     }
@@ -158,16 +210,42 @@ const Bookings = () => {
   const handleRefreshBookings = async () => {
     try {
       setLoading(true);
-      const response = await bookingAPI.getAllBookings();
-      setBookings(response.data);
       setError(null);
+      const response = await bookingAPI.getAllBookings();
+      
+      if (response.data && Array.isArray(response.data)) {
+        setBookings(response.data);
+        console.log('Bookings refreshed successfully:', response.data.length, 'bookings loaded');
+      } else {
+        console.error('Invalid response format:', response);
+        setError('Định dạng dữ liệu không hợp lệ. Vui lòng thử lại sau.');
+      }
     } catch (err) {
       console.error('Error refreshing bookings:', err);
-      setError('Failed to refresh bookings. Please try again.');
+      setError('Không thể tải danh sách đặt phòng. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
   };
+  
+  // Apply filters to bookings
+  useEffect(() => {
+    let filtered = [...bookings];
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(booking => booking.status === statusFilter);
+    }
+    
+    // Apply guest filter
+    if (guestFilter === 'guest') {
+      filtered = filtered.filter(booking => booking.isGuestBooking);
+    } else if (guestFilter === 'user') {
+      filtered = filtered.filter(booking => !booking.isGuestBooking);
+    }
+    
+    setFilteredBookings(filtered);
+  }, [bookings, statusFilter, guestFilter]);
   
   // Get status color
   const getStatusColor = (status) => {
@@ -180,14 +258,44 @@ const Bookings = () => {
         return 'error';
       case 'completed':
         return 'info';
+      case 'checked-in':
+        return 'primary';
+      case 'checked-out':
+        return 'secondary';
       default:
         return 'default';
     }
   };
   
+  // Get status text in Vietnamese
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Chờ xác nhận';
+      case 'confirmed':
+        return 'Đã xác nhận';
+      case 'cancelled':
+        return 'Đã hủy';
+      case 'completed':
+        return 'Hoàn thành';
+      case 'checked-in':
+        return 'Đã nhận phòng';
+      case 'checked-out':
+        return 'Đã trả phòng';
+      default:
+        return status;
+    }
+  };
+  
   // Format date
   const formatDate = (dateString) => {
-    return format(new Date(dateString), 'dd/MM/yyyy');
+    if (!dateString) return 'Không xác định';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Không xác định';
+    }
   };
   
   // Render loading state
@@ -220,6 +328,60 @@ const Bookings = () => {
         </Alert>
       )}
       
+      {/* Filters */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item>
+            <Typography variant="subtitle1" component="div" sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
+              <FilterListIcon sx={{ mr: 1 }} />
+              Lọc:
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={4} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="status-filter-label">Trạng thái</InputLabel>
+              <Select
+                labelId="status-filter-label"
+                id="status-filter"
+                value={statusFilter}
+                label="Trạng thái"
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <MenuItem value="all">Tất cả</MenuItem>
+                <MenuItem value="pending">Chờ xác nhận</MenuItem>
+                <MenuItem value="confirmed">Đã xác nhận</MenuItem>
+                <MenuItem value="checked-in">Đã nhận phòng</MenuItem>
+                <MenuItem value="checked-out">Đã trả phòng</MenuItem>
+                <MenuItem value="cancelled">Đã hủy</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={4} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="guest-filter-label">Loại khách</InputLabel>
+              <Select
+                labelId="guest-filter-label"
+                id="guest-filter"
+                value={guestFilter}
+                label="Loại khách"
+                onChange={(e) => setGuestFilter(e.target.value)}
+              >
+                <MenuItem value="all">Tất cả</MenuItem>
+                <MenuItem value="guest">Khách vãng lai</MenuItem>
+                <MenuItem value="user">Tài khoản đã đăng ký</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item>
+            <Typography variant="body2" color="text.secondary">
+              {filteredBookings.length} kết quả
+            </Typography>
+          </Grid>
+        </Grid>
+      </Paper>
+      
+
+      
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -234,23 +396,27 @@ const Bookings = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {bookings.length > 0 ? (
-              bookings.map((booking) => (
+            {filteredBookings.length > 0 ? (
+              filteredBookings.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell>{booking._id.substring(0, 8)}...</TableCell>
-                  <TableCell>{booking.user?.name || 'Unknown'}</TableCell>
+                  <TableCell>
+                    {booking.isGuestBooking 
+                      ? `Khách Vãng Lai (${booking.guestPhone})` 
+                      : booking.user?.name || 'Unknown'}
+                  </TableCell>
                   <TableCell>{booking.room?.roomNumber || 'Unknown'}</TableCell>
                   <TableCell>{formatDate(booking.checkInDate)}</TableCell>
                   <TableCell>{formatDate(booking.checkOutDate)}</TableCell>
                   <TableCell>
                     <Chip 
-                      label={booking.status} 
+                      label={getStatusText(booking.status)} 
                       color={getStatusColor(booking.status)} 
                       size="small" 
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="View Details">
+                    <Tooltip title="Xem chi tiết">
                       <IconButton 
                         color="primary" 
                         onClick={() => handleOpenDetailDialog(booking)}
@@ -261,7 +427,7 @@ const Bookings = () => {
                     
                     {booking.status === 'pending' && (
                       <>
-                        <Tooltip title="Confirm">
+                        <Tooltip title="Xác nhận">
                           <IconButton 
                             color="success" 
                             onClick={() => handleOpenConfirmDialog(booking)}
@@ -269,7 +435,7 @@ const Bookings = () => {
                             <CheckCircleIcon />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Cancel">
+                        <Tooltip title="Hủy bỏ">
                           <IconButton 
                             color="error" 
                             onClick={() => handleOpenCancelDialog(booking)}
@@ -297,17 +463,38 @@ const Bookings = () => {
       <Dialog open={openDetailDialog} onClose={handleCloseDialogs} maxWidth="sm" fullWidth>
         <DialogTitle>Chi Tiết Đặt Phòng</DialogTitle>
         <DialogContent>
-          {selectedBooking && (
+          {selectedBooking ? (
             <Box sx={{ pt: 1 }}>
               <Typography variant="subtitle1" gutterBottom>
                 <strong>Mã đặt phòng:</strong> {selectedBooking._id}
               </Typography>
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>Khách hàng:</strong> {selectedBooking.user?.name || 'Không xác định'}
-              </Typography>
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>Email:</strong> {selectedBooking.user?.email || 'Không xác định'}
-              </Typography>
+              
+              {selectedBooking.isGuestBooking ? (
+                <>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Khách hàng:</strong> Khách Vãng Lai
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Tên:</strong> {selectedBooking.guestName || 'Không xác định'}
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Số điện thoại:</strong> {selectedBooking.guestPhone || 'Không xác định'}
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Email:</strong> {selectedBooking.guestEmail || 'Không xác định'}
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Khách hàng:</strong> {selectedBooking.user?.name || 'Không xác định'}
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Email:</strong> {selectedBooking.user?.email || 'Không xác định'}
+                  </Typography>
+                </>
+              )}
+              
               <Typography variant="subtitle1" gutterBottom>
                 <strong>Phòng:</strong> {selectedBooking.room?.roomNumber || 'Không xác định'} ({selectedBooking.room?.type || 'Không xác định'})
               </Typography>
@@ -318,13 +505,22 @@ const Bookings = () => {
                 <strong>Trả phòng:</strong> {formatDate(selectedBooking.checkOutDate)}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Số khách:</strong> {selectedBooking.numberOfGuests}
+                <strong>Số đêm:</strong> {
+                  selectedBooking.checkInDate && selectedBooking.checkOutDate ? 
+                  Math.ceil((new Date(selectedBooking.checkOutDate) - new Date(selectedBooking.checkInDate)) / (1000 * 60 * 60 * 24)) : 
+                  'Không xác định'
+                }
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Tổng tiền:</strong> ${selectedBooking.totalPrice}
+                <strong>Số khách:</strong> {selectedBooking.numberOfGuests ? 
+                  `${selectedBooking.numberOfGuests.adults || 0} người lớn, ${selectedBooking.numberOfGuests.children || 0} trẻ em` : 
+                  'Không xác định'}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Trạng thái:</strong> {selectedBooking.status}
+                <strong>Tổng tiền:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedBooking.totalPrice || 0)}
+              </Typography>
+              <Typography variant="subtitle1" gutterBottom>
+                <strong>Trạng thái:</strong> {getStatusText(selectedBooking.status)}
               </Typography>
               <Typography variant="subtitle1" gutterBottom>
                 <strong>Yêu cầu đặc biệt:</strong> {selectedBooking.specialRequests || 'Không'}
@@ -332,6 +528,11 @@ const Bookings = () => {
               <Typography variant="subtitle1" gutterBottom>
                 <strong>Ngày tạo:</strong> {formatDate(selectedBooking.createdAt)}
               </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ py: 2, textAlign: 'center' }}>
+              <CircularProgress size={28} sx={{ mb: 2 }} />
+              <Typography>Đang tải thông tin...</Typography>
             </Box>
           )}
         </DialogContent>
@@ -391,4 +592,4 @@ const Bookings = () => {
   );
 };
 
-export default withDashboardLayout(Bookings, "Quản Lý Đặt Phòng"); 
+export default withDashboardLayout(Bookings, "Quản Lý Đặt Phòng");

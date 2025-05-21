@@ -154,6 +154,7 @@ const Home = () => {
             .sort((a, b) => b.price - a.price)
             .slice(0, 4);
           
+          console.log('Featured rooms fetched:', sortedRooms);
           setFeaturedRooms(sortedRooms);
         } else {
           // Nếu không có phòng, hiển thị danh sách trống

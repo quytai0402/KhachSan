@@ -91,7 +91,7 @@ const BookingForm = () => {
     adults: 1,
     children: 0,
     specialRequests: '',
-    isGuestBooking: false,
+    isGuestBooking: true,
     guestName: '',
     guestEmail: '',
     guestPhone: '',
@@ -214,6 +214,12 @@ const BookingForm = () => {
         guestEmail: user.email || '',
         guestPhone: user.phone || ''
       }));
+    } else {
+      // For non-authenticated users, default to guest booking
+      setBookingData(prev => ({
+        ...prev,
+        isGuestBooking: true
+      }));
     }
   }, [user, isAuthenticated]);
   
@@ -319,7 +325,7 @@ const BookingForm = () => {
       }
     } else if (step === 1) {
       // Validate guest information
-      if (!isAuthenticated && bookingData.isGuestBooking) {
+      if (bookingData.isGuestBooking) {
         if (!bookingData.guestName) {
           errors.guestName = 'Vui lòng nhập tên khách hàng';
         }
@@ -354,6 +360,16 @@ const BookingForm = () => {
     return Object.keys(errors).length === 0;
   };
   
+  // Get the booking completion message
+  const getBookingCompletionMessage = () => {
+    // For guest bookings, include the phone number in the message
+    if (bookingData.isGuestBooking) {
+      return `Đặt phòng thành công! Số điện thoại ${bookingData.guestPhone} đã được ghi nhận. Bạn có thể sử dụng số điện thoại này để tra cứu đặt phòng sau này.`;
+    }
+    // For authenticated users
+    return 'Đặt phòng thành công!';
+  };
+
   // Handle form submission
   const handleSubmit = async () => {
     // Validate final step
@@ -382,19 +398,25 @@ const BookingForm = () => {
       setIsSubmitting(true);
       setBookingError(null);
       
-      // Submit booking
-      const response = await bookingAPI.createBooking(bookingPayload);
+      // Submit booking - use the appropriate API method based on whether it's a guest booking
+      const response = bookingData.isGuestBooking 
+        ? await bookingAPI.createGuestBooking(bookingPayload)
+        : await bookingAPI.createBooking(bookingPayload);
       
       // Check for successful response
       if (response.data && response.data._id) {
         setBookingSuccess(true);
         
-        // Show success message
-        toastService.success('Đặt phòng thành công!');
+        // Show success message with phone number for guest bookings
+        toastService.success(getBookingCompletionMessage());
         
         // Navigate to booking confirmation or user bookings page
         setTimeout(() => {
-          navigate(`/my-bookings?new=${response.data._id}`);
+          if (isAuthenticated) {
+            navigate(`/my-bookings?new=${response.data._id}`);
+          } else {
+            navigate(`/rooms?bookingSuccess=true&id=${response.data._id}`);
+          }
         }, 3000);
       } else {
         throw new Error('Không nhận được xác nhận đặt phòng.');
@@ -448,6 +470,40 @@ const BookingForm = () => {
         [type]: newValue
       };
     });
+  };
+  
+  // Add this function after the other functions
+  const handleLookupBookingsByPhone = async () => {
+    if (!bookingData.guestPhone || bookingData.guestPhone.trim() === '') {
+      toastService.warning('Vui lòng nhập số điện thoại để tra cứu');
+      return;
+    }
+    
+    try {
+      // Look up bookings by phone number
+      const response = await bookingAPI.getBookingsByPhone(bookingData.guestPhone);
+      
+      if (response.data && response.data.length > 0) {
+        // Auto-fill the guest information from the most recent booking
+        const latestBooking = response.data[0]; // Assuming sorted by date descending
+        
+        setBookingData(prev => ({
+          ...prev,
+          guestName: latestBooking.guestName,
+          guestEmail: latestBooking.guestEmail,
+          guestAddress: latestBooking.guestAddress || prev.guestAddress
+        }));
+        
+        // Show success message with booking count
+        toastService.success(`Tìm thấy ${response.data.length} đặt phòng trước đây. Đã điền thông tin khách hàng.`);
+      } else {
+        // No bookings found - just continue with new customer information
+        toastService.info('Không tìm thấy đặt phòng trước đây với số điện thoại này.');
+      }
+    } catch (err) {
+      console.error('Error looking up bookings by phone:', err);
+      // Don't show error to user, just continue with booking
+    }
   };
   
   // Step content rendering
@@ -690,16 +746,18 @@ const BookingForm = () => {
             ) : (
               <Grid container spacing={3}>
                 <Grid item xs={12}>
-                  <Alert severity="warning" sx={{ mb: 3 }}>
+                  <Alert severity="info" sx={{ mb: 3 }}>
                     <AlertTitle>Thông báo</AlertTitle>
-                    Bạn đang đặt phòng mà không đăng nhập. Đăng nhập để sử dụng thông tin tài khoản của bạn hoặc điền thông tin bên dưới.
-                    <Button 
-                      color="primary" 
-                      sx={{ mt: 1, display: 'block' }}
-                      onClick={() => navigate('/login?redirect=/booking/' + roomId)}
-                    >
-                      Đăng nhập ngay
-                    </Button>
+                    Bạn đang đặt phòng với tư cách Khách Vãng Lai. Vui lòng nhập chính xác số điện thoại của bạn để tra cứu đặt phòng sau này. 
+                    <Box mt={1}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        href="/login"
+                      >
+                        Đăng nhập nếu bạn đã có tài khoản
+                      </Button>
+                    </Box>
                   </Alert>
                 </Grid>
                 
@@ -710,9 +768,10 @@ const BookingForm = () => {
                     value={bookingData.guestName}
                     onChange={handleInputChange}
                     fullWidth
-                    required
+                    margin="normal"
                     error={Boolean(validationErrors.guestName)}
                     helperText={validationErrors.guestName}
+                    required
                   />
                 </Grid>
                 
@@ -724,23 +783,36 @@ const BookingForm = () => {
                     value={bookingData.guestEmail}
                     onChange={handleInputChange}
                     fullWidth
-                    required
+                    margin="normal"
                     error={Boolean(validationErrors.guestEmail)}
                     helperText={validationErrors.guestEmail}
+                    required
                   />
                 </Grid>
                 
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="guestPhone"
-                    label="Số điện thoại"
-                    value={bookingData.guestPhone}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                    error={Boolean(validationErrors.guestPhone)}
-                    helperText={validationErrors.guestPhone}
-                  />
+                  <Box display="flex" alignItems="flex-start">
+                    <TextField
+                      name="guestPhone"
+                      label="Số điện thoại"
+                      value={bookingData.guestPhone}
+                      onChange={handleInputChange}
+                      fullWidth
+                      margin="normal"
+                      error={Boolean(validationErrors.guestPhone)}
+                      helperText={validationErrors.guestPhone || "Số điện thoại sẽ được sử dụng để nhận diện khách hàng"}
+                      required
+                    />
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      sx={{ mt: 2, ml: 1, height: 40 }}
+                      onClick={handleLookupBookingsByPhone}
+                      disabled={!bookingData.guestPhone}
+                    >
+                      Tra cứu
+                    </Button>
+                  </Box>
                 </Grid>
                 
                 <Grid item xs={12} sm={6}>
@@ -750,6 +822,7 @@ const BookingForm = () => {
                     value={bookingData.guestAddress}
                     onChange={handleInputChange}
                     fullWidth
+                    margin="normal"
                   />
                 </Grid>
               </Grid>
@@ -1031,11 +1104,29 @@ const BookingForm = () => {
           </Typography>
           
           <Typography variant="body1" paragraph>
-            Cảm ơn bạn đã đặt phòng tại khách sạn của chúng tôi. Chi tiết đặt phòng đã được gửi đến email của bạn.
+            Cảm ơn bạn đã đặt phòng tại khách sạn của chúng tôi. 
+            {isAuthenticated 
+              ? 'Chi tiết đặt phòng đã được gửi đến email của bạn.'
+              : `Số điện thoại ${bookingData.guestPhone} đã được ghi nhận. Vui lòng lưu lại số điện thoại này để tra cứu đặt phòng sau này.`
+            }
           </Typography>
           
+          {!isAuthenticated && (
+            <Alert severity="info" sx={{ mb: 3, mx: 'auto', maxWidth: '80%', textAlign: 'left' }}>
+              <AlertTitle>Lưu ý quan trọng</AlertTitle>
+              <Typography variant="body2" paragraph>
+                Bạn đã đặt phòng với tư cách Khách Vãng Lai. Để quản lý đặt phòng này:
+              </Typography>
+              <ul>
+                <li>Lưu lại số điện thoại: <strong>{bookingData.guestPhone}</strong></li>
+                <li>Khi đến khách sạn, vui lòng cung cấp số điện thoại này cho lễ tân</li>
+                <li>Tất cả các đặt phòng trước đây với số điện thoại này sẽ được liên kết với nhau</li>
+              </ul>
+            </Alert>
+          )}
+          
           <Typography variant="body2" color="text.secondary" paragraph>
-            Bạn sẽ được chuyển hướng đến trang đặt phòng của bạn trong vài giây...
+            Bạn sẽ được chuyển hướng đến trang {isAuthenticated ? 'đặt phòng của bạn' : 'danh sách phòng'} trong vài giây...
           </Typography>
           
           <CircularProgress size={24} sx={{ mt: 2 }} />

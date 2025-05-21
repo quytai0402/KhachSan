@@ -5,6 +5,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ROLES } from './utils/roles';
@@ -164,183 +165,185 @@ const App = () => {
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <AuthProvider>
           <SocketProvider>
-            <Router basename="/">
-              <ScrollToTop />
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: '100vh'
-                }}
-              >
-                <Header />
-                <Box sx={{ flexGrow: 1 }}>
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/rooms" element={<Rooms />} />
-                    <Route path="/rooms/:id" element={<RoomDetail />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/promotions" element={<Promotions />} />
-                    <Route path="/contact" element={<Contact />} />
-                    
-                    {/* User Routes - Requires Authentication */}
-                    <Route 
-                      path="/booking/:roomId" 
-                      element={
-                        <ProtectedRoute>
-                          <BookingForm />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/profile" 
-                      element={
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/my-bookings" 
-                      element={
-                        <ProtectedRoute>
-                          <MyBookings />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    
-                    {/* Staff Routes */}
-                    <Route 
-                      path="/staff/dashboard" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
-                          <StaffDashboard />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/staff/rooms" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
-                          <StaffRooms />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/staff/bookings" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
-                          <StaffBookings />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/staff/schedule" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
-                          <StaffSchedule />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/staff/guests" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
-                          <StaffGuests />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/staff/housekeeping" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
-                          <StaffHousekeeping />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/staff/promotions" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
-                          <StaffPromotions />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    
-                    {/* Admin Routes - Only accessible for admins */}
-                    <Route 
-                      path="/admin/dashboard" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-                          <AdminDashboard />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/rooms" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-                          <AdminRooms />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/bookings" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-                          <AdminBookings />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/users" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-                          <AdminUsers />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/housekeeping" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-                          <AdminHousekeeping />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/services" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-                          <AdminServices />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/promotions" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-                          <AdminPromotions />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/reports" 
-                      element={
-                        <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-                          <AdminReports />
-                        </ProtectedRoute>
-                      } 
-                    />
-                  </Routes>
+            <LanguageProvider>
+              <Router basename="/">
+                <ScrollToTop />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: '100vh'
+                  }}
+                >
+                  <Header />
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route path="/" element={<Home />} />
+                      <Route path="/rooms" element={<Rooms />} />
+                      <Route path="/rooms/:id" element={<RoomDetail />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/services" element={<Services />} />
+                      <Route path="/promotions" element={<Promotions />} />
+                      <Route path="/contact" element={<Contact />} />
+                      
+                      {/* User Routes - Requires Authentication */}
+                      <Route 
+                        path="/booking/:roomId" 
+                        element={
+                          <ProtectedRoute>
+                            <BookingForm />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/profile" 
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/my-bookings" 
+                        element={
+                          <ProtectedRoute>
+                            <MyBookings />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* Staff Routes */}
+                      <Route 
+                        path="/staff/dashboard" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+                            <StaffDashboard />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/staff/rooms" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+                            <StaffRooms />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/staff/bookings" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+                            <StaffBookings />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/staff/schedule" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+                            <StaffSchedule />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/staff/guests" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+                            <StaffGuests />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/staff/housekeeping" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+                            <StaffHousekeeping />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/staff/promotions" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+                            <StaffPromotions />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* Admin Routes - Only accessible for admins */}
+                      <Route 
+                        path="/admin/dashboard" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/admin/rooms" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <AdminRooms />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/admin/bookings" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <AdminBookings />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/admin/users" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <AdminUsers />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/admin/housekeeping" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <AdminHousekeeping />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/admin/services" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <AdminServices />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/admin/promotions" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <AdminPromotions />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/admin/reports" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <AdminReports />
+                          </ProtectedRoute>
+                        } 
+                      />
+                    </Routes>
+                  </Box>
+                  <Footer />
                 </Box>
-                <Footer />
-              </Box>
-              <ToastContainer position="bottom-right" autoClose={5000} />
-            </Router>
+                <ToastContainer position="bottom-right" autoClose={5000} />
+              </Router>
+            </LanguageProvider>
           </SocketProvider>
         </AuthProvider>
       </LocalizationProvider>

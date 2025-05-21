@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -27,6 +27,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
+// Language switcher removed
+import { useLanguage } from '../context/LanguageContext';
 import SystemNotification from './SystemNotification';
 import { ROLES } from '../utils/roles';
 
@@ -218,7 +220,8 @@ const UserMenu = () => {
 };
 
 const Header = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
+  const { t } = useLanguage(); // Add language context
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
@@ -386,6 +389,11 @@ const Header = () => {
             </Typography>
           </Box>
         )}
+        
+        {/* Language switcher removed from mobile drawer */}
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+          {/* Language switcher removed */}
+        </Box>
       </Box>
     </Box>
   );
@@ -462,6 +470,11 @@ const Header = () => {
             
             {/* User authentication section */}
             <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+              {/* Language Switcher removed */}
+              <Box sx={{ mr: 2 }}>
+                {/* Language switcher removed */}
+              </Box>
+              
               {!isAuthenticated ? (
                 <>
                   <Button
@@ -499,9 +512,7 @@ const Header = () => {
             </Box>
           </StyledToolbar>
         </Container>
-      </StyledAppBar>
-      
-      {/* Mobile drawer */}
+      </StyledAppBar>            {/* Mobile drawer */}
       <Drawer
         anchor="left"
         open={mobileOpen}
@@ -516,6 +527,8 @@ const Header = () => {
       >
         {drawer}
       </Drawer>
+      
+      {/* Language Switcher on Mobile - removed */}
     </Box>
   );
 };

@@ -85,13 +85,53 @@ router.get('/available', async (req, res) => {
   }
 
   try {
-    // TODO: Implement logic to find available rooms for the given date range
-    // This will require a query to the Booking model to check overlapping dates
-    const availableRooms = await Room.find({ status: 'available' });
+    // Convert string dates to Date objects
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    
+    // Validate dates
+    if (isNaN(checkInDate) || isNaN(checkOutDate)) {
+      return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD format.' });
+    }
+    
+    if (checkInDate >= checkOutDate) {
+      return res.status(400).json({ message: 'Check-out date must be after check-in date' });
+    }
+    
+    // Find rooms that are booked during the specified date range
+    const Booking = require('../models/Booking');
+    const bookedRooms = await Booking.find({
+      $and: [
+        { status: { $ne: 'cancelled' } }, // Exclude cancelled bookings
+        {
+          $or: [
+            // Case 1: Booking starts during the requested period
+            { checkInDate: { $gte: checkInDate, $lt: checkOutDate } },
+            // Case 2: Booking ends during the requested period
+            { checkOutDate: { $gt: checkInDate, $lte: checkOutDate } },
+            // Case 3: Booking spans the entire requested period
+            {
+              $and: [
+                { checkInDate: { $lte: checkInDate } },
+                { checkOutDate: { $gte: checkOutDate } }
+              ]
+            }
+          ]
+        }
+      ]
+    }).distinct('room');
+    
+    // Find all rooms that are not in the bookedRooms array and not in maintenance
+    const availableRooms = await Room.find({
+      _id: { $nin: bookedRooms },
+      status: { $nin: ['maintenance', 'cleaning'] } // Exclude rooms in maintenance or cleaning
+    }).populate('type');
+    
+    console.log(`Found ${availableRooms.length} available rooms for ${checkIn} to ${checkOut}`);
     res.json(availableRooms);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error('Error finding available rooms:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
@@ -113,7 +153,7 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
-    const room = await Room.findById(req.params.id);
+    const room = await Room.findById(req.params.id).populate('type');
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
     }
@@ -127,26 +167,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// @route   GET api/rooms/featured
-// @desc    Get featured rooms for homepage
-// @access  Public
-router.get('/featured', async (req, res) => {
-  try {
-    // Get featured rooms - rooms that are available and have good features
-    const featuredRooms = await Room.find({ 
-      status: 'available',
-      price: { $exists: true }
-    })
-    .populate('type')
-    .sort({ price: -1 }) // Sort by price descending to get premium rooms first
-    .limit(4); // Only get top 4 rooms
-    
-    res.json(featuredRooms);
-  } catch (err) {
-    console.error('Error fetching featured rooms:', err.message);
-    res.status(500).send('Server error');
-  }
-});
+// Note: The featured route was duplicated and has been removed. 
+// The first instance of this route earlier in the file is preserved.
 
 // @route   POST api/rooms
 // @desc    Create a room

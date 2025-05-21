@@ -218,6 +218,35 @@ router.get('/dashboard', [auth, admin], async (req, res) => {
       }
     };
     
+    // Get count of guest bookings and identify unique guests by phone number
+    const guestBookings = bookings.filter(booking => booking.isGuestBooking);
+    const uniqueGuestPhones = [...new Set(guestBookings.map(booking => booking.guestPhone))];
+    
+    // Count of unique walk-in guests
+    const uniqueWalkInGuests = uniqueGuestPhones.length;
+    
+    // Get the most frequent walk-in guests (by phone number)
+    const phoneBookingCounts = {};
+    guestBookings.forEach(booking => {
+      if (!phoneBookingCounts[booking.guestPhone]) {
+        phoneBookingCounts[booking.guestPhone] = {
+          count: 0,
+          name: booking.guestName,
+          phone: booking.guestPhone
+        };
+      }
+      phoneBookingCounts[booking.guestPhone].count += 1;
+    });
+    
+    const frequentGuestsList = Object.values(phoneBookingCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5); // Top 5 most frequent guests
+    
+    dashboardData.guestStatistics = {
+      totalUniqueGuests: uniqueWalkInGuests,
+      frequentGuests: frequentGuestsList
+    };
+    
     console.log('Admin dashboard data prepared successfully');
     return res.json(dashboardData);
   } catch (err) {
@@ -447,4 +476,4 @@ router.get('/dashboard/test', async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

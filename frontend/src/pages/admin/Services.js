@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Typography,
   Box,
   Paper,
   Table,
@@ -10,12 +9,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle,
   TextField,
   Grid,
   CircularProgress,
@@ -23,7 +20,8 @@ import {
   Tooltip,
   Card,
   CardMedia,
-  CardContent
+  CardContent,
+  IconButton
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -34,10 +32,18 @@ import {
 import { serviceAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { withDashboardLayout } from '../../utils/layoutHelpers';
+import { useLanguage } from '../../context/LanguageContext';
+import { 
+  Text, 
+  TranslatedButton as Button, 
+  TranslatedDialogTitle as DialogTitle,
+  TranslatedTextField
+} from '../../components/TranslatedComponents';
 
 const Services = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage(); // Extract translation function
   
   // Services state
   const [services, setServices] = useState([]);
@@ -224,9 +230,9 @@ const Services = () => {
   return (
     <Box sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1">
+        <Text variant="h4" component="h1">
           Quản Lý Dịch Vụ
-        </Typography>
+        </Text>
         <Box>
           <Button 
             variant="outlined" 
@@ -234,14 +240,14 @@ const Services = () => {
             onClick={handleRefreshServices}
             sx={{ mr: 2 }}
           >
-            Làm Mới
+            {t('refresh')}
           </Button>
           <Button 
             variant="contained" 
             startIcon={<AddIcon />} 
             onClick={handleOpenAddDialog}
           >
-            Thêm Dịch Vụ
+            {t('add_service')}
           </Button>
         </Box>
       </Box>
@@ -270,15 +276,15 @@ const Services = () => {
                   alt={service.title}
                 />
                 <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" component="h2" gutterBottom>
+                  <Text variant="h6" component="h2" gutterBottom>
                     {service.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  </Text>
+                  <Text variant="body2" color="text.secondary">
                     {service.description}
-                  </Typography>
+                  </Text>
                 </CardContent>
                 <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                  <Tooltip title="Edit">
+                  <Tooltip title={t('edit')}>
                     <IconButton 
                       color="primary" 
                       onClick={() => handleOpenEditDialog(service)}
@@ -286,7 +292,7 @@ const Services = () => {
                       <EditIcon />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Delete">
+                  <Tooltip title={t('delete')}>
                     <IconButton 
                       color="error" 
                       onClick={() => handleOpenDeleteDialog(service)}
@@ -308,7 +314,7 @@ const Services = () => {
                     fontSize: '0.75rem',
                     fontWeight: 'bold'
                   }}>
-                    Inactive
+                    {t('inactive')}
                   </Box>
                 )}
               </Card>
@@ -317,9 +323,9 @@ const Services = () => {
         ) : (
           <Grid item xs={12}>
             <Paper sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body1">
-                Không tìm thấy dịch vụ nào. Thêm một dịch vụ để bắt đầu.
-              </Typography>
+              <Text variant="body1">
+                {t('no_services_found')}
+              </Text>
             </Paper>
           </Grid>
         )}
@@ -327,12 +333,12 @@ const Services = () => {
       
       {/* Add Service Dialog */}
       <Dialog open={openAddDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
-        <DialogTitle>Thêm Dịch Vụ Mới</DialogTitle>
+        <DialogTitle>{t('add_service')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
-              <TextField
-                label="Tiêu Đề Dịch Vụ"
+              <TranslatedTextField
+                label={t('service_title')}
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
@@ -341,8 +347,8 @@ const Services = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                label="Mô Tả"
+              <TranslatedTextField
+                label={t('description')}
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
@@ -353,50 +359,50 @@ const Services = () => {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Tên Biểu Tượng (Material Icon)"
+              <TranslatedTextField
+                label={t('icon_name')}
                 name="icon"
                 value={formData.icon}
                 onChange={handleChange}
                 fullWidth
-                helperText="VD: SpaOutlined, RestaurantOutlined"
+                helperText={t('icon_helper')}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="URL Hình Ảnh"
+              <TranslatedTextField
+                label={t('image_url')}
                 name="image"
                 value={formData.image}
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Nhập URL hình ảnh hợp lệ"
+                helperText={t('image_url_helper')}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Hủy
+            {t('cancel')}
           </Button>
           <Button 
             onClick={handleAddService} 
             variant="contained" 
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Thêm Dịch Vụ'}
+            {submitting ? <CircularProgress size={24} /> : t('add_service')}
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Edit Service Dialog */}
       <Dialog open={openEditDialog} onClose={handleCloseDialogs} maxWidth="md" fullWidth>
-        <DialogTitle>Chỉnh Sửa Dịch Vụ</DialogTitle>
+        <DialogTitle>{t('edit_service')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
-              <TextField
-                label="Tiêu Đề Dịch Vụ"
+              <TranslatedTextField
+                label={t('service_title')}
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
@@ -405,8 +411,8 @@ const Services = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                label="Mô Tả"
+              <TranslatedTextField
+                label={t('description')}
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
@@ -417,53 +423,53 @@ const Services = () => {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Tên Biểu Tượng (Material Icon)"
+              <TranslatedTextField
+                label={t('icon_name')}
                 name="icon"
                 value={formData.icon}
                 onChange={handleChange}
                 fullWidth
-                helperText="VD: SpaOutlined, RestaurantOutlined"
+                helperText={t('icon_helper')}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="URL Hình Ảnh"
+              <TranslatedTextField
+                label={t('image_url')}
                 name="image"
                 value={formData.image}
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Nhập URL hình ảnh hợp lệ"
+                helperText={t('image_url_helper')}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Hủy
+            {t('cancel')}
           </Button>
           <Button 
             onClick={handleUpdateService} 
             variant="contained" 
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Cập Nhật Dịch Vụ'}
+            {submitting ? <CircularProgress size={24} /> : t('update_service')}
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Delete Service Dialog */}
       <Dialog open={openDeleteDialog} onClose={handleCloseDialogs}>
-        <DialogTitle>Xóa Dịch Vụ</DialogTitle>
+        <DialogTitle>{t('delete_service')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Bạn có chắc chắn muốn xóa dịch vụ "{selectedService?.title}"? Hành động này không thể hoàn tác.
+            {t('confirm_delete_service', { title: selectedService?.title })}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialogs} disabled={submitting}>
-            Hủy
+            {t('cancel')}
           </Button>
           <Button 
             onClick={handleDeleteService} 
@@ -471,7 +477,7 @@ const Services = () => {
             variant="contained"
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={24} /> : 'Xóa'}
+            {submitting ? <CircularProgress size={24} /> : t('delete')}
           </Button>
         </DialogActions>
       </Dialog>

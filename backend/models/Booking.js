@@ -21,7 +21,8 @@ const BookingSchema = new mongoose.Schema({
   },
   guestPhone: {
     type: String,
-    required: function() { return this.isGuestBooking; }
+    required: function() { return this.isGuestBooking; },
+    index: true  // Add index for faster queries by phone number
   },
   guestAddress: {
     type: String
@@ -73,4 +74,4 @@ const BookingSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('Booking', BookingSchema); 
+module.exports = mongoose.model('Booking', BookingSchema);
