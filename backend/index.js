@@ -195,26 +195,17 @@ io.on('connection', (socket) => {
   }
 });
 
+// Error handler middleware (must be placed after all routes)
+const errorHandler = require('./middleware/errorHandler');
+app.use(errorHandler);
+
 // Unhandled promise rejection handler
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Application specific logging, throwing an error, or other logic here
+  // Application should continue running despite unhandled promise rejections
 });
 
-// Uncaught exception handler to prevent crashing
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  // Attempt to gracefully shutdown or continue based on error severity
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!', error: err.message });
-});
-
-// Start server
+// Start the server
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 }); 
