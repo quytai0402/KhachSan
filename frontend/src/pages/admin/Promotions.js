@@ -82,7 +82,9 @@ const Promotions = () => {
       try {
         setLoading(true);
         const response = await promotionAPI.getAllPromotions();
-        setPromotions(response.data);
+        // Extract data from the new API format { success: true, data: [...] }
+        const promotionsData = response.data?.data || response.data || [];
+        setPromotions(promotionsData);
       } catch (err) {
         console.error('Error fetching promotions:', err);
         setError('Failed to load promotions. Please try again.');
@@ -332,7 +334,7 @@ const Promotions = () => {
                   <CardMedia
                     component="img"
                     height="140"
-                    image={promotion.image || 'https://via.placeholder.com/300x140?text=Promotion+Image'}
+                    image={promotion.image ? `http://localhost:5000${promotion.image}` : 'https://via.placeholder.com/300x140?text=Promotion+Image'}
                     alt={promotion.title}
                   />
                   

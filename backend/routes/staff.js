@@ -155,7 +155,7 @@ router.get('/dashboard', [auth, staff], asyncHandler(async (req, res) => {
   };
   
   console.log('Staff dashboard data prepared successfully');
-  res.status(HTTP_STATUS.OK).json(dashboardData);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: dashboardData });
 }));
 
 // @route   GET api/staff/rooms
@@ -163,7 +163,7 @@ router.get('/dashboard', [auth, staff], asyncHandler(async (req, res) => {
 // @access  Private (Staff only)
 router.get('/rooms', [auth, staff], asyncHandler(async (req, res) => {
   const rooms = await Room.find().sort({ roomNumber: 1 });
-  res.status(HTTP_STATUS.OK).json(rooms);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: rooms });
 }));
 
 // @route   POST api/staff/rooms/:id/status
@@ -208,7 +208,7 @@ router.get('/bookings', [auth, staff], asyncHandler(async (req, res) => {
     .populate('user')
     .sort({ createdAt: -1 });
   
-  res.status(HTTP_STATUS.OK).json(bookings);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: bookings });
 }));
 
 // @route   POST api/staff/bookings/:id/checkin
@@ -290,7 +290,7 @@ router.get('/services', [auth, staff], asyncHandler(async (req, res) => {
     .populate('requestedBy')
     .sort({ createdAt: -1 });
   
-  res.status(HTTP_STATUS.OK).json(services);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: services });
 }));
 
 // @route   POST api/staff/services/:id/complete

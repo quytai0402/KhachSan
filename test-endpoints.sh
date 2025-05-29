@@ -43,6 +43,21 @@ test_api_format "/promotions" "Promotions"
 # Test protected endpoints (should return 401)
 echo ""
 echo "🔒 Testing Protected Endpoints (should return 401):"
+echo -n "  ✓ Admin Dashboard: "
+curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/admin/dashboard"
+echo ""
+
+echo -n "  ✓ Staff Dashboard: "
+curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/staff/dashboard"
+echo ""
+
+echo ""
+echo "🎉 API Endpoints Test Complete!"
+echo "======================================================"
+
+# Test protected endpoints (should return 401)
+echo ""
+echo "🔒 Testing Protected Endpoints (should return 401):"
 echo -n "  ✓ Users: "
 curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/users"
 echo ""

@@ -48,7 +48,7 @@ router.get('/types', async (req, res) => {
   try {
     console.log('Fetching all room types');
     const roomTypes = await RoomType.find().sort({ name: 1 });
-    res.json(roomTypes);
+    res.json({ success: true, data: roomTypes });
   } catch (err) {
     console.error('Error fetching room types:', err.message);
     res.status(500).json({ message: 'Server error retrieving room types' });

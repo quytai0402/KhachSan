@@ -26,6 +26,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Services from './pages/Services';
 import Promotions from './pages/Promotions';
+import PromotionDetail from './pages/PromotionDetail';
 import Contact from './pages/Contact';
 
 // Admin Pages (to be implemented later)
@@ -185,6 +186,7 @@ const App = () => {
                       <Route path="/register" element={<Register />} />
                       <Route path="/services" element={<Services />} />
                       <Route path="/promotions" element={<Promotions />} />
+                      <Route path="/promotions/:id" element={<PromotionDetail />} />
                       <Route path="/contact" element={<Contact />} />
                       
                       {/* User Routes - Requires Authentication */}

@@ -147,10 +147,13 @@ const Home = () => {
         
         // Load featured rooms using centralized API service
         const roomsResponse = await roomAPI.getAllRooms();
-        if (roomsResponse.data && roomsResponse.data.success) {
+        // Extract data from the new API format { success: true, data: [...] }
+        const roomsData = roomsResponse.data?.data || roomsResponse.data || [];
+        
+        if (roomsData.length > 0) {
           // If we have rooms, get a sample of up to 4 rooms sorted by price
-          const sortedRooms = roomsResponse.data.data
-            .filter(room => room.status === 'available')
+          // For demo purposes, show all rooms regardless of status
+          const sortedRooms = roomsData
             .sort((a, b) => b.price - a.price)
             .slice(0, 4);
           
@@ -164,12 +167,16 @@ const Home = () => {
         
         // Load promotions using centralized API service
         const promotionsResponse = await promotionAPI.getAllPromotions();
-        setPromotions(promotionsResponse.data || []);
+        // Extract data from the new API format { success: true, data: [...] }
+        const promotionsData = promotionsResponse.data?.data || promotionsResponse.data || [];
+        setPromotions(promotionsData);
         
         // Load hotel features/services using centralized API service
         const featuresResponse = await serviceAPI.getFeatures();
-        if (featuresResponse.data && featuresResponse.data.length > 0) {
-          setHotelFeatures(featuresResponse.data);
+        // Extract data from the new API format { success: true, data: [...] }
+        const featuresData = featuresResponse.data?.data || featuresResponse.data || [];
+        if (featuresData.length > 0) {
+          setHotelFeatures(featuresData);
         }
         
         setLoading(false);
@@ -634,8 +641,8 @@ const Home = () => {
                     <CardMedia
                       component="img"
                       sx={{ width: 180 }}
-                      image={promo.image || 'https://source.unsplash.com/random/300x200/?hotel'}
-                      alt={promo.title}
+                      image={promo.image ? `http://localhost:5000${promo.image}` : 'https://source.unsplash.com/random/300x200/?hotel'}
+                      alt={promo.title || promo.name}
                     />
                     <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
                       <Chip 
@@ -645,7 +652,7 @@ const Home = () => {
                         sx={{ alignSelf: 'flex-start', mb: 1 }}
                       />
                       <Typography component="div" variant="h6" fontWeight={600}>
-                        {promo.title}
+                        {promo.title || promo.name}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         {promo.description?.slice(0, 100)}...

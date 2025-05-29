@@ -125,6 +125,7 @@ router.get('/dashboard', [auth, admin], asyncHandler(async (req, res) => {
       thisWeek: Number(weekRevenue || 0),
       thisMonth: Number(monthRevenue || 0)
     },
+    // Recent bookings for display
     bookingsData: bookings.slice(0, 5).map(booking => ({
       _id: booking._id,
       roomNumber: booking.room?.roomNumber || 'N/A',
@@ -135,6 +136,7 @@ router.get('/dashboard', [auth, admin], asyncHandler(async (req, res) => {
       totalPrice: booking.totalPrice,
       createdAt: booking.createdAt
     })),
+    // Statistics for last 30 days
     statistics: {
       newUsers: users.filter(user => {
         const thirtyDaysAgo = new Date();
@@ -154,10 +156,14 @@ router.get('/dashboard', [auth, admin], asyncHandler(async (req, res) => {
     }
   };
   
+  // Get count of guest bookings and identify unique guests by phone number
   const guestBookings = bookings.filter(booking => booking.isGuestBooking);
   const uniqueGuestPhones = [...new Set(guestBookings.map(booking => booking.guestPhone))];
+  
+  // Count of unique walk-in guests
   const uniqueWalkInGuests = uniqueGuestPhones.length;
   
+  // Get the most frequent walk-in guests (by phone number)
   const phoneBookingCounts = {};
   guestBookings.forEach(booking => {
     if (!phoneBookingCounts[booking.guestPhone]) {
@@ -172,7 +178,7 @@ router.get('/dashboard', [auth, admin], asyncHandler(async (req, res) => {
   
   const frequentGuestsList = Object.values(phoneBookingCounts)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+    .slice(0, 5); // Top 5 most frequent guests
   
   dashboardData.guestStatistics = {
     totalUniqueGuests: uniqueWalkInGuests,
@@ -180,18 +186,25 @@ router.get('/dashboard', [auth, admin], asyncHandler(async (req, res) => {
   };
   
   console.log('Admin dashboard data prepared successfully');
-  return res.status(HTTP_STATUS.OK).json(dashboardData);
+  return res.status(HTTP_STATUS.OK).json({ success: true, data: dashboardData });
 }));
 
 // @route   GET api/admin/activities
+// @desc    Get recent activities for admin
+// @access  Private (Admin only)
 router.get('/activities', [auth, admin], asyncHandler(async (req, res) => {
-  res.status(HTTP_STATUS.OK).json([]);
+  // In a real implementation, you would fetch recent activities from a dedicated collection
+  // For now, return an empty array
+  res.status(HTTP_STATUS.OK).json({ success: true, data: [] });
 }));
 
 // @route   GET api/admin/reports
+// @desc    Get report data for admin
+// @access  Private (Admin only)
 router.get('/reports', [auth, admin], asyncHandler(async (req, res) => {
   console.log('Fetching admin report data...');
   
+  // Get start and end dates from query or use default (1 month)
   const { startDate, endDate } = req.query;
   const start = startDate ? new Date(startDate) : new Date(new Date().setMonth(new Date().getMonth() - 1));
   const end = endDate ? new Date(endDate) : new Date();
@@ -199,6 +212,9 @@ router.get('/reports', [auth, admin], asyncHandler(async (req, res) => {
   start.setHours(0, 0, 0, 0);
   end.setHours(23, 59, 59, 999);
   
+  console.log(`Report period: ${start.toISOString()} to ${end.toISOString()}`);
+  
+  // Get all data needed for the reports
   const [rooms, bookings, users] = await Promise.all([
     Room.find().populate('type'),
     Booking.find({
@@ -207,6 +223,9 @@ router.get('/reports', [auth, admin], asyncHandler(async (req, res) => {
     User.find()
   ]);
   
+  console.log(`Found: ${rooms.length} rooms, ${bookings.length} bookings, ${users.length} users`);
+  
+  // Calculate revenue metrics
   const totalRevenue = bookings.reduce((sum, booking) => {
     if (booking.status !== BOOKING_STATUS.CANCELLED) {
       return sum + (booking.totalPrice || 0);
@@ -214,25 +233,32 @@ router.get('/reports', [auth, admin], asyncHandler(async (req, res) => {
     return sum;
   }, 0);
   
+  // Calculate booking metrics
   const totalBookings = bookings.length;
   const completedBookings = bookings.filter(booking => 
     booking.status === BOOKING_STATUS.CHECKED_OUT).length;
   const cancelledBookings = bookings.filter(booking => 
     booking.status === BOOKING_STATUS.CANCELLED).length;
   
+  // Calculate guest metrics
   const totalGuests = bookings.reduce((sum, booking) => {
     const adults = booking.numberOfGuests?.adults || 1;
     const children = booking.numberOfGuests?.children || 0;
     return sum + adults + children;
   }, 0);
   
+  // Calculate occupancy rate
   const occupiedRooms = rooms.filter(room => 
     room.status === ROOM_STATUS.OCCUPIED || room.status === ROOM_STATUS.BOOKED).length;
   const occupancyRate = Math.round((occupiedRooms / (rooms.length || 1)) * 100);
   
+  // Group revenue by month for the last 12 months
   const revenueByMonth = calculateRevenueByMonth(bookings);
+  
+  // Group bookings by room type
   const bookingsByRoomType = calculateBookingsByRoomType(bookings, rooms);
   
+  // Format response data
   const reportData = {
     totalRevenue,
     totalBookings,
@@ -255,9 +281,10 @@ router.get('/reports', [auth, admin], asyncHandler(async (req, res) => {
   };
   
   console.log('Admin report data prepared successfully');
-  return res.status(HTTP_STATUS.OK).json(reportData);
+  return res.status(HTTP_STATUS.OK).json({ success: true, data: reportData });
 }));
 
+// Helper function to calculate revenue by month
 const calculateRevenueByMonth = (bookings) => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -278,7 +305,9 @@ const calculateRevenueByMonth = (bookings) => {
   }));
 };
 
+// Helper function to calculate bookings by room type
 const calculateBookingsByRoomType = (bookings, rooms) => {
+  // Create a map of room IDs to room types
   const roomTypesMap = {};
   rooms.forEach(room => {
     if (room.type && typeof room.type === 'object') {
@@ -288,12 +317,14 @@ const calculateBookingsByRoomType = (bookings, rooms) => {
     }
   });
   
+  // Count bookings by room type
   const bookingCounts = {};
   
   bookings.forEach(booking => {
     if (booking.room) {
       let roomId = booking.room;
       
+      // Handle if room is populated
       if (typeof booking.room === 'object' && booking.room._id) {
         roomId = booking.room._id;
       }
@@ -303,15 +334,20 @@ const calculateBookingsByRoomType = (bookings, rooms) => {
     }
   });
   
+  // Convert to array format needed for chart
   return Object.keys(bookingCounts).map(type => ({
     type,
     bookings: bookingCounts[type]
   }));
 };
 
+// @route   GET api/admin/dashboard/test
+// @desc    Test endpoint for dashboard data
+// @access  Public (for testing)
 router.get('/dashboard/test', asyncHandler(async (req, res) => {
   console.log('Fetching test dashboard data...');
   
+  // Get all data needed for the dashboard with proper population
   const [rooms, bookings, users, services] = await Promise.all([
     Room.find().populate('type'),
     Booking.find().populate('room').populate('user').sort({ createdAt: -1 }),
@@ -319,12 +355,14 @@ router.get('/dashboard/test', asyncHandler(async (req, res) => {
     Service.find().sort({ createdAt: -1 })
   ]);
   
+  // Raw counts
   const rawCounts = {
     roomsCount: rooms.length,
     bookingsCount: bookings.length,
     usersCount: users.length
   };
   
+  // Format basic response data
   const testData = {
     rawCounts,
     roomsArray: rooms.map(room => ({

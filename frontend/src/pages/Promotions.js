@@ -26,7 +26,9 @@ const Promotions = () => {
       try {
         setLoading(true);
         const response = await promotionAPI.getAllPromotions();
-        setPromotions(response.data);
+        // Extract data from the new API format { success: true, data: [...] }
+        const promotionsData = response.data?.data || response.data || [];
+        setPromotions(promotionsData);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching promotions:', err);
@@ -82,8 +84,8 @@ const Promotions = () => {
               <CardMedia
                 component="img"
                 height="200"
-                image={promo.image}
-                alt={promo.title}
+                image={promo.image ? `http://localhost:5000${promo.image}` : 'https://source.unsplash.com/random/300x200/?hotel'}
+                alt={promo.title || promo.name}
               />
               
               <CardContent sx={{ flexGrow: 1 }}>
@@ -129,9 +131,16 @@ const Promotions = () => {
               
               <CardActions sx={{ p: 2, pt: 0 }}>
                 <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  sx={{ mr: 1 }}
+                  href={`/promotions/${promo._id || promo.id}`}
+                >
+                  Xem chi tiết
+                </Button>
+                <Button 
                   variant="contained" 
                   color="primary" 
-                  fullWidth
                   href="/rooms"
                 >
                   Đặt Ngay

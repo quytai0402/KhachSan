@@ -90,7 +90,7 @@ const commonAmenities = [
 const Rooms = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const { t } = useLanguage(); // Add translation function
+  // const { t } = useLanguage(); // Translation function currently unused
   
   // Rooms state
   const [rooms, setRooms] = useState([]);
@@ -146,12 +146,13 @@ const Rooms = () => {
       try {
         setRoomTypesLoading(true);
         const response = await roomAPI.getRoomTypes();
-        setRoomTypes(response.data);
+        const roomTypesData = response.data.data || response.data || [];
+        setRoomTypes(roomTypesData);
         // If we have room types, set the first one as default in form
-        if (response.data.length > 0) {
+        if (roomTypesData.length > 0) {
           setFormData(prev => ({
             ...prev,
-            type: response.data[0]._id
+            type: roomTypesData[0]._id
           }));
         }
       } catch (err) {
@@ -173,7 +174,9 @@ const Rooms = () => {
       try {
         setLoading(true);
         const response = await roomAPI.getAllRooms();
-        setRooms(response.data);
+        // Extract data from the new API format { success: true, data: [...] }
+        const roomsData = response.data?.data || response.data || [];
+        setRooms(roomsData);
       } catch (err) {
         console.error('Error fetching rooms:', err);
         setError('Failed to load rooms. Please try again.');

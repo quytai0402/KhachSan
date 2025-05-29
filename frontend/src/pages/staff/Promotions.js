@@ -58,7 +58,9 @@ const StaffPromotions = () => {
       try {
         setLoading(true);
         const response = await promotionAPI.getAllPromotions();
-        setPromotions(response.data);
+        // Extract data from the new API format { success: true, data: [...] }
+        const promotionsData = response.data?.data || response.data || [];
+        setPromotions(promotionsData);
         setError('');
       } catch (err) {
         console.error('Error fetching promotions:', err);
@@ -236,7 +238,7 @@ const StaffPromotions = () => {
                   <CardMedia
                     component="img"
                     height="140"
-                    image={promotion.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop'}
+                    image={promotion.image ? `http://localhost:5000${promotion.image}` : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop'}
                     alt={promotion.title}
                   />
                   <CardContent sx={{ flexGrow: 1 }}>

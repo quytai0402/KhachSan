@@ -24,8 +24,8 @@ class DashboardService {
         ? await adminAPI.getDashboard()
         : await staffAPI.getStaffDashboard();
       
-      // Return data from the API with additional processing if needed
-      const dashboardData = response.data;
+      // Return data from the API response (handle new format with success: true, data: {...})
+      const dashboardData = response.data.data || response.data;
       
       // Debug data from API
       console.log('Dashboard API response:', dashboardData);
@@ -101,7 +101,8 @@ class DashboardService {
         ? await adminAPI.getActivities()
         : await staffAPI.getStaffActivities();
       
-      return response.data || [];
+      // Handle new format with success: true, data: [...]
+      return response.data.data || response.data || [];
     } catch (error) {
       console.error('Error getting recent activities:', error);
       return [];

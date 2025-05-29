@@ -33,7 +33,9 @@ export const AuthProvider = ({ children }) => {
         }
         
         const response = await authAPI.getCurrentUser();
-        setUser(response.data);
+        // Extract user data from the new API format { success: true, data: {...} }
+        const userData = response.data?.data || response.data;
+        setUser(userData);
         setIsAuthenticated(true);
       } catch (err) {
         console.error('Error loading user:', err);
@@ -53,7 +55,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', res.data.token);
       
       const userRes = await authAPI.getCurrentUser();
-      setUser(userRes.data);
+      // Extract user data from the new API format { success: true, data: {...} }
+      const currentUserData = userRes.data?.data || userRes.data;
+      setUser(currentUserData);
       setIsAuthenticated(true);
       toastService.success('Registration successful! Welcome to our hotel.');
       return true;
@@ -72,9 +76,11 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', res.data.token);
       
       const userRes = await authAPI.getCurrentUser();
-      setUser(userRes.data);
+      // Extract user data from the new API format { success: true, data: {...} }
+      const userData = userRes.data?.data || userRes.data;
+      setUser(userData);
       setIsAuthenticated(true);
-      toastService.success(`Welcome back, ${userRes.data.name}!`);
+      toastService.success(`Welcome back, ${userData.name}!`);
       return true;
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Invalid credentials';

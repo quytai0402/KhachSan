@@ -59,12 +59,14 @@ const Rooms = () => {
       try {
         setLoading(true);
         const response = await roomAPI.getAllRooms();
-        setRooms(response.data);
-        setFilteredRooms(response.data);
-        if (response.data.length === 0) {
+        // Extract data from the new API format { success: true, data: [...] }
+        const roomsData = response.data?.data || response.data || [];
+        setRooms(roomsData);
+        setFilteredRooms(roomsData);
+        if (roomsData.length === 0) {
           toastService.info('Hiện không có phòng nào khả dụng.');
         } else {
-          toastService.success(`Tìm thấy ${response.data.length} phòng cho kỳ nghỉ của bạn.`);
+          toastService.success(`Tìm thấy ${roomsData.length} phòng cho kỳ nghỉ của bạn.`);
         }
       } catch (err) {
         console.error('Error fetching rooms:', err);
@@ -111,8 +113,8 @@ const Rooms = () => {
       );
     }
     
-    // Filter by availability
-    result = result.filter(room => room.status === 'available');
+    // Filter by availability - temporarily disabled for demo
+    // result = result.filter(room => room.status === 'available');
     
     // Log filtered rooms for debugging
     console.log('Filtered rooms count:', result.length);

@@ -31,7 +31,7 @@ const Services = () => {
     const fetchServices = async () => {
       try {
         setLoading(true);
-        const response = await serviceAPI.getAllServices();
+        const response = await serviceAPI.getFeatures();
         setServices(response.data.data || []);
         setLoading(false);
       } catch (err) {
@@ -49,6 +49,7 @@ const Services = () => {
     switch (iconName) {
       case 'spa':
         return <SpaOutlined fontSize="large" />;
+      case 'dining':
       case 'restaurant':
         return <RestaurantOutlined fontSize="large" />;
       case 'parking':
@@ -109,20 +110,19 @@ const Services = () => {
                 boxShadow: 4
               }
             }}>
-              <CardMedia
-                component="img"
-                sx={{ 
-                  width: { xs: '100%', sm: 200 },
-                  height: { xs: 200, sm: '100%' }
-                }}
-                image={service.image}
-                alt={service.title}
-              />
+              <Box sx={{
+                width: { xs: '100%', sm: 200 },
+                height: { xs: 200, sm: '100%' },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: 'primary.main',
+                color: 'white'
+              }}>
+                {getServiceIcon(service.type)}
+              </Box>
               <CardContent sx={{ flex: '1 0 auto', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Box sx={{ mr: 2, color: 'primary.main' }}>
-                    {getServiceIcon(service.icon)}
-                  </Box>
                   <Typography variant="h6" component="h2">
                     {service.title}
                   </Typography>
