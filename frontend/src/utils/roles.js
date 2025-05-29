@@ -3,11 +3,10 @@
  * Used to maintain consistency across the frontend and ensure
  * that the roles align with the backend definitions
  */
-export const ROLES = {
-  USER: 'user',
-  STAFF: 'staff',
-  ADMIN: 'admin'
-};
+import { USER_ROLES } from '../constants';
+
+// Use centralized roles from constants
+export const ROLES = USER_ROLES;
 
 /**
  * Role hierarchy and permissions

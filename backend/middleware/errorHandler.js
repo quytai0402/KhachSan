@@ -1,3 +1,5 @@
+const { HTTP_STATUS, ERROR_MESSAGES } = require('../constants');
+
 /**
  * Global error handler middleware
  * Ensures all errors are returned in a consistent JSON format
@@ -6,15 +8,15 @@ const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
 
   // Default values
-  let statusCode = err.statusCode || 500;
-  let message = err.message || 'Internal Server Error';
+  let statusCode = err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+  let message = err.message || ERROR_MESSAGES.INTERNAL_SERVER_ERROR;
   let errors = err.errors || [];
 
   // Handle specific error types
   if (err.name === 'ValidationError') {
     // Mongoose validation error
-    statusCode = 400;
-    message = 'Validation Error';
+    statusCode = HTTP_STATUS.BAD_REQUEST;
+    message = ERROR_MESSAGES.VALIDATION_ERROR;
     
     // Format Mongoose validation errors
     if (err.errors) {
@@ -25,13 +27,13 @@ const errorHandler = (err, req, res, next) => {
     }
   } else if (err.name === 'MongoError' || err.name === 'MongoServerError') {
     // MongoDB error
-    statusCode = 500;
-    message = 'Database Error';
+    statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
+    message = ERROR_MESSAGES.DATABASE_ERROR;
     
     // Handle duplicate key error
     if (err.code === 11000) {
-      statusCode = 400;
-      message = 'Duplicate key error';
+      statusCode = HTTP_STATUS.BAD_REQUEST;
+      message = ERROR_MESSAGES.DUPLICATE_KEY;
       
       // Extract field name from error message
       const fieldName = Object.keys(err.keyPattern)[0];
@@ -42,16 +44,16 @@ const errorHandler = (err, req, res, next) => {
     }
   } else if (err.name === 'CastError') {
     // Mongoose cast error (usually invalid ObjectId)
-    statusCode = 400;
-    message = `Invalid ${err.path}: ${err.value}`;
+    statusCode = HTTP_STATUS.BAD_REQUEST;
+    message = `${ERROR_MESSAGES.INVALID_ID}: ${err.value}`;
   } else if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
     // JWT related errors
-    statusCode = 401;
-    message = 'Authentication Error: ' + err.message;
+    statusCode = HTTP_STATUS.UNAUTHORIZED;
+    message = ERROR_MESSAGES.INVALID_TOKEN;
   } else if (err.name === 'SyntaxError' && err.message.includes('JSON')) {
     // JSON parsing error
-    statusCode = 400;
-    message = 'Invalid JSON in request body';
+    statusCode = HTTP_STATUS.BAD_REQUEST;
+    message = ERROR_MESSAGES.INVALID_JSON;
   }
 
   // Return standardized error response

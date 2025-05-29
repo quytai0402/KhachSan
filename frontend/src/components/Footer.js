@@ -36,9 +36,9 @@ const Footer = () => {
       <Container maxWidth="lg">
         <Grid container spacing={4}>
           <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="h5" gutterBottom sx={{ 
+            <Typography variant="h5" gutterBottom sx={{
               fontWeight: 'bold',
-              background: 'linear-gradient(90deg, #e67e22, #f39c12)', 
+              background: 'linear-gradient(90deg, #e67e22, #f39c12)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               display: 'inline-block',
@@ -50,9 +50,9 @@ const Footer = () => {
               Sang trọng và tiện nghi với giá cả hợp lý. Trải nghiệm dịch vụ khách sạn tốt nhất cùng chúng tôi.
             </Typography>
             <Box sx={{ mt: 3, display: 'flex', gap: 1.5 }}>
-              <IconButton size="small" sx={{ 
+              <IconButton size="small" sx={{
                 color: 'white',
-                '&:hover': { 
+                '&:hover': {
                   backgroundColor: 'secondary.main',
                   transform: 'translateY(-3px)'
                 },
@@ -60,9 +60,9 @@ const Footer = () => {
               }}>
                 <FacebookIcon />
               </IconButton>
-              <IconButton size="small" sx={{ 
+              <IconButton size="small" sx={{
                 color: 'white',
-                '&:hover': { 
+                '&:hover': {
                   backgroundColor: 'secondary.main',
                   transform: 'translateY(-3px)'
                 },
@@ -70,9 +70,9 @@ const Footer = () => {
               }}>
                 <TwitterIcon />
               </IconButton>
-              <IconButton size="small" sx={{ 
+              <IconButton size="small" sx={{
                 color: 'white',
-                '&:hover': { 
+                '&:hover': {
                   backgroundColor: 'secondary.main',
                   transform: 'translateY(-3px)'
                 },
@@ -80,9 +80,9 @@ const Footer = () => {
               }}>
                 <InstagramIcon />
               </IconButton>
-              <IconButton size="small" sx={{ 
+              <IconButton size="small" sx={{
                 color: 'white',
-                '&:hover': { 
+                '&:hover': {
                   backgroundColor: 'secondary.main',
                   transform: 'translateY(-3px)'
                 },
@@ -92,9 +92,9 @@ const Footer = () => {
               </IconButton>
             </Box>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="h6" gutterBottom sx={{ 
+            <Typography variant="h6" gutterBottom sx={{
               fontWeight: 600,
               position: 'relative',
               display: 'inline-block',
@@ -113,85 +113,85 @@ const Footer = () => {
               Liên Kết Nhanh
             </Typography>
             <Stack spacing={1.5}>
-              <Link 
-                component={RouterLink} 
-                to="/" 
-                color="inherit" 
-                underline="none" 
-                sx={{ 
+              <Link
+                component={RouterLink}
+                to="/"
+                color="inherit"
+                underline="none"
+                sx={{
                   display: 'flex',
                   alignItems: 'center',
                   transition: 'all 0.3s',
-                  '&:hover': { 
-                    pl: 0.5, 
+                  '&:hover': {
+                    pl: 0.5,
                     color: 'secondary.main'
                   }
                 }}
               >
                 <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Trang Chủ
               </Link>
-              <Link 
-                component={RouterLink} 
-                to="/rooms" 
-                color="inherit" 
-                underline="none" 
-                sx={{ 
+              <Link
+                component={RouterLink}
+                to="/rooms"
+                color="inherit"
+                underline="none"
+                sx={{
                   display: 'flex',
                   alignItems: 'center',
                   transition: 'all 0.3s',
-                  '&:hover': { 
-                    pl: 0.5, 
+                  '&:hover': {
+                    pl: 0.5,
                     color: 'secondary.main'
                   }
                 }}
               >
                 <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Phòng & Suites
               </Link>
-              <Link 
-                component={RouterLink} 
-                to="/services" 
-                color="inherit" 
-                underline="none" 
-                sx={{ 
+              <Link
+                component={RouterLink}
+                to="/services"
+                color="inherit"
+                underline="none"
+                sx={{
                   display: 'flex',
                   alignItems: 'center',
                   transition: 'all 0.3s',
-                  '&:hover': { 
-                    pl: 0.5, 
+                  '&:hover': {
+                    pl: 0.5,
                     color: 'secondary.main'
                   }
                 }}
               >
                 <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Dịch Vụ
               </Link>
-              <Link 
-                component={RouterLink} 
-                to="/promotions" 
-                color="inherit" 
-                underline="none" 
-                sx={{ 
+              <Link
+                component={RouterLink}
+                to="/promotions"
+                color="inherit"
+                underline="none"
+                sx={{
                   display: 'flex',
                   alignItems: 'center',
                   transition: 'all 0.3s',
-                  '&:hover': { 
-                    pl: 0.5, 
+                  '&:hover': {
+                    pl: 0.5,
                     color: 'secondary.main'
                   }
                 }}
               >
                 <ArrowForwardIcon sx={{ fontSize: 14, mr: 1, opacity: 0.7 }} /> Khuyến Mãi
               </Link>
-              <Link 
-                component={RouterLink} 
-                to="/contact" 
-                color="inherit" 
-                underline="none" 
-                sx={{ 
+              <Link
+                component={RouterLink}
+                to="/contact"
+                color="inherit"
+                underline="none"
+                sx={{
                   display: 'flex',
                   alignItems: 'center',
                   transition: 'all 0.3s',
-                  '&:hover': { 
-                    pl: 0.5, 
+                  '&:hover': {
+                    pl: 0.5,
                     color: 'secondary.main'
                   }
                 }}
@@ -200,9 +200,9 @@ const Footer = () => {
               </Link>
             </Stack>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="h6" gutterBottom sx={{ 
+            <Typography variant="h6" gutterBottom sx={{
               fontWeight: 600,
               position: 'relative',
               display: 'inline-block',
@@ -222,16 +222,16 @@ const Footer = () => {
             </Typography>
             <Stack spacing={2.5}>
               <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                <Box 
-                  sx={{ 
-                    mr: 2, 
-                    mt: 0.5, 
-                    backgroundColor: 'rgba(230, 126, 34, 0.15)', 
-                    borderRadius: '50%', 
-                    width: 32, 
-                    height: 32, 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                <Box
+                  sx={{
+                    mr: 2,
+                    mt: 0.5,
+                    backgroundColor: 'rgba(230, 126, 34, 0.15)',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     color: 'secondary.main'
                   }}
@@ -243,16 +243,16 @@ const Footer = () => {
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                <Box 
-                  sx={{ 
-                    mr: 2, 
-                    mt: 0.5, 
-                    backgroundColor: 'rgba(230, 126, 34, 0.15)', 
-                    borderRadius: '50%', 
-                    width: 32, 
-                    height: 32, 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                <Box
+                  sx={{
+                    mr: 2,
+                    mt: 0.5,
+                    backgroundColor: 'rgba(230, 126, 34, 0.15)',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     color: 'secondary.main'
                   }}
@@ -269,16 +269,16 @@ const Footer = () => {
                 </Box>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                <Box 
-                  sx={{ 
-                    mr: 2, 
-                    mt: 0.5, 
-                    backgroundColor: 'rgba(230, 126, 34, 0.15)', 
-                    borderRadius: '50%', 
-                    width: 32, 
-                    height: 32, 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                <Box
+                  sx={{
+                    mr: 2,
+                    mt: 0.5,
+                    backgroundColor: 'rgba(230, 126, 34, 0.15)',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     color: 'secondary.main'
                   }}
@@ -296,9 +296,9 @@ const Footer = () => {
               </Box>
             </Stack>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="h6" gutterBottom sx={{ 
+            <Typography variant="h6" gutterBottom sx={{
               fontWeight: 600,
               position: 'relative',
               display: 'inline-block',
@@ -325,7 +325,7 @@ const Footer = () => {
                 placeholder="Địa chỉ Email của bạn"
                 variant="outlined"
                 size="small"
-                sx={{ 
+                sx={{
                   mb: 2,
                   backgroundColor: 'rgba(255, 255, 255, 0.08)',
                   borderRadius: 1.5,
@@ -343,12 +343,12 @@ const Footer = () => {
                   input: { color: 'white' }
                 }}
               />
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 color="secondary"
                 fullWidth
-                sx={{ 
-                  py: 1, 
+                sx={{
+                  py: 1,
                   fontWeight: 500,
                   transition: 'all 0.3s',
                   '&:hover': {
@@ -363,14 +363,14 @@ const Footer = () => {
             </Box>
           </Grid>
         </Grid>
-        
+
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 4 }} />
-        
+
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', pt: 2 }}>
           <Typography variant="body2" sx={{ mb: { xs: 2, sm: 0 }, opacity: 0.7 }}>
             © {new Date().getFullYear()} Khách Sạn Sang Trọng. Tất cả các quyền được bảo lưu.
           </Typography>
-          
+
           <Box sx={{ display: 'flex', gap: 3 }}>
             <Link component={RouterLink} to="/terms" color="inherit" underline="hover" sx={{ fontSize: '0.875rem', opacity: 0.7, '&:hover': { opacity: 1 } }}>
               Điều khoản & Điều kiện

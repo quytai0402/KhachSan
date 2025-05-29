@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import { roomAPI, bookingAPI, userAPI } from './api';
-import axios from 'axios';
+import { adminAPI, staffAPI } from './api';
 
 /**
  * Service lấy và xử lý dữ liệu dashboard cho cả Admin và Staff
@@ -13,23 +13,16 @@ class DashboardService {
    */
   async getStats(role = 'admin') {
     try {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
       
       if (!token) {
         throw new Error('No authentication token found');
       }
       
-      // Fetch dashboard data directly from dedicated API endpoint with proper authentication
-      const response = await axios.get(
-        `${API_URL}/api/${role === 'admin' ? 'admin' : 'staff'}/dashboard`,
-        {
-          headers: {
-            'x-auth-token': token,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // Use centralized API service for dashboard data
+      const response = role === 'admin' 
+        ? await adminAPI.getDashboard()
+        : await staffAPI.getStaffDashboard();
       
       // Return data from the API with additional processing if needed
       const dashboardData = response.data;
@@ -98,22 +91,16 @@ class DashboardService {
    */
   async getRecentActivities(role = 'admin') {
     try {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
       
       if (!token) {
         throw new Error('No authentication token found');
       }
       
-      const response = await axios.get(
-        `${API_URL}/api/${role}/activities`,
-        {
-          headers: {
-            'x-auth-token': token,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = role === 'admin' 
+        ? await adminAPI.getActivities()
+        : await staffAPI.getStaffActivities();
+      
       return response.data || [];
     } catch (error) {
       console.error('Error getting recent activities:', error);

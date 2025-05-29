@@ -37,7 +37,7 @@ import {
 } from '@mui/icons-material';
 import { format, parseISO } from 'date-fns';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import { promotionAPI } from '../../services/api';
 
 // Empty promotions array as fallback
 const emptyPromotions = [];
@@ -57,7 +57,7 @@ const StaffPromotions = () => {
     const fetchPromotions = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/promotions');
+        const response = await promotionAPI.getAllPromotions();
         setPromotions(response.data);
         setError('');
       } catch (err) {
@@ -101,7 +101,7 @@ const StaffPromotions = () => {
   const handleRefresh = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/promotions');
+      const response = await promotionAPI.getAllPromotions();
       setPromotions(response.data);
       setError('');
       toast.success('Danh sách khuyến mãi đã được cập nhật');

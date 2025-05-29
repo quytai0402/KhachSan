@@ -274,7 +274,7 @@ const Header = () => {
   ];
 
   const userPages = [
-    { title: 'Đặt Phòng Của Tôi', path: '/my-bookings' }
+    // Removed "Đặt Phòng Của Tôi" - now integrated into Profile page
   ];
 
   const drawer = (

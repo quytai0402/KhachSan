@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_ENDPOINTS, HTTP_STATUS } from '../constants';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -41,7 +42,7 @@ api.interceptors.response.use(
       
       // Handle common errors
       switch (errorStatus) {
-        case 401:
+        case HTTP_STATUS.UNAUTHORIZED:
           // Unauthorized - clear token and redirect to login
           // Only redirect if not already on login/register page to avoid redirect loops
           if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
@@ -53,22 +54,22 @@ api.interceptors.response.use(
           }
           break;
           
-        case 403:
+        case HTTP_STATUS.FORBIDDEN:
           // Forbidden - user doesn't have permission
           console.error('Access denied: You do not have permission to perform this action');
           break;
           
-        case 404:
+        case HTTP_STATUS.NOT_FOUND:
           // Not found
           console.error('Resource not found');
           break;
           
-        case 422:
+        case HTTP_STATUS.UNPROCESSABLE_ENTITY:
           // Validation error
           console.error('Validation error:', errorData.errors || errorData.message);
           break;
           
-        case 500:
+        case HTTP_STATUS.INTERNAL_SERVER_ERROR:
           // Server error
           console.error('Server error. Please try again later or contact support.');
           break;
@@ -157,61 +158,59 @@ const createFormData = (data) => {
 
 // Auth Services
 export const authAPI = {
-  register: (userData) => api.post('/auth/register', userData),
-  login: (credentials) => api.post('/auth/login', credentials),
-  getCurrentUser: () => api.get('/auth/user')
+  register: (userData) => api.post(API_ENDPOINTS.AUTH.REGISTER, userData),
+  login: (credentials) => api.post(API_ENDPOINTS.AUTH.LOGIN, credentials),
+  getCurrentUser: () => api.get(API_ENDPOINTS.AUTH.USER)
 };
 
 // Room Services
 export const roomAPI = {
-  getAllRooms: () => api.get('/rooms'),
-  getRoomById: (id) => api.get(`/rooms/${id}`),
-  getAvailableRooms: (checkIn, checkOut) => api.get(`/rooms/available?checkIn=${checkIn}&checkOut=${checkOut}`),
-  getRoomTypes: () => api.get('/rooms/types'),
+  getAllRooms: () => api.get(API_ENDPOINTS.ROOMS.BASE),
+  getRoomById: (id) => api.get(`${API_ENDPOINTS.ROOMS.BASE}/${id}`),
+  getAvailableRooms: (checkIn, checkOut) => api.get(`${API_ENDPOINTS.ROOMS.AVAILABLE}?checkIn=${checkIn}&checkOut=${checkOut}`),
+  getRoomTypes: () => api.get(API_ENDPOINTS.ROOMS.TYPES),
   createRoom: (roomData) => {
     // If roomData contains files, use FormData
     if (roomData.images && (Array.isArray(roomData.images) || roomData.images instanceof File)) {
       const formData = createFormData(roomData);
       
-      return axios.post(`${API_URL}/rooms`, formData, {
+      return api.post(API_ENDPOINTS.ROOMS.BASE, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'x-auth-token': localStorage.getItem('token')
+          'Content-Type': 'multipart/form-data'
         }
       });
     }
     
     // Otherwise use regular JSON
-    return api.post('/rooms', roomData);
+    return api.post(API_ENDPOINTS.ROOMS.BASE, roomData);
   },
   updateRoom: (id, roomData) => {
     // If roomData contains files, use FormData
     if (roomData.images && (Array.isArray(roomData.images) || roomData.images instanceof File)) {
       const formData = createFormData(roomData);
       
-      return axios.put(`${API_URL}/rooms/${id}`, formData, {
+      return api.put(`${API_ENDPOINTS.ROOMS.BASE}/${id}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'x-auth-token': localStorage.getItem('token')
+          'Content-Type': 'multipart/form-data'
         }
       });
     }
     
     // Otherwise use regular JSON
-    return api.put(`/rooms/${id}`, roomData);
+    return api.put(`${API_ENDPOINTS.ROOMS.BASE}/${id}`, roomData);
   },
-  deleteRoom: (id) => api.delete(`/rooms/${id}`)
+  deleteRoom: (id) => api.delete(`${API_ENDPOINTS.ROOMS.BASE}/${id}`)
 };
 
 // Booking Services
 export const bookingAPI = {
-  getAllBookings: () => api.get('/bookings'),
-  getBookingById: (id) => api.get(`/bookings/${id}`),
-  getUserBookings: () => api.get('/bookings/me'),
-  getRoomBookings: (roomId) => api.get(`/bookings/room/${roomId}`),
-  getBookingsByPhone: (phoneNumber) => api.get(`/bookings/phone/${phoneNumber}`),
-  createBooking: (bookingData) => api.post('/bookings', bookingData),
-  createGuestBooking: (bookingData) => api.post('/bookings/guest', { 
+  getAllBookings: () => api.get(API_ENDPOINTS.BOOKINGS.BASE),
+  getBookingById: (id) => api.get(`${API_ENDPOINTS.BOOKINGS.BASE}/${id}`),
+  getUserBookings: () => api.get(API_ENDPOINTS.BOOKINGS.USER),
+  getRoomBookings: (roomId) => api.get(`${API_ENDPOINTS.BOOKINGS.BY_ROOM}/${roomId}`),
+  getBookingsByPhone: (phoneNumber) => api.get(`${API_ENDPOINTS.BOOKINGS.BY_PHONE}/${phoneNumber}`),
+  createBooking: (bookingData) => api.post(API_ENDPOINTS.BOOKINGS.BASE, bookingData),
+  createGuestBooking: (bookingData) => api.post(API_ENDPOINTS.BOOKINGS.GUEST, { 
     roomId: bookingData.roomId, 
     checkInDate: bookingData.checkInDate,
     checkOutDate: bookingData.checkOutDate,
@@ -225,54 +224,53 @@ export const bookingAPI = {
       address: bookingData.guestAddress
     }
   }),
-  updateBooking: (id, bookingData) => api.put(`/bookings/${id}`, bookingData),
-  updateBookingStatus: (id, statusData) => api.put(`/bookings/${id}/status`, statusData),
-  deleteBooking: (id) => api.delete(`/bookings/${id}`)
+  updateBooking: (id, bookingData) => api.put(`${API_ENDPOINTS.BOOKINGS.BASE}/${id}`, bookingData),
+  updateBookingStatus: (id, statusData) => api.put(`${API_ENDPOINTS.BOOKINGS.STATUS}/${id}`, statusData),
+  deleteBooking: (id) => api.delete(`${API_ENDPOINTS.BOOKINGS.BASE}/${id}`)
 };
 
 // User Services
 export const userAPI = {
-  getAllUsers: () => api.get('/users'),
-  getUserById: (id) => api.get(`/users/${id}`),
-  updateUser: (id, userData) => api.put(`/users/${id}`, userData),
-  deleteUser: (id) => api.delete(`/users/${id}`)
+  getAllUsers: () => api.get(API_ENDPOINTS.USERS.BASE),
+  getUserById: (id) => api.get(`${API_ENDPOINTS.USERS.BASE}/${id}`),
+  updateUser: (id, userData) => api.put(`${API_ENDPOINTS.USERS.BASE}/${id}`, userData),
+  deleteUser: (id) => api.delete(`${API_ENDPOINTS.USERS.BASE}/${id}`)
 };
 
 // Service Services
 export const serviceAPI = {
-  getAllServices: () => api.get('/services'),
-  getServiceById: (id) => api.get(`/services/${id}`),
+  getAllServices: () => api.get(API_ENDPOINTS.SERVICES.BASE),
+  getServiceById: (id) => api.get(`${API_ENDPOINTS.SERVICES.BASE}/${id}`),
+  getFeatures: () => api.get('/services/features'),
   createService: (serviceData) => {
     // If serviceData contains image file, use FormData
     if (serviceData.image && serviceData.image instanceof File) {
       const formData = createFormData(serviceData);
       
-      return axios.post(`${API_URL}/services`, formData, {
+      return api.post(API_ENDPOINTS.SERVICES.BASE, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'x-auth-token': localStorage.getItem('token')
+          'Content-Type': 'multipart/form-data'
         }
       });
     }
     
-    return api.post('/services', serviceData);
+    return api.post(API_ENDPOINTS.SERVICES.BASE, serviceData);
   },
   updateService: (id, serviceData) => {
     // If serviceData contains image file, use FormData
     if (serviceData.image && serviceData.image instanceof File) {
       const formData = createFormData(serviceData);
       
-      return axios.put(`${API_URL}/services/${id}`, formData, {
+      return api.put(`${API_ENDPOINTS.SERVICES.BASE}/${id}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'x-auth-token': localStorage.getItem('token')
+          'Content-Type': 'multipart/form-data'
         }
       });
     }
     
-    return api.put(`/services/${id}`, serviceData);
+    return api.put(`${API_ENDPOINTS.SERVICES.BASE}/${id}`, serviceData);
   },
-  deleteService: (id) => api.delete(`/services/${id}`)
+  deleteService: (id) => api.delete(`${API_ENDPOINTS.SERVICES.BASE}/${id}`)
 };
 
 // Promotion Services
@@ -284,10 +282,9 @@ export const promotionAPI = {
     if (promotionData.image && promotionData.image instanceof File) {
       const formData = createFormData(promotionData);
       
-      return axios.post(`${API_URL}/promotions`, formData, {
+      return api.post('/promotions', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'x-auth-token': localStorage.getItem('token')
+          'Content-Type': 'multipart/form-data'
         }
       });
     }
@@ -299,10 +296,9 @@ export const promotionAPI = {
     if (promotionData.image && promotionData.image instanceof File) {
       const formData = createFormData(promotionData);
       
-      return axios.put(`${API_URL}/promotions/${id}`, formData, {
+      return api.put(`/promotions/${id}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'x-auth-token': localStorage.getItem('token')
+          'Content-Type': 'multipart/form-data'
         }
       });
     }
@@ -319,6 +315,33 @@ export const adminAPI = {
   getReports: (startDate, endDate) => api.get('/admin/reports', {
     params: { startDate, endDate }
   })
+};
+
+// Staff Services
+export const staffAPI = {
+  // Bookings
+  getStaffBookings: () => api.get('/staff/bookings'),
+  updateBookingCheckIn: (id, data) => api.put(`/staff/bookings/${id}/check-in`, data),
+  updateBookingCheckOut: (id, data) => api.put(`/staff/bookings/${id}/check-out`, data),
+  updateBooking: (id, data) => api.put(`/staff/bookings/${id}`, data),
+  
+  // Schedule
+  getStaffSchedule: () => api.get('/staff/schedule'),
+  updateScheduleItem: (type, id, data) => api.put(`/staff/schedule/${type}/${id}`, data),
+  
+  // Guests
+  getStaffGuests: () => api.get('/staff/guests'),
+  getGuestRequests: () => api.get('/staff/guest-requests'),
+  updateGuestRequest: (id, data) => api.put(`/staff/guest-requests/${id}`, data),
+  createGuestRequest: (data) => api.post('/staff/guest-requests', data),
+  
+  // Rooms
+  getStaffRooms: () => api.get('/staff/rooms'),
+  updateStaffRoom: (id, data) => api.put(`/staff/rooms/${id}`, data),
+  
+  // Dashboard
+  getStaffDashboard: () => api.get('/staff/dashboard'),
+  getStaffActivities: () => api.get('/staff/activities')
 };
 
 export default api;

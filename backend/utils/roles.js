@@ -2,11 +2,10 @@
  * Role definitions for the application
  * These should match the enum values in the User model
  */
-const ROLES = {
-  USER: 'user',
-  STAFF: 'staff',
-  ADMIN: 'admin'
-};
+const { USER_ROLES } = require('../constants');
+
+// Use centralized roles from constants
+const ROLES = USER_ROLES;
 
 /**
  * Role hierarchy and permissions

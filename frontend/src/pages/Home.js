@@ -1,3 +1,4 @@
+import Axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
@@ -29,7 +30,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format, addDays } from 'date-fns';
-import axios from 'axios';
+import { roomAPI, promotionAPI, serviceAPI } from '../services/api';
 
 import HotelIcon from '@mui/icons-material/Hotel';
 import SpaIcon from '@mui/icons-material/Spa';
@@ -143,13 +144,12 @@ const Home = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
         
-        // Load featured rooms
-        const roomsResponse = await axios.get(`${API_URL}/api/rooms`);
-        if (roomsResponse.data && roomsResponse.data.length > 0) {
+        // Load featured rooms using centralized API service
+        const roomsResponse = await roomAPI.getAllRooms();
+        if (roomsResponse.data && roomsResponse.data.success) {
           // If we have rooms, get a sample of up to 4 rooms sorted by price
-          const sortedRooms = roomsResponse.data
+          const sortedRooms = roomsResponse.data.data
             .filter(room => room.status === 'available')
             .sort((a, b) => b.price - a.price)
             .slice(0, 4);
@@ -162,12 +162,12 @@ const Home = () => {
           setError('Không có phòng khả dụng vào lúc này.');
         }
         
-        // Load promotions
-        const promotionsResponse = await axios.get(`${API_URL}/api/promotions`);
+        // Load promotions using centralized API service
+        const promotionsResponse = await promotionAPI.getAllPromotions();
         setPromotions(promotionsResponse.data || []);
         
-        // Load hotel features/services
-        const featuresResponse = await axios.get(`${API_URL}/api/services/features`);
+        // Load hotel features/services using centralized API service
+        const featuresResponse = await serviceAPI.getFeatures();
         if (featuresResponse.data && featuresResponse.data.length > 0) {
           setHotelFeatures(featuresResponse.data);
         }

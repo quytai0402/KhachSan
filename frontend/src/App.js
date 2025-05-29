@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline, Box } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -24,7 +24,6 @@ import BookingForm from './pages/BookingForm';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
-import MyBookings from './pages/MyBookings';
 import Services from './pages/Services';
 import Promotions from './pages/Promotions';
 import Contact from './pages/Contact';
@@ -209,7 +208,7 @@ const App = () => {
                         path="/my-bookings" 
                         element={
                           <ProtectedRoute>
-                            <MyBookings />
+                            <Navigate to="/profile?tab=1" replace />
                           </ProtectedRoute>
                         } 
                       />

@@ -33,7 +33,7 @@ import HotelIcon from '@mui/icons-material/Hotel';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { DatePicker } from '@mui/x-date-pickers';
 import { format, parseISO } from 'date-fns';
-import axios from 'axios';
+import { staffAPI } from '../../services/api';
 
 const StaffBookings = () => {
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,7 @@ const StaffBookings = () => {
     const fetchBookings = async () => {
       try {
         // Lấy dữ liệu đặt phòng từ API thực tế
-        const response = await axios.get('/api/staff/bookings');
+        const response = await staffAPI.getStaffBookings();
         setBookings(response.data);
         setFilteredBookings(response.data);
         setLoading(false);
@@ -132,13 +132,13 @@ const StaffBookings = () => {
 
     try {
       // Cập nhật trạng thái đặt phòng thành checked-in thông qua API
-      await axios.put(`/api/staff/bookings/${selectedBooking.id}/check-in`, {
+      await staffAPI.updateBookingCheckIn(selectedBooking.id, {
         roomNumber: roomAssigned,
         notes: notes
       });
       
       // Lấy lại dữ liệu cập nhật
-      const response = await axios.get('/api/staff/bookings');
+      const response = await staffAPI.getStaffBookings();
       setBookings(response.data);
       
       handleCloseDialog();
@@ -151,12 +151,12 @@ const StaffBookings = () => {
   const handleCheckOut = async () => {
     try {
       // Cập nhật trạng thái đặt phòng thành checked-out thông qua API
-      await axios.put(`/api/staff/bookings/${selectedBooking.id}/check-out`, {
+      await staffAPI.updateBookingCheckOut(selectedBooking.id, {
         notes: notes
       });
       
       // Lấy lại dữ liệu cập nhật
-      const response = await axios.get('/api/staff/bookings');
+      const response = await staffAPI.getStaffBookings();
       setBookings(response.data);
       
       handleCloseDialog();
@@ -169,7 +169,7 @@ const StaffBookings = () => {
   const handleUpdateBooking = async () => {
     try {
       // Cập nhật thông tin đặt phòng thông qua API
-      await axios.put(`/api/staff/bookings/${selectedBooking.id}`, {
+      await staffAPI.updateBooking(selectedBooking.id, {
         status: statusUpdate,
         roomNumber: roomAssigned,
         paymentStatus: paymentStatus,
@@ -177,7 +177,7 @@ const StaffBookings = () => {
       });
       
       // Lấy lại dữ liệu cập nhật
-      const response = await axios.get('/api/staff/bookings');
+      const response = await staffAPI.getStaffBookings();
       setBookings(response.data);
       
       handleCloseDialog();

@@ -6,37 +6,29 @@ const Room = require('../models/Room');
 const User = require('../models/User');
 const { sendBookingConfirmation, sendBookingCancellation } = require('../utils/emailService');
 const socketEvents = require('../utils/socketEvents');
+const asyncHandler = require('../middleware/asyncHandler');
+const { HTTP_STATUS, ERROR_MESSAGES, BOOKING_STATUS, ROOM_STATUS } = require('../constants');
 
 // @route   GET api/bookings
 // @desc    Get all bookings (admin only)
 // @access  Private
-router.get('/', [auth, admin], async (req, res) => {
-  try {
-    const bookings = await Booking.find()
-      .populate('user', ['name', 'email', 'phone'])
-      .populate('room', ['roomNumber', 'type', 'price'])
-      .sort({ createdAt: -1 });
-    res.json(bookings);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
+router.get('/', [auth, admin], asyncHandler(async (req, res) => {
+  const bookings = await Booking.find()
+    .populate('user', ['name', 'email', 'phone'])
+    .populate('room', ['roomNumber', 'type', 'price'])
+    .sort({ createdAt: -1 });
+  res.json({ success: true, data: bookings });
+}));
 
 // @route   GET api/bookings/me
 // @desc    Get current user's bookings
 // @access  Private
-router.get('/me', auth, async (req, res) => {
-  try {
-    const bookings = await Booking.find({ user: req.user.id })
-      .populate('room', ['roomNumber', 'type', 'price', 'images'])
-      .sort({ createdAt: -1 });
-    res.json(bookings);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
+router.get('/me', auth, asyncHandler(async (req, res) => {
+  const bookings = await Booking.find({ user: req.user.id })
+    .populate('room', ['roomNumber', 'type', 'price', 'images'])
+    .sort({ createdAt: -1 });
+  res.json({ success: true, data: bookings });
+}));
 
 // @route   GET api/bookings/:id
 // @desc    Get booking by ID
@@ -49,15 +41,19 @@ router.get('/:id', auth, async (req, res) => {
 
     // Check if booking exists
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+        message: ERROR_MESSAGES.BOOKING_NOT_FOUND 
+      });
     }
 
     // Make sure user owns the booking or is admin
     if (booking.user._id.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'Not authorized' });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ 
+        message: ERROR_MESSAGES.NOT_AUTHORIZED 
+      });
     }
 
-    res.json(booking);
+    res.json({ success: true, data: booking });
   } catch (err) {
     console.error(err.message);
     if (err.kind === 'ObjectId') {
@@ -70,27 +66,19 @@ router.get('/:id', auth, async (req, res) => {
 // @route   GET api/bookings/room/:roomId
 // @desc    Get bookings for a specific room
 // @access  Public
-router.get('/room/:roomId', async (req, res) => {
-  try {
-    // Find bookings for the specified room that are not cancelled
-    // Only include future and current bookings
-    const bookings = await Booking.find({
-      room: req.params.roomId,
-      status: { $ne: 'cancelled' }, // Not cancelled
-      checkOutDate: { $gte: new Date() } // Check-out date is in the future or today
-    })
-    .select('checkInDate checkOutDate status')
-    .sort({ checkInDate: 1 });
-    
-    res.json(bookings);
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Room not found' });
-    }
-    res.status(500).send('Server error');
-  }
-});
+router.get('/room/:roomId', asyncHandler(async (req, res) => {
+  // Find bookings for the specified room that are not cancelled
+  // Only include future and current bookings
+  const bookings = await Booking.find({
+    room: req.params.roomId,
+    status: { $ne: BOOKING_STATUS.CANCELLED }, // Not cancelled
+    checkOutDate: { $gte: new Date() } // Check-out date is in the future or today
+  })
+  .select('checkInDate checkOutDate status')
+  .sort({ checkInDate: 1 });
+  
+  res.json({ success: true, data: bookings });
+}));
 
 // @route   POST api/bookings
 // @desc    Create a booking

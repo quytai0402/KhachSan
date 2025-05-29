@@ -32,7 +32,7 @@ const Services = () => {
       try {
         setLoading(true);
         const response = await serviceAPI.getAllServices();
-        setServices(response.data);
+        setServices(response.data.data || []);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching services:', err);

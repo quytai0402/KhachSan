@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ROOM_STATUS, CLEANING_STATUS } = require('../constants');
 
 const RoomSchema = new mongoose.Schema({
   roomNumber: {
@@ -32,13 +33,13 @@ const RoomSchema = new mongoose.Schema({
   }],
   status: {
     type: String,
-    enum: ['available', 'booked', 'maintenance', 'cleaning', 'occupied', 'vacant-clean', 'vacant-dirty'],
-    default: 'available'
+    enum: Object.values(ROOM_STATUS),
+    default: ROOM_STATUS.AVAILABLE
   },
   cleaningStatus: {
     type: String,
-    enum: ['clean', 'dirty', 'cleaning'],
-    default: 'clean'
+    enum: Object.values(CLEANING_STATUS),
+    default: CLEANING_STATUS.CLEAN
   },
   floor: {
     type: Number

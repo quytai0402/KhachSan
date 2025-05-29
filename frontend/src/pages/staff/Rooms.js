@@ -49,7 +49,7 @@ import {
 } from '@mui/icons-material';
 import { ActionModal } from '../../components/dashboard';
 import { withDashboardLayout } from '../../utils/layoutHelpers';
-import axios from 'axios';
+import { staffAPI } from '../../services/api';
 import toastService from '../../services/toastService';
 
 // Sample data in case API fails
@@ -181,7 +181,7 @@ const StaffRooms = () => {
     const fetchRooms = async () => {
       try {
         // Lấy dữ liệu phòng từ API thực tế
-        const response = await axios.get('/api/staff/rooms');
+        const response = await staffAPI.getStaffRooms();
         setRooms(response.data);
         setFilteredRooms(response.data);
         setLoading(false);
@@ -296,7 +296,7 @@ const StaffRooms = () => {
       }
       
       // Make API call to update room
-      const response = await axios.put(`/api/staff/rooms/${selectedRoom._id}`, updateData);
+      const response = await staffAPI.updateStaffRoom(selectedRoom._id, updateData);
       
       if (response.data) {
         // Update the room in local state with the server response
@@ -333,7 +333,7 @@ const StaffRooms = () => {
     setLoading(true);
     try {
       // Make actual API call to fetch latest data
-      const response = await axios.get('/api/staff/rooms');
+      const response = await staffAPI.getStaffRooms();
       setRooms(response.data);
       setFilteredRooms(response.data);
       setError(null);

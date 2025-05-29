@@ -28,7 +28,7 @@ import FlightLandIcon from '@mui/icons-material/FlightLand';
 import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
-import axios from 'axios';
+import { staffAPI } from '../../services/api';
 
 const StaffSchedule = () => {
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ const StaffSchedule = () => {
     const fetchScheduleData = async () => {
       try {
         // Lấy dữ liệu từ API thực tế
-        const response = await axios.get('/api/staff/schedule');
+        const response = await staffAPI.getStaffSchedule();
         const data = response.data;
         
         setSchedule(data);
@@ -81,13 +81,13 @@ const StaffSchedule = () => {
   const handleUpdateStatus = async () => {
     try {
       // Cập nhật trạng thái thông qua API
-      await axios.put(`/api/staff/schedule/${selectedItem.type}/${selectedItem.id}`, {
+      await staffAPI.updateScheduleItem(selectedItem.type, selectedItem.id, {
         status: statusUpdate,
         notes
       });
       
       // Lấy lại dữ liệu cập nhật
-      const response = await axios.get('/api/staff/schedule');
+      const response = await staffAPI.getStaffSchedule();
       setSchedule(response.data);
       
       handleCloseDialog();

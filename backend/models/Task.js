@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { TASK_TYPES, TASK_PRIORITY, TASK_STATUS } = require('../constants');
 
 const TaskSchema = new mongoose.Schema({
   roomNumber: {
@@ -7,18 +8,18 @@ const TaskSchema = new mongoose.Schema({
   },
   taskType: {
     type: String,
-    enum: ['cleaning', 'maintenance', 'service'],
+    enum: Object.values(TASK_TYPES),
     required: true
   },
   priority: {
     type: String,
-    enum: ['high', 'medium', 'low'],
-    default: 'medium'
+    enum: Object.values(TASK_PRIORITY),
+    default: TASK_PRIORITY.MEDIUM
   },
   status: {
     type: String,
-    enum: ['pending', 'in-progress', 'completed'],
-    default: 'pending'
+    enum: Object.values(TASK_STATUS),
+    default: TASK_STATUS.PENDING
   },
   notes: {
     type: String,

@@ -41,7 +41,7 @@ import RestaurantIcon from '@mui/icons-material/Restaurant';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import axios from 'axios';
+import { staffAPI } from '../../services/api';
 
 const StaffGuests = () => {
   const [loading, setLoading] = useState(true);
@@ -67,8 +67,8 @@ const StaffGuests = () => {
     const fetchGuestsAndRequests = async () => {
       try {
         // Lấy dữ liệu từ API thực tế
-        const guestsResponse = await axios.get('/api/staff/guests');
-        const requestsResponse = await axios.get('/api/staff/guest-requests');
+        const guestsResponse = await staffAPI.getStaffGuests();
+        const requestsResponse = await staffAPI.getGuestRequests();
         
         // Phân loại yêu cầu dựa trên trạng thái
         const allRequests = requestsResponse.data;
@@ -143,13 +143,13 @@ const StaffGuests = () => {
   const handleUpdateRequestStatus = async () => {
     try {
       // Cập nhật trạng thái yêu cầu thông qua API
-      await axios.put(`/api/staff/guest-requests/${selectedRequest.id}`, {
+      await staffAPI.updateGuestRequest(selectedRequest.id, {
         status: statusUpdate,
         notes
       });
       
       // Lấy lại dữ liệu cập nhật sau khi thay đổi
-      const requestsResponse = await axios.get('/api/staff/guest-requests');
+      const requestsResponse = await staffAPI.getGuestRequests();
       const allRequests = requestsResponse.data;
       
       // Phân loại lại yêu cầu
@@ -170,13 +170,13 @@ const StaffGuests = () => {
     
     try {
       // Gửi yêu cầu mới thông qua API
-      await axios.post('/api/staff/guest-requests', { 
+      await staffAPI.createGuestRequest({ 
         ...newRequestData, 
         guestId: selectedGuest.id 
       });
       
       // Lấy lại dữ liệu cập nhật
-      const requestsResponse = await axios.get('/api/staff/guest-requests');
+      const requestsResponse = await staffAPI.getGuestRequests();
       const allRequests = requestsResponse.data;
       
       // Phân loại lại yêu cầu

@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { auth, admin } = require('../middleware/auth');
+const asyncHandler = require('../middleware/asyncHandler');
+const { 
+  HTTP_STATUS, 
+  ERROR_MESSAGES,
+  SERVICE_STATUS,
+  VALIDATION_RULES 
+} = require('../constants');
 const Service = require('../models/Service');
 const Feature = require('../models/Feature');
 const multer = require('multer');
@@ -41,198 +48,156 @@ const upload = multer({
 // @route   GET api/services/features
 // @desc    Get all active hotel features/services for homepage
 // @access  Public
-router.get('/features', async (req, res) => {
-  try {
-    // Get all active features ordered by their display order
-    const features = await Feature.find({ isActive: true }).sort({ order: 1 });
-    res.json(features);
-  } catch (err) {
-    console.error('Error fetching features:', err.message);
-    res.status(500).send('Server error');
-  }
-});
+router.get('/features', asyncHandler(async (req, res) => {
+  // Get all active features ordered by their display order
+  const features = await Feature.find({ isActive: true }).sort({ order: 1 });
+  res.status(HTTP_STATUS.OK).json({ success: true, data: features });
+}));
 
 // @route   POST api/services/features
 // @desc    Add a new hotel feature
 // @access  Private (Admin only)
-router.post('/features', [auth, admin], async (req, res) => {
+router.post('/features', [auth, admin], asyncHandler(async (req, res) => {
   const { title, description, type, order, isActive } = req.body;
   
-  try {
-    const newFeature = new Feature({
-      title,
-      description,
-      type: type || 'other',
-      order: order || 1,
-      isActive: isActive !== undefined ? isActive : true
-    });
-    
-    await newFeature.save();
-    res.json(newFeature);
-  } catch (err) {
-    console.error('Error creating feature:', err.message);
-    res.status(500).send('Server error');
-  }
-});
+  const newFeature = new Feature({
+    title,
+    description,
+    type: type || 'other',
+    order: order || 1,
+    isActive: isActive !== undefined ? isActive : true
+  });
+  
+  await newFeature.save();
+  res.status(HTTP_STATUS.CREATED).json(newFeature);
+}));
 
 // @route   PUT api/services/features/:id
 // @desc    Update a hotel feature
 // @access  Private (Admin only)
-router.put('/features/:id', [auth, admin], async (req, res) => {
+router.put('/features/:id', [auth, admin], asyncHandler(async (req, res) => {
   const { title, description, type, order, isActive } = req.body;
   
-  try {
-    // Check if feature exists
-    let feature = await Feature.findById(req.params.id);
-    if (!feature) {
-      return res.status(404).json({ message: 'Feature not found' });
-    }
-    
-    // Build feature update object
-    const featureFields = {};
-    if (title) featureFields.title = title;
-    if (description) featureFields.description = description;
-    if (type) featureFields.type = type;
-    if (order !== undefined) featureFields.order = order;
-    if (isActive !== undefined) featureFields.isActive = isActive;
-    
-    // Update feature
-    feature = await Feature.findByIdAndUpdate(
-      req.params.id,
-      { $set: featureFields },
-      { new: true }
-    );
-    
-    res.json(feature);
-  } catch (err) {
-    console.error('Error updating feature:', err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Feature not found' });
-    }
-    res.status(500).send('Server error');
+  // Check if feature exists
+  let feature = await Feature.findById(req.params.id);
+  if (!feature) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+      message: 'Feature not found' 
+    });
   }
-});
+  
+  // Build feature update object
+  const featureFields = {};
+  if (title) featureFields.title = title;
+  if (description) featureFields.description = description;
+  if (type) featureFields.type = type;
+  if (order !== undefined) featureFields.order = order;
+  if (isActive !== undefined) featureFields.isActive = isActive;
+  
+  // Update feature
+  feature = await Feature.findByIdAndUpdate(
+    req.params.id,
+    { $set: featureFields },
+    { new: true }
+  );
+  
+  res.status(HTTP_STATUS.OK).json(feature);
+}));
 
 // @route   DELETE api/services/features/:id
 // @desc    Delete a hotel feature
 // @access  Private (Admin only)
-router.delete('/features/:id', [auth, admin], async (req, res) => {
-  try {
-    // Check if feature exists
-    const feature = await Feature.findById(req.params.id);
-    if (!feature) {
-      return res.status(404).json({ message: 'Feature not found' });
-    }
-    
-    // Delete feature
-    await Feature.findByIdAndRemove(req.params.id);
-    res.json({ message: 'Feature removed' });
-  } catch (err) {
-    console.error('Error deleting feature:', err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Feature not found' });
-    }
-    res.status(500).send('Server error');
+router.delete('/features/:id', [auth, admin], asyncHandler(async (req, res) => {
+  // Check if feature exists
+  const feature = await Feature.findById(req.params.id);
+  if (!feature) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+      message: 'Feature not found' 
+    });
   }
-});
+  
+  // Delete feature
+  await Feature.findByIdAndDelete(req.params.id);
+  res.status(HTTP_STATUS.OK).json({ 
+    message: 'Feature removed successfully' 
+  });
+}));
 
 // @route   GET api/services
 // @desc    Get all services
 // @access  Public
-router.get('/', async (req, res) => {
-  try {
-    const services = await Service.find().sort({ createdAt: -1 });
-    res.json(services);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
+router.get('/', asyncHandler(async (req, res) => {
+  const services = await Service.find().sort({ createdAt: -1 });
+  res.status(HTTP_STATUS.OK).json({ success: true, data: services });
+}));
 
 // @route   GET api/services/:id
 // @desc    Get service by ID
 // @access  Public
-router.get('/:id', async (req, res) => {
-  try {
-    const service = await Service.findById(req.params.id);
-    
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    
-    res.json(service);
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    res.status(500).send('Server error');
+router.get('/:id', asyncHandler(async (req, res) => {
+  const service = await Service.findById(req.params.id);
+  
+  if (!service) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+      message: 'Service not found' 
+    });
   }
-});
+  
+  res.status(HTTP_STATUS.OK).json({ success: true, data: service });
+}));
 
 // @route   GET api/services/category/:category
 // @desc    Get services by category
 // @access  Public
-router.get('/category/:category', async (req, res) => {
-  try {
-    const services = await Service.find({ 
-      category: req.params.category,
-      isAvailable: true 
-    }).sort({ createdAt: -1 });
-    
-    res.json(services);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
+router.get('/category/:category', asyncHandler(async (req, res) => {
+  const services = await Service.find({ 
+    category: req.params.category,
+    isAvailable: true 
+  }).sort({ createdAt: -1 });
+  
+  res.status(HTTP_STATUS.OK).json({ success: true, data: services });
+}));
 
 // @route   POST api/services
 // @desc    Create a service
 // @access  Private (Admin only)
-router.post('/', [auth, admin, upload.single('image')], async (req, res) => {
+router.post('/', [auth, admin, upload.single('image')], asyncHandler(async (req, res) => {
   const { name, description, price, category } = req.body;
 
-  try {
-    console.log('Creating new service with data:', req.body);
-    
-    // Validate required fields
-    if (!name || !description || !price) {
-      console.error('Missing required fields:', { name, description, price });
-      return res.status(400).json({ message: 'Please provide all required fields' });
-    }
-
-    // Create new service
-    const newService = new Service({
-      name,
-      description,
-      price,
-      category: category || 'other'
+  console.log('Creating new service with data:', req.body);
+  
+  // Validate required fields
+  if (!name || !description || !price) {
+    console.error('Missing required fields:', { name, description, price });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+      message: ERROR_MESSAGES.INVALID_INPUT 
     });
-
-    // Add image path if uploaded
-    if (req.file) {
-      console.log('Processing uploaded image:', req.file.filename);
-      newService.image = `/uploads/services/${req.file.filename}`;
-    }
-
-    // Save service to database
-    const service = await newService.save();
-    console.log('Service created successfully:', service._id);
-    res.json(service);
-  } catch (err) {
-    console.error('Error creating service:', err.message);
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ message: 'Validation Error', errors: err.errors });
-    }
-    res.status(500).json({ message: 'Server error', error: err.message });
   }
-});
+
+  // Create new service
+  const newService = new Service({
+    name,
+    description,
+    price,
+    category: category || 'other'
+  });
+
+  // Add image path if uploaded
+  if (req.file) {
+    console.log('Processing uploaded image:', req.file.filename);
+    newService.image = `/uploads/services/${req.file.filename}`;
+  }
+
+  // Save service to database
+  const service = await newService.save();
+  console.log('Service created successfully:', service._id);
+  res.status(HTTP_STATUS.CREATED).json({ success: true, data: service });
+}));
 
 // @route   PUT api/services/:id
 // @desc    Update a service
 // @access  Private (Admin only)
-router.put('/:id', [auth, admin, upload.single('image')], async (req, res) => {
+router.put('/:id', [auth, admin, upload.single('image')], asyncHandler(async (req, res) => {
   const { name, description, price, category, isAvailable } = req.body;
 
   // Build service object
@@ -243,56 +208,46 @@ router.put('/:id', [auth, admin, upload.single('image')], async (req, res) => {
   if (category) serviceFields.category = category;
   if (isAvailable !== undefined) serviceFields.isAvailable = isAvailable === 'true';
 
-  try {
-    // Check if service exists
-    let service = await Service.findById(req.params.id);
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-
-    // Add new image if uploaded
-    if (req.file) {
-      serviceFields.image = `/uploads/services/${req.file.filename}`;
-    }
-
-    // Update service
-    service = await Service.findByIdAndUpdate(
-      req.params.id,
-      { $set: serviceFields },
-      { new: true }
-    );
-
-    res.json(service);
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    res.status(500).send('Server error');
+  // Check if service exists
+  let service = await Service.findById(req.params.id);
+  if (!service) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+      message: 'Service not found' 
+    });
   }
-});
+
+  // Add new image if uploaded
+  if (req.file) {
+    serviceFields.image = `/uploads/services/${req.file.filename}`;
+  }
+
+  // Update service
+  service = await Service.findByIdAndUpdate(
+    req.params.id,
+    { $set: serviceFields },
+    { new: true }
+  );
+
+  res.status(HTTP_STATUS.OK).json({ success: true, data: service });
+}));
 
 // @route   DELETE api/services/:id
 // @desc    Delete a service
 // @access  Private (Admin only)
-router.delete('/:id', [auth, admin], async (req, res) => {
-  try {
-    // Check if service exists
-    const service = await Service.findById(req.params.id);
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-
-    // Delete service
-    await Service.findByIdAndRemove(req.params.id);
-    res.json({ message: 'Service removed' });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    res.status(500).send('Server error');
+router.delete('/:id', [auth, admin], asyncHandler(async (req, res) => {
+  // Check if service exists
+  const service = await Service.findById(req.params.id);
+  if (!service) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+      message: 'Service not found' 
+    });
   }
-});
+
+  // Delete service
+  await Service.findByIdAndDelete(req.params.id);
+  res.status(HTTP_STATUS.OK).json({ 
+    message: 'Service removed successfully' 
+  });
+}));
 
 module.exports = router; 

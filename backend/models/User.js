@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { USER_ROLES } = require('../constants');
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -19,8 +20,8 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin', 'staff'],
-    default: 'user'
+    enum: Object.values(USER_ROLES),
+    default: USER_ROLES.USER
   },
   isActive: {
     type: Boolean,
@@ -33,6 +34,8 @@ const UserSchema = new mongoose.Schema({
   lastLogin: {
     type: Date
   }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('User', UserSchema); 

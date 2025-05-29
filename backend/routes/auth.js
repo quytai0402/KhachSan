@@ -6,6 +6,7 @@ const { auth } = require('../middleware/auth');
 const User = require('../models/User');
 const { sendWelcomeEmail } = require('../utils/emailService');
 const asyncHandler = require('../middleware/asyncHandler');
+const { HTTP_STATUS, ERROR_MESSAGES, VALIDATION_RULES } = require('../constants');
 
 // @route   POST api/auth/register
 // @desc    Register user
@@ -15,24 +16,36 @@ router.post('/register', asyncHandler(async (req, res) => {
 
   // Basic validation
   if (!name || !email || !password) {
-    return res.status(400).json({ success: false, message: 'Please provide all required fields' });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+      success: false, 
+      message: ERROR_MESSAGES.REQUIRED_FIELDS 
+    });
   }
 
   // Email format validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = VALIDATION_RULES.EMAIL_REGEX;
   if (!emailRegex.test(email)) {
-    return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+      success: false, 
+      message: ERROR_MESSAGES.INVALID_EMAIL 
+    });
   }
 
   // Password strength validation
-  if (password.length < 6) {
-    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
+  if (password.length < VALIDATION_RULES.PASSWORD_MIN_LENGTH) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+      success: false, 
+      message: ERROR_MESSAGES.PASSWORD_TOO_SHORT 
+    });
   }
 
   // Check if user already exists
   let user = await User.findOne({ email });
   if (user) {
-    return res.status(400).json({ success: false, message: 'User already exists with this email' });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+      success: false, 
+      message: ERROR_MESSAGES.USER_EXISTS 
+    });
   }
 
   // Create new user
@@ -90,20 +103,29 @@ router.post('/login', asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) {
     console.log('Login failed: User not found -', email);
-    return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({ 
+      success: false, 
+      message: ERROR_MESSAGES.INVALID_CREDENTIALS 
+    });
   }
 
   // Check if user is active
   if (!user.isActive) {
     console.log('Login failed: Account is deactivated -', email);
-    return res.status(403).json({ success: false, message: 'Account is deactivated' });
+    return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+      success: false, 
+      message: ERROR_MESSAGES.ACCOUNT_DEACTIVATED 
+    });
   }
 
   // Check if password matches
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     console.log('Login failed: Invalid password -', email);
-    return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({ 
+      success: false, 
+      message: ERROR_MESSAGES.INVALID_CREDENTIALS 
+    });
   }
 
   console.log('Login successful for:', email, 'Role:', user.role);

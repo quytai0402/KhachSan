@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { BOOKING_STATUS, PAYMENT_STATUS } = require('../constants');
 
 const BookingSchema = new mongoose.Schema({
   user: {
@@ -57,21 +58,46 @@ const BookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'checked-in', 'checked-out', 'cancelled'],
-    default: 'pending'
+    enum: Object.values(BOOKING_STATUS),
+    default: BOOKING_STATUS.PENDING
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'refunded'],
-    default: 'pending'
+    enum: Object.values(PAYMENT_STATUS),
+    default: PAYMENT_STATUS.PENDING
   },
   specialRequests: {
     type: String
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  // Additional tracking fields
+  roomNumber: {
+    type: String
+  },
+  checkInTime: {
+    type: Date
+  },
+  checkOutTime: {
+    type: Date
+  },
+  checkedInBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  checkedOutBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  notes: {
+    type: String
   }
+}, {
+  timestamps: true
+});
+
+// Update the updatedAt field before saving
+BookingSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 module.exports = mongoose.model('Booking', BookingSchema);

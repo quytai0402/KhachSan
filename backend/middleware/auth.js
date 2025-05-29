@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
-const { ROLES, hasPermission } = require('../utils/roles');
+const { USER_ROLES, ERROR_MESSAGES, HTTP_STATUS } = require('../constants');
+const { hasPermission } = require('../utils/roles');
 
 /**
  * Authentication middleware
@@ -12,7 +13,9 @@ const auth = (req, res, next) => {
 
     // Check if no token
     if (!token) {
-      return res.status(401).json({ message: 'No token, authorization denied' });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ 
+        message: ERROR_MESSAGES.NO_TOKEN 
+      });
     }
 
     // Verify token
@@ -22,7 +25,9 @@ const auth = (req, res, next) => {
     req.user = decoded.user;
     next();
   } catch (err) {
-    res.status(401).json({ message: 'Token is not valid' });
+    res.status(HTTP_STATUS.UNAUTHORIZED).json({ 
+      message: ERROR_MESSAGES.INVALID_TOKEN 
+    });
   }
 };
 
@@ -31,10 +36,12 @@ const auth = (req, res, next) => {
  * Requires auth middleware to run first
  */
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === ROLES.ADMIN) {
+  if (req.user && req.user.role === USER_ROLES.ADMIN) {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as an admin' });
+    res.status(HTTP_STATUS.FORBIDDEN).json({ 
+      message: ERROR_MESSAGES.NOT_ADMIN 
+    });
   }
 };
 
@@ -44,10 +51,12 @@ const admin = (req, res, next) => {
  * Requires auth middleware to run first
  */
 const staff = (req, res, next) => {
-  if (req.user && (req.user.role === ROLES.STAFF || req.user.role === ROLES.ADMIN)) {
+  if (req.user && (req.user.role === USER_ROLES.STAFF || req.user.role === USER_ROLES.ADMIN)) {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as staff' });
+    res.status(HTTP_STATUS.FORBIDDEN).json({ 
+      message: ERROR_MESSAGES.NOT_STAFF 
+    });
   }
 };
 
@@ -61,8 +70,8 @@ const checkPermission = (permission) => (req, res, next) => {
   if (req.user && hasPermission(req.user, permission)) {
     next();
   } else {
-    res.status(403).json({ 
-      message: `Not authorized. Missing permission: ${permission}` 
+    res.status(HTTP_STATUS.FORBIDDEN).json({ 
+      message: `${ERROR_MESSAGES.INSUFFICIENT_PERMISSIONS}: ${permission}` 
     });
   }
 };

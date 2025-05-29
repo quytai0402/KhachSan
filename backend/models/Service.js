@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { SERVICE_CATEGORIES } = require('../constants');
 
 const ServiceSchema = new mongoose.Schema({
   name: {
@@ -15,8 +16,8 @@ const ServiceSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['restaurant', 'spa', 'gym', 'pool', 'transport', 'laundry', 'other'],
-    default: 'other'
+    enum: Object.values(SERVICE_CATEGORIES),
+    default: SERVICE_CATEGORIES.OTHER
   },
   isAvailable: {
     type: Boolean,

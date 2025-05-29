@@ -7,6 +7,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
+const asyncHandler = require('../middleware/asyncHandler');
+const { HTTP_STATUS, ERROR_MESSAGES, ROOM_STATUS } = require('../constants');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads/rooms');
@@ -138,34 +140,23 @@ router.get('/available', async (req, res) => {
 // @route   GET api/rooms
 // @desc    Get all rooms
 // @access  Public
-router.get('/', async (req, res) => {
-  try {
-    const rooms = await Room.find().sort({ createdAt: -1 }).populate('type');
-    res.json(rooms);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
+router.get('/', asyncHandler(async (req, res) => {
+  const rooms = await Room.find().sort({ createdAt: -1 }).populate('type');
+  res.json({ success: true, data: rooms });
+}));
 
 // @route   GET api/rooms/:id
 // @desc    Get room by ID
 // @access  Public
-router.get('/:id', async (req, res) => {
-  try {
-    const room = await Room.findById(req.params.id).populate('type');
-    if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
-    }
-    res.json(room);
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Room not found' });
-    }
-    res.status(500).send('Server error');
+router.get('/:id', asyncHandler(async (req, res) => {
+  const room = await Room.findById(req.params.id).populate('type');
+  if (!room) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+      message: ERROR_MESSAGES.ROOM_NOT_FOUND 
+    });
   }
-});
+  res.json({ success: true, data: room });
+}));
 
 // Note: The featured route was duplicated and has been removed. 
 // The first instance of this route earlier in the file is preserved.
