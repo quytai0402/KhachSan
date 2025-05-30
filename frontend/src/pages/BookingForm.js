@@ -1239,10 +1239,10 @@ const BookingForm = () => {
                   size="small"
                   variant="outlined"
                 />
-                {room.features && room.features.slice(0, 2).map((feature, index) => (
+                {room.features && Array.isArray(room.features) && room.features.slice(0, 2).map((feature, index) => (
                   <Chip 
                     key={index}
-                    label={feature.name}
+                    label={feature?.name || feature}
                     size="small"
                     variant="outlined"
                   />

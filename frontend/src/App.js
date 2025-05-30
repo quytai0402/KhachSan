@@ -35,6 +35,7 @@ import AdminRooms from './pages/admin/Rooms';
 import AdminBookings from './pages/admin/Bookings';
 import AdminUsers from './pages/admin/Users';
 import AdminServices from './pages/admin/Services';
+import UnifiedServicesManagement from './pages/admin/UnifiedServicesManagement';
 import AdminPromotions from './pages/admin/Promotions';
 import AdminReports from './pages/admin/Reports';
 import AdminHousekeeping from './pages/admin/Housekeeping';
@@ -314,6 +315,14 @@ const App = () => {
                         element={
                           <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
                             <AdminServices />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/admin/services-management" 
+                        element={
+                          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <UnifiedServicesManagement />
                           </ProtectedRoute>
                         } 
                       />

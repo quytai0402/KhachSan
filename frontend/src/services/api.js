@@ -168,6 +168,7 @@ export const roomAPI = {
   getAllRooms: () => api.get(API_ENDPOINTS.ROOMS.BASE),
   getRoomById: (id) => api.get(`${API_ENDPOINTS.ROOMS.BASE}/${id}`),
   getAvailableRooms: (checkIn, checkOut) => api.get(`${API_ENDPOINTS.ROOMS.AVAILABLE}?checkIn=${checkIn}&checkOut=${checkOut}`),
+  getFeaturedRooms: () => api.get(API_ENDPOINTS.ROOMS.FEATURED),
   getRoomTypes: () => api.get(API_ENDPOINTS.ROOMS.TYPES),
   createRoom: (roomData) => {
     // If roomData contains files, use FormData
@@ -225,7 +226,9 @@ export const bookingAPI = {
     }
   }),
   updateBooking: (id, bookingData) => api.put(`${API_ENDPOINTS.BOOKINGS.BASE}/${id}`, bookingData),
-  updateBookingStatus: (id, statusData) => api.put(`${API_ENDPOINTS.BOOKINGS.STATUS}/${id}`, statusData),
+  updateBookingStatus: (id, statusData) => api.put(`${API_ENDPOINTS.BOOKINGS.STATUS}/${id}/status`, statusData),
+  updateBookingPayment: (id, paymentData) => api.put(`${API_ENDPOINTS.BOOKINGS.PAYMENT}/${id}/payment`, paymentData),
+  cancelBooking: (id) => api.put(`${API_ENDPOINTS.BOOKINGS.CANCEL}/${id}/cancel`),
   deleteBooking: (id) => api.delete(`${API_ENDPOINTS.BOOKINGS.BASE}/${id}`)
 };
 
@@ -233,6 +236,7 @@ export const bookingAPI = {
 export const userAPI = {
   getAllUsers: () => api.get(API_ENDPOINTS.USERS.BASE),
   getUserById: (id) => api.get(`${API_ENDPOINTS.USERS.BASE}/${id}`),
+  createAdmin: (userData) => api.post(API_ENDPOINTS.USERS.ADMIN, userData),
   updateUser: (id, userData) => api.put(`${API_ENDPOINTS.USERS.BASE}/${id}`, userData),
   deleteUser: (id) => api.delete(`${API_ENDPOINTS.USERS.BASE}/${id}`)
 };
@@ -241,7 +245,8 @@ export const userAPI = {
 export const serviceAPI = {
   getAllServices: () => api.get(API_ENDPOINTS.SERVICES.BASE),
   getServiceById: (id) => api.get(`${API_ENDPOINTS.SERVICES.BASE}/${id}`),
-  getFeatures: () => api.get('/services/features'),
+  getServicesByCategory: (category) => api.get(`${API_ENDPOINTS.SERVICES.CATEGORY}/${category}`),
+  getFeatures: () => api.get(API_ENDPOINTS.SERVICES.FEATURES),
   createService: (serviceData) => {
     // If serviceData contains image file, use FormData
     if (serviceData.image && serviceData.image instanceof File) {
@@ -270,49 +275,54 @@ export const serviceAPI = {
     
     return api.put(`${API_ENDPOINTS.SERVICES.BASE}/${id}`, serviceData);
   },
-  deleteService: (id) => api.delete(`${API_ENDPOINTS.SERVICES.BASE}/${id}`)
+  deleteService: (id) => api.delete(`${API_ENDPOINTS.SERVICES.BASE}/${id}`),
+  
+  // Feature management
+  createFeature: (featureData) => api.post(API_ENDPOINTS.SERVICES.FEATURES, featureData),
+  updateFeature: (id, featureData) => api.put(`${API_ENDPOINTS.SERVICES.FEATURES}/${id}`, featureData),
+  deleteFeature: (id) => api.delete(`${API_ENDPOINTS.SERVICES.FEATURES}/${id}`)
 };
 
 // Promotion Services
 export const promotionAPI = {
-  getAllPromotions: () => api.get('/promotions'),
-  getPromotionById: (id) => api.get(`/promotions/${id}`),
+  getAllPromotions: () => api.get(API_ENDPOINTS.PROMOTIONS.BASE),
+  getPromotionById: (id) => api.get(`${API_ENDPOINTS.PROMOTIONS.BASE}/${id}`),
   createPromotion: (promotionData) => {
     // If promotionData contains image file, use FormData
     if (promotionData.image && promotionData.image instanceof File) {
       const formData = createFormData(promotionData);
       
-      return api.post('/promotions', formData, {
+      return api.post(API_ENDPOINTS.PROMOTIONS.BASE, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
     }
     
-    return api.post('/promotions', promotionData);
+    return api.post(API_ENDPOINTS.PROMOTIONS.BASE, promotionData);
   },
   updatePromotion: (id, promotionData) => {
     // If promotionData contains image file, use FormData
     if (promotionData.image && promotionData.image instanceof File) {
       const formData = createFormData(promotionData);
       
-      return api.put(`/promotions/${id}`, formData, {
+      return api.put(`${API_ENDPOINTS.PROMOTIONS.BASE}/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
     }
     
-    return api.put(`/promotions/${id}`, promotionData);
+    return api.put(`${API_ENDPOINTS.PROMOTIONS.BASE}/${id}`, promotionData);
   },
-  deletePromotion: (id) => api.delete(`/promotions/${id}`)
+  deletePromotion: (id) => api.delete(`${API_ENDPOINTS.PROMOTIONS.BASE}/${id}`)
 };
 
 // Admin Services
 export const adminAPI = {
-  getDashboard: () => api.get('/admin/dashboard'),
-  getActivities: () => api.get('/admin/activities'),
-  getReports: (startDate, endDate) => api.get('/admin/reports', {
+  getDashboard: () => api.get(API_ENDPOINTS.ADMIN.DASHBOARD),
+  getActivities: () => api.get(API_ENDPOINTS.ADMIN.ACTIVITIES),
+  getReports: (startDate, endDate) => api.get(API_ENDPOINTS.ADMIN.REPORTS, {
     params: { startDate, endDate }
   })
 };
@@ -320,28 +330,42 @@ export const adminAPI = {
 // Staff Services
 export const staffAPI = {
   // Bookings
-  getStaffBookings: () => api.get('/staff/bookings'),
-  updateBookingCheckIn: (id, data) => api.put(`/staff/bookings/${id}/check-in`, data),
-  updateBookingCheckOut: (id, data) => api.put(`/staff/bookings/${id}/check-out`, data),
-  updateBooking: (id, data) => api.put(`/staff/bookings/${id}`, data),
+  getStaffBookings: () => api.get(API_ENDPOINTS.STAFF.BOOKINGS),
+  updateBookingCheckIn: (id, data) => api.put(`${API_ENDPOINTS.STAFF.BOOKINGS}/${id}/check-in`, data),
+  updateBookingCheckOut: (id, data) => api.put(`${API_ENDPOINTS.STAFF.BOOKINGS}/${id}/check-out`, data),
+  updateBooking: (id, data) => api.put(`${API_ENDPOINTS.STAFF.BOOKINGS}/${id}`, data),
   
   // Schedule
-  getStaffSchedule: () => api.get('/staff/schedule'),
-  updateScheduleItem: (type, id, data) => api.put(`/staff/schedule/${type}/${id}`, data),
-  
-  // Guests
-  getStaffGuests: () => api.get('/staff/guests'),
-  getGuestRequests: () => api.get('/staff/guest-requests'),
-  updateGuestRequest: (id, data) => api.put(`/staff/guest-requests/${id}`, data),
-  createGuestRequest: (data) => api.post('/staff/guest-requests', data),
+  getStaffSchedule: () => api.get(API_ENDPOINTS.STAFF.SCHEDULE),
+  updateScheduleItem: (type, id, data) => api.put(`${API_ENDPOINTS.STAFF.SCHEDULE}/${type}/${id}`, data),
   
   // Rooms
-  getStaffRooms: () => api.get('/staff/rooms'),
-  updateStaffRoom: (id, data) => api.put(`/staff/rooms/${id}`, data),
+  getStaffRooms: () => api.get(API_ENDPOINTS.STAFF.ROOMS),
+  updateStaffRoom: (id, data) => api.put(`${API_ENDPOINTS.STAFF.ROOMS}/${id}`, data),
+  updateRoomStatus: (id, statusData) => api.post(`${API_ENDPOINTS.STAFF.ROOMS}/${id}/status`, statusData),
+  
+  // Guest Services
+  getGuestRequests: () => api.get(API_ENDPOINTS.STAFF.SERVICES),
+  updateGuestRequest: (id, data) => api.put(`${API_ENDPOINTS.STAFF.SERVICES}/${id}`, data),
+  createGuestRequest: (data) => api.post(API_ENDPOINTS.STAFF.SERVICES, data),
+  completeGuestRequest: (id) => api.post(`${API_ENDPOINTS.STAFF.SERVICES}/${id}/complete`),
+  
+  // Guests
+  getStaffGuests: () => api.get(API_ENDPOINTS.STAFF.GUESTS),
   
   // Dashboard
-  getStaffDashboard: () => api.get('/staff/dashboard'),
-  getStaffActivities: () => api.get('/staff/activities')
+  getStaffDashboard: () => api.get(API_ENDPOINTS.STAFF.DASHBOARD),
+  getStaffActivities: () => api.get(API_ENDPOINTS.STAFF.ACTIVITIES)
+};
+
+// Task Services
+export const taskAPI = {
+  getAllTasks: () => api.get(API_ENDPOINTS.TASKS.BASE),
+  getTaskById: (id) => api.get(`${API_ENDPOINTS.TASKS.BASE}/${id}`),
+  getTaskStats: () => api.get(`${API_ENDPOINTS.TASKS.BASE}/stats`),
+  createTask: (taskData) => api.post(API_ENDPOINTS.TASKS.BASE, taskData),
+  updateTask: (id, taskData) => api.put(`${API_ENDPOINTS.TASKS.BASE}/${id}`, taskData),
+  deleteTask: (id) => api.delete(`${API_ENDPOINTS.TASKS.BASE}/${id}`)
 };
 
 export default api;

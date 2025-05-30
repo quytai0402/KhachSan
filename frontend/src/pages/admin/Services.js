@@ -84,11 +84,14 @@ const Services = () => {
     const fetchServices = async () => {
       try {
         setLoading(true);
+        setError(null);
         const response = await serviceAPI.getAllServices();
-        setServices(response.data);
+        const servicesData = response.data || [];
+        setServices(Array.isArray(servicesData) ? servicesData : []);
       } catch (err) {
         console.error('Error fetching services:', err);
-        setError('Failed to load services. Please try again.');
+        setError('Không thể tải danh sách dịch vụ. Vui lòng thử lại sau.');
+        setServices([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
@@ -207,12 +210,14 @@ const Services = () => {
   const handleRefreshServices = async () => {
     try {
       setLoading(true);
-      const response = await serviceAPI.getAllServices();
-      setServices(response.data);
       setError(null);
+      const response = await serviceAPI.getAllServices();
+      const servicesData = response.data || [];
+      setServices(Array.isArray(servicesData) ? servicesData : []);
     } catch (err) {
       console.error('Error refreshing services:', err);
-      setError('Failed to refresh services. Please try again.');
+      setError('Không thể làm mới danh sách dịch vụ. Vui lòng thử lại sau.');
+      setServices([]);
     } finally {
       setLoading(false);
     }
@@ -324,7 +329,7 @@ const Services = () => {
           <Grid item xs={12}>
             <Paper sx={{ p: 3, textAlign: 'center' }}>
               <Text variant="body1">
-                {t('no_services_found')}
+                Chưa có dịch vụ nào được tạo. Hãy thêm dịch vụ đầu tiên.
               </Text>
             </Paper>
           </Grid>

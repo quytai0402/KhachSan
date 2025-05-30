@@ -285,4 +285,250 @@ router.get('/stats', auth, asyncHandler(async (req, res) => {
   res.status(HTTP_STATUS.OK).json(stats);
 }));
 
+/**
+ * @route   POST api/tasks
+ * @desc    Create a new task
+ * @access  Private (Admin, Staff)
+ */
+router.post('/', auth, asyncHandler(async (req, res) => {
+  // Verify user role
+  if (req.user.role !== USER_ROLES.ADMIN && req.user.role !== USER_ROLES.STAFF) {
+    return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+      message: ERROR_MESSAGES.UNAUTHORIZED 
+    });
+  }
+  
+  const { title, description, type, priority, assignedTo, room, dueDate } = req.body;
+  
+  // Validate required fields
+  if (!title || !type) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      message: 'Title and type are required fields'
+    });
+  }
+  
+  // Validate task type
+  const validTypes = Object.values(TASK_TYPES);
+  if (!validTypes.includes(type)) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      message: `Invalid task type. Must be one of: ${validTypes.join(', ')}`
+    });
+  }
+  
+  // Validate priority if provided
+  if (priority) {
+    const validPriorities = Object.values(TASK_PRIORITY);
+    if (!validPriorities.includes(priority)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: `Invalid priority. Must be one of: ${validPriorities.join(', ')}`
+      });
+    }
+  }
+  
+  // Validate assignedTo user exists if provided
+  if (assignedTo) {
+    const assignedUser = await User.findById(assignedTo);
+    if (!assignedUser) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: 'Assigned user not found'
+      });
+    }
+    
+    // Check if assigned user is staff or admin
+    if (assignedUser.role !== USER_ROLES.STAFF && assignedUser.role !== USER_ROLES.ADMIN) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: 'Tasks can only be assigned to staff or admin users'
+      });
+    }
+  }
+  
+  // Validate room exists if provided
+  if (room) {
+    const roomExists = await Room.findById(room);
+    if (!roomExists) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: 'Room not found'
+      });
+    }
+  }
+  
+  const newTask = new Task({
+    title,
+    description,
+    type,
+    priority: priority || TASK_PRIORITY.NORMAL,
+    assignedTo,
+    room,
+    dueDate: dueDate ? new Date(dueDate) : null,
+    createdBy: req.user.id,
+    status: TASK_STATUS.PENDING
+  });
+  
+  await newTask.save();
+  
+  // Populate the created task for response
+  const populatedTask = await Task.findById(newTask._id)
+    .populate('assignedTo', 'name email role')
+    .populate('room', 'roomNumber type')
+    .populate('createdBy', 'name email');
+  
+  res.status(HTTP_STATUS.CREATED).json({ 
+    success: true, 
+    data: populatedTask,
+    message: 'Task created successfully' 
+  });
+}));
+
+/**
+ * @route   PUT api/tasks/:id
+ * @desc    Update a task
+ * @access  Private (Admin, Staff)
+ */
+router.put('/:id', auth, asyncHandler(async (req, res) => {
+  if (req.user.role !== USER_ROLES.ADMIN && req.user.role !== USER_ROLES.STAFF) {
+    return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+      message: ERROR_MESSAGES.UNAUTHORIZED 
+    });
+  }
+  
+  const task = await Task.findById(req.params.id);
+  
+  if (!task) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+      message: 'Task not found' 
+    });
+  }
+  
+  // Check if user can update this task
+  // Staff can only update tasks assigned to them or unassigned tasks
+  if (req.user.role === USER_ROLES.STAFF) {
+    if (task.assignedTo && task.assignedTo.toString() !== req.user.id) {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        message: 'You can only update tasks assigned to you'
+      });
+    }
+  }
+  
+  const { title, description, type, priority, assignedTo, room, dueDate, status, notes } = req.body;
+  
+  // Validate task type if provided
+  if (type) {
+    const validTypes = Object.values(TASK_TYPES);
+    if (!validTypes.includes(type)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: `Invalid task type. Must be one of: ${validTypes.join(', ')}`
+      });
+    }
+  }
+  
+  // Validate priority if provided
+  if (priority) {
+    const validPriorities = Object.values(TASK_PRIORITY);
+    if (!validPriorities.includes(priority)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: `Invalid priority. Must be one of: ${validPriorities.join(', ')}`
+      });
+    }
+  }
+  
+  // Validate status if provided
+  if (status) {
+    const validStatuses = Object.values(TASK_STATUS);
+    if (!validStatuses.includes(status)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+  }
+  
+  // Validate assignedTo user if provided
+  if (assignedTo) {
+    const assignedUser = await User.findById(assignedTo);
+    if (!assignedUser) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: 'Assigned user not found'
+      });
+    }
+    
+    if (assignedUser.role !== USER_ROLES.STAFF && assignedUser.role !== USER_ROLES.ADMIN) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: 'Tasks can only be assigned to staff or admin users'
+      });
+    }
+  }
+  
+  // Validate room if provided
+  if (room) {
+    const roomExists = await Room.findById(room);
+    if (!roomExists) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: 'Room not found'
+      });
+    }
+  }
+  
+  // Build update object
+  const updateData = {};
+  if (title) updateData.title = title;
+  if (description) updateData.description = description;
+  if (type) updateData.type = type;
+  if (priority) updateData.priority = priority;
+  if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
+  if (room !== undefined) updateData.room = room;
+  if (dueDate) updateData.dueDate = new Date(dueDate);
+  if (status) updateData.status = status;
+  if (notes) updateData.notes = notes;
+  
+  // Set completion time if status is completed
+  if (status === TASK_STATUS.COMPLETED) {
+    updateData.completedAt = new Date();
+    updateData.completedBy = req.user.id;
+  }
+  
+  updateData.updatedAt = new Date();
+  
+  const updatedTask = await Task.findByIdAndUpdate(
+    req.params.id,
+    updateData,
+    { new: true }
+  ).populate('assignedTo', 'name email role')
+   .populate('room', 'roomNumber type')
+   .populate('createdBy', 'name email')
+   .populate('completedBy', 'name email');
+  
+  res.json({ 
+    success: true, 
+    data: updatedTask,
+    message: 'Task updated successfully' 
+  });
+}));
+
+/**
+ * @route   DELETE api/tasks/:id
+ * @desc    Delete a task
+ * @access  Private (Admin only)
+ */
+router.delete('/:id', auth, asyncHandler(async (req, res) => {
+  if (req.user.role !== USER_ROLES.ADMIN) {
+    return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+      message: 'Only admins can delete tasks' 
+    });
+  }
+  
+  const task = await Task.findById(req.params.id);
+  
+  if (!task) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+      message: 'Task not found' 
+    });
+  }
+  
+  await Task.findByIdAndDelete(req.params.id);
+  
+  res.json({ 
+    success: true, 
+    message: 'Task deleted successfully' 
+  });
+}));
+
 module.exports = router;

@@ -44,21 +44,21 @@ const upload = multer({
 // @route   GET api/rooms/types
 // @desc    Get all room types
 // @access  Public
-router.get('/types', async (req, res) => {
+router.get('/types', asyncHandler(async (req, res) => {
   try {
     console.log('Fetching all room types');
     const roomTypes = await RoomType.find().sort({ name: 1 });
     res.json({ success: true, data: roomTypes });
   } catch (err) {
     console.error('Error fetching room types:', err.message);
-    res.status(500).json({ message: 'Server error retrieving room types' });
+    res.status(500).json({ success: false, message: 'Server error retrieving room types', error: err.message });
   }
-});
+}));
 
 // @route   GET api/rooms/featured
 // @desc    Get featured rooms for homepage
 // @access  Public
-router.get('/featured', async (req, res) => {
+router.get('/featured', asyncHandler(async (req, res) => {
   try {
     // Get featured rooms - rooms that are available and have good features
     const featuredRooms = await Room.find({ 
@@ -69,17 +69,17 @@ router.get('/featured', async (req, res) => {
     .sort({ price: -1 }) // Sort by price descending to get premium rooms first
     .limit(4); // Only get top 4 rooms
     
-    res.json(featuredRooms);
+    res.json({ success: true, data: featuredRooms });
   } catch (err) {
     console.error('Error fetching featured rooms:', err.message);
-    res.status(500).send('Server error');
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
-});
+}));
 
 // @route   GET api/rooms/available
 // @desc    Get available rooms by date range
 // @access  Public
-router.get('/available', async (req, res) => {
+router.get('/available', asyncHandler(async (req, res) => {
   const { checkIn, checkOut } = req.query;
 
   if (!checkIn || !checkOut) {
@@ -130,12 +130,12 @@ router.get('/available', async (req, res) => {
     }).populate('type');
     
     console.log(`Found ${availableRooms.length} available rooms for ${checkIn} to ${checkOut}`);
-    res.json(availableRooms);
+    res.json({ success: true, data: availableRooms });
   } catch (err) {
     console.error('Error finding available rooms:', err.message);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
-});
+}));
 
 // @route   GET api/rooms
 // @desc    Get all rooms
@@ -164,7 +164,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // @route   POST api/rooms
 // @desc    Create a room
 // @access  Private (Admin only)
-router.post('/', [auth, admin, upload.array('images', 5)], async (req, res) => {
+router.post('/', [auth, admin, upload.array('images', 5)], asyncHandler(async (req, res) => {
   const { roomNumber, type, description, price, capacity, amenities, floor } = req.body;
 
   try {
@@ -222,12 +222,12 @@ router.post('/', [auth, admin, upload.array('images', 5)], async (req, res) => {
     }
     res.status(500).json({ message: 'Server error', error: err.message });
   }
-});
+}));
 
 // @route   PUT api/rooms/:id
 // @desc    Update a room
 // @access  Private (Admin only)
-router.put('/:id', [auth, admin, upload.array('images', 5)], async (req, res) => {
+router.put('/:id', [auth, admin, upload.array('images', 5)], asyncHandler(async (req, res) => {
   const { roomNumber, type, description, price, capacity, amenities, status, floor, cleaningStatus, notes } = req.body;
 
   // Build room object
@@ -284,7 +284,7 @@ router.put('/:id', [auth, admin, upload.array('images', 5)], async (req, res) =>
       { new: true, runValidators: true } // Added runValidators to ensure schema validation on update
     ).populate('type').populate('lastUpdatedBy', 'name email'); // Populate referenced fields
 
-    res.json(room);
+    res.json({ success: true, data: room });
   } catch (err) {
     console.error('Error updating room:', err.message);
     if (err.kind === 'ObjectId') {
@@ -293,14 +293,14 @@ router.put('/:id', [auth, admin, upload.array('images', 5)], async (req, res) =>
     if (err.name === 'ValidationError') {
       return res.status(400).json({ message: 'Validation Error', errors: err.errors });
     }
-    res.status(500).send('Server error');
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
-});
+}));
 
 // @route   DELETE api/rooms/:id
 // @desc    Delete a room
 // @access  Private (Admin only)
-router.delete('/:id', [auth, admin], async (req, res) => {
+router.delete('/:id', [auth, admin], asyncHandler(async (req, res) => {
   try {
     // Check if room exists
     const room = await Room.findById(req.params.id);
@@ -322,13 +322,13 @@ router.delete('/:id', [auth, admin], async (req, res) => {
     }
 
     await Room.findByIdAndDelete(req.params.id); // Changed from findByIdAndRemove
-    res.json({ message: 'Room removed successfully' });
+    res.json({ success: true, message: 'Room removed successfully' });
   } catch (err) {
     console.error('Error deleting room:', err.message);
     if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json({ success: false, message: 'Room not found' });
     }
-    res.status(500).send('Server error');
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
 

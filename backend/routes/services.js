@@ -69,7 +69,7 @@ router.post('/features', [auth, admin], asyncHandler(async (req, res) => {
   });
   
   await newFeature.save();
-  res.status(HTTP_STATUS.CREATED).json(newFeature);
+  res.status(HTTP_STATUS.CREATED).json({ success: true, data: newFeature });
 }));
 
 // @route   PUT api/services/features/:id
@@ -101,7 +101,7 @@ router.put('/features/:id', [auth, admin], asyncHandler(async (req, res) => {
     { new: true }
   );
   
-  res.status(HTTP_STATUS.OK).json(feature);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: feature });
 }));
 
 // @route   DELETE api/services/features/:id

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -41,8 +41,8 @@ import {
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
-import { useAuth } from '../../context/AuthContext';
 import taskService from '../../services/taskService';
+import { userAPI, roomAPI } from '../../services/api';
 import { DashboardLayout } from '../../components/dashboard';
 
 const AdminHousekeeping = () => {
@@ -69,7 +69,6 @@ const AdminHousekeeping = () => {
     notes: ''
   });
   const [formError, setFormError] = useState(null);
-  const { user } = useAuth();
 
   // Fetch tasks from API
   useEffect(() => {
@@ -93,8 +92,8 @@ const AdminHousekeeping = () => {
     const fetchStaff = async () => {
       try {
         // Fetch staff from users API - only get staff/maintenance roles
-        const response = await fetch('/api/users?role=staff,maintenance');
-        const data = await response.json();
+        const response = await userAPI.getAllUsers();
+        const data = response.data;
         
         if (Array.isArray(data)) {
           // Filter out admin users and map to required format
@@ -122,12 +121,11 @@ const AdminHousekeeping = () => {
       setLoadingRooms(true);
       try {
         // Fetch rooms from your API
-        const response = await fetch('/api/rooms');
-        const data = await response.json();
-        if (data.success) {
-          setRooms(data.data);
+        const response = await roomAPI.getAllRooms();
+        if (response.data && response.data.success) {
+          setRooms(response.data.data);
         } else {
-          console.error("Failed to fetch rooms:", data.message);
+          console.error("Failed to fetch rooms:", response.data?.message);
         }
       } catch (error) {
         console.error("Error fetching rooms:", error);

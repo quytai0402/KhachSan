@@ -13,6 +13,7 @@ const Room = require('../models/Room');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const Service = require('../models/Service');
+const GuestRequest = require('../models/GuestRequest');
 
 // @route   GET api/staff/dashboard
 // @desc    Get dashboard data for staff
@@ -40,7 +41,7 @@ router.get('/dashboard', [auth, staff], asyncHandler(async (req, res) => {
   });
   
   const activeGuests = bookings.filter(booking => booking.status === BOOKING_STATUS.CHECKED_IN);
-  const pendingServices = await Service.find({ status: SERVICE_STATUS.PENDING }).countDocuments();
+  const pendingServices = await GuestRequest.find({ status: SERVICE_STATUS.PENDING }).countDocuments();
   const roomsNeedCleaning = await Room.find({ status: ROOM_STATUS.VACANT_DIRTY }).countDocuments();
   
   const calculateRevenue = (bookings, period) => {
@@ -211,10 +212,10 @@ router.get('/bookings', [auth, staff], asyncHandler(async (req, res) => {
   res.status(HTTP_STATUS.OK).json({ success: true, data: bookings });
 }));
 
-// @route   POST api/staff/bookings/:id/checkin
+// @route   POST api/staff/bookings/:id/check-in
 // @desc    Check in a guest
 // @access  Private (Staff only)
-router.post('/bookings/:id/checkin', [auth, staff], asyncHandler(async (req, res) => {
+router.post('/bookings/:id/check-in', [auth, staff], asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id).populate('room');
   
   if (!booking) {
@@ -246,10 +247,10 @@ router.post('/bookings/:id/checkin', [auth, staff], asyncHandler(async (req, res
   });
 }));
 
-// @route   POST api/staff/bookings/:id/checkout
+// @route   POST api/staff/bookings/:id/check-out
 // @desc    Check out a guest
 // @access  Private (Staff only)
-router.post('/bookings/:id/checkout', [auth, staff], asyncHandler(async (req, res) => {
+router.post('/bookings/:id/check-out', [auth, staff], asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id).populate('room');
   
   if (!booking) {
@@ -282,39 +283,234 @@ router.post('/bookings/:id/checkout', [auth, staff], asyncHandler(async (req, re
 }));
 
 // @route   GET api/staff/services
-// @desc    Get all service requests
+// @desc    Get all guest requests and service requests
 // @access  Private (Staff only)
 router.get('/services', [auth, staff], asyncHandler(async (req, res) => {
-  const services = await Service.find()
+  // Get guest requests
+  const guestRequests = await GuestRequest.find()
     .populate('room')
+    .populate('booking')
     .populate('requestedBy')
+    .populate('assignedTo')
     .sort({ createdAt: -1 });
   
-  res.status(HTTP_STATUS.OK).json({ success: true, data: services });
+  // Format guest requests to match expected structure
+  const formattedGuestRequests = guestRequests.map(request => ({
+    _id: request._id,
+    type: request.type,
+    title: request.title,
+    description: request.description,
+    details: request.description, // For compatibility
+    priority: request.priority,
+    status: request.status,
+    room: request.room,
+    booking: request.booking,
+    guestName: request.guestName,
+    guestPhone: request.guestPhone,
+    roomNumber: request.room?.roomNumber || 'N/A',
+    requestedBy: request.requestedBy,
+    assignedTo: request.assignedTo,
+    notes: request.notes,
+    costs: request.costs,
+    createdAt: request.createdAt,
+    updatedAt: request.updatedAt,
+    completedAt: request.completedAt
+  }));
+  
+  res.status(HTTP_STATUS.OK).json({ success: true, data: formattedGuestRequests });
 }));
 
 // @route   POST api/staff/services/:id/complete
-// @desc    Mark service as completed
+// @desc    Mark guest request as completed
 // @access  Private (Staff only)
 router.post('/services/:id/complete', [auth, staff], asyncHandler(async (req, res) => {
-  const service = await Service.findById(req.params.id);
+  const guestRequest = await GuestRequest.findById(req.params.id);
   
-  if (!service) {
+  if (!guestRequest) {
     return res.status(HTTP_STATUS.NOT_FOUND).json({
-      message: 'Service request not found'
+      message: 'Guest request not found'
     });
   }
   
-  service.status = SERVICE_STATUS.COMPLETED;
-  service.completedAt = new Date();
-  service.completedBy = req.user.id;
+  guestRequest.status = SERVICE_STATUS.COMPLETED;
+  guestRequest.completedAt = new Date();
+  guestRequest.completedBy = req.user.id;
   
-  await service.save();
+  await guestRequest.save();
   
   res.status(HTTP_STATUS.OK).json({
-    message: 'Service marked as completed',
-    service
+    message: 'Guest request marked as completed',
+    data: guestRequest
   });
+}));
+
+// @route   POST api/staff/services
+// @desc    Create a new guest request
+// @access  Private (Staff only)
+router.post('/services', [auth, staff], asyncHandler(async (req, res) => {
+  const { type, title, description, details, priority, roomId, bookingId, guestId, guestName, guestPhone } = req.body;
+
+  // Find room if roomId provided
+  let room = null;
+  if (roomId) {
+    room = await Room.findById(roomId);
+    if (!room) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: 'Room not found'
+      });
+    }
+  }
+
+  // Find booking if bookingId provided
+  let booking = null;
+  if (bookingId) {
+    booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: 'Booking not found'
+      });
+    }
+  }
+
+  const newGuestRequest = new GuestRequest({
+    type: type || 'room_service',
+    title: title || 'Guest Request',
+    description: description || details || '',
+    priority: priority || 'normal',
+    room: roomId,
+    booking: bookingId,
+    requestedBy: guestId,
+    guestName: guestName || '',
+    guestPhone: guestPhone || '',
+    status: SERVICE_STATUS.PENDING,
+    createdAt: new Date()
+  });
+
+  await newGuestRequest.save();
+  
+  const populatedRequest = await GuestRequest.findById(newGuestRequest._id)
+    .populate('room')
+    .populate('booking')
+    .populate('requestedBy');
+
+  res.status(HTTP_STATUS.CREATED).json({
+    success: true,
+    message: 'Guest request created successfully',
+    data: populatedRequest
+  });
+}));
+
+// @route   PUT api/staff/services/:id
+// @desc    Update guest request
+// @access  Private (Staff only)
+router.put('/services/:id', [auth, staff], asyncHandler(async (req, res) => {
+  const { status, notes, priority, assignedTo, costs } = req.body;
+
+  const guestRequest = await GuestRequest.findById(req.params.id);
+  
+  if (!guestRequest) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
+      message: 'Guest request not found'
+    });
+  }
+
+  // Update fields
+  if (status) guestRequest.status = status;
+  if (notes) guestRequest.notes = notes;
+  if (priority) guestRequest.priority = priority;
+  if (assignedTo) guestRequest.assignedTo = assignedTo;
+  if (costs !== undefined) guestRequest.costs = costs;
+  
+  // Set completion time if status is completed
+  if (status === SERVICE_STATUS.COMPLETED) {
+    guestRequest.completedAt = new Date();
+    guestRequest.completedBy = req.user.id;
+  }
+
+  guestRequest.updatedAt = new Date();
+  await guestRequest.save();
+
+  const updatedRequest = await GuestRequest.findById(guestRequest._id)
+    .populate('room')
+    .populate('booking')
+    .populate('requestedBy')
+    .populate('assignedTo')
+    .populate('completedBy');
+
+  res.status(HTTP_STATUS.OK).json({
+    success: true,
+    message: 'Guest request updated successfully',
+    data: updatedRequest
+  });
+}));
+
+// @route   GET api/staff/guests
+// @desc    Get all current guests for staff
+// @access  Private (Staff only)
+router.get('/guests', [auth, staff], asyncHandler(async (req, res) => {
+  // Get all checked-in bookings with guest information
+  const currentGuests = await Booking.find({
+    status: BOOKING_STATUS.CHECKED_IN
+  })
+    .populate('room', ['roomNumber', 'type'])
+    .populate('user', ['name', 'email', 'phone'])
+    .sort({ checkInDate: -1 });
+
+  // Format guest data for staff view
+  const guestsData = currentGuests.map(booking => ({
+    _id: booking._id,
+    name: booking.guestName || (booking.user ? booking.user.name : 'Walk-in Guest'),
+    email: booking.guestEmail || (booking.user ? booking.user.email : ''),
+    phone: booking.guestPhone || (booking.user ? booking.user.phone : ''),
+    roomNumber: booking.room ? booking.room.roomNumber : 'N/A',
+    roomType: booking.room && booking.room.type ? booking.room.type.name : 'Standard',
+    checkInDate: booking.checkInDate,
+    checkOutDate: booking.checkOutDate,
+    status: booking.status,
+    adults: booking.numberOfGuests?.adults || 1,
+    children: booking.numberOfGuests?.children || 0,
+    specialRequests: booking.specialRequests || ''
+  }));
+
+  res.status(HTTP_STATUS.OK).json({ success: true, data: guestsData });
+}));
+
+// @route   PUT api/staff/rooms/:id
+// @desc    Update room details (staff version)
+// @access  Private (Staff only)
+router.put('/rooms/:id', [auth, staff], asyncHandler(async (req, res) => {
+  const { status, cleaningStatus, notes, guestName } = req.body;
+  
+  const room = await Room.findById(req.params.id);
+  if (!room) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
+      message: ERROR_MESSAGES.ROOM_NOT_FOUND
+    });
+  }
+  
+  // Validate status if provided
+  if (status) {
+    const validStatuses = Object.values(ROOM_STATUS);
+    if (!validStatuses.includes(status)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: ERROR_MESSAGES.VALIDATION_ERROR,
+        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+    room.status = status;
+  }
+  
+  // Update other fields if provided
+  if (cleaningStatus !== undefined) room.cleaningStatus = cleaningStatus;
+  if (notes !== undefined) room.notes = notes;
+  if (guestName !== undefined) room.guestName = guestName;
+  
+  room.lastUpdated = new Date();
+  room.updatedBy = req.user.id;
+  
+  await room.save();
+  
+  res.status(HTTP_STATUS.OK).json(room);
 }));
 
 module.exports = router;

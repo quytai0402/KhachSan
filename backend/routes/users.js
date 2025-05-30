@@ -15,7 +15,7 @@ const User = require('../models/User');
 // @access  Private
 router.get('/', [auth, admin], asyncHandler(async (req, res) => {
   const users = await User.find().select('-password').sort({ createdAt: -1 });
-  res.status(HTTP_STATUS.OK).json(users);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: users });
 }));
 
 // @route   GET api/users/:id
@@ -26,11 +26,12 @@ router.get('/:id', [auth, admin], asyncHandler(async (req, res) => {
   
   if (!user) {
     return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+      success: false,
       message: ERROR_MESSAGES.USER_NOT_FOUND 
     });
   }
   
-  res.status(HTTP_STATUS.OK).json(user);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: user });
 }));
 
 // @route   PUT api/users/me
@@ -82,7 +83,7 @@ router.put('/me', auth, asyncHandler(async (req, res) => {
     { new: true }
   ).select('-password');
 
-  res.status(HTTP_STATUS.OK).json(user);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: user });
 }));
 
 // @route   PUT api/users/:id
@@ -114,7 +115,7 @@ router.put('/:id', [auth, admin], asyncHandler(async (req, res) => {
     { new: true }
   ).select('-password');
 
-  res.status(HTTP_STATUS.OK).json(user);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: user });
 }));
 
 // @route   POST api/users/admin
@@ -163,7 +164,7 @@ router.post('/admin', [auth, admin], asyncHandler(async (req, res) => {
 
   // Return user without password
   const returnUser = await User.findById(user.id).select('-password');
-  res.status(HTTP_STATUS.CREATED).json(returnUser);
+  res.status(HTTP_STATUS.CREATED).json({ success: true, data: returnUser });
 }));
 
 // @route   DELETE api/users/:id

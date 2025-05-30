@@ -62,7 +62,7 @@ export const adminMenuItems = [
   { text: 'Đặt Phòng', path: '/admin/bookings', icon: <EventNoteIcon /> },
   { text: 'Người Dùng', path: '/admin/users', icon: <PeopleIcon /> },
   { text: 'Dịch Vụ Phòng', path: '/admin/housekeeping', icon: <CleaningServicesIcon /> },
-  { text: 'Dịch Vụ', path: '/admin/services', icon: <SettingsIcon /> },
+  { text: 'Quản Lý Dịch Vụ', path: '/admin/services-management', icon: <SettingsIcon /> },
   { text: 'Khuyến Mãi', path: '/admin/promotions', icon: <LocalOfferIcon /> },
   { text: 'Báo Cáo', path: '/admin/reports', icon: <AssessmentIcon /> },
 ];

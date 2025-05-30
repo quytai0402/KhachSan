@@ -202,19 +202,24 @@ export const API_ENDPOINTS = {
     GUEST_CREATE: '/bookings/guest',
     GUEST: '/bookings/guest',
     UPDATE: '/bookings',
-    STATUS: '/bookings/:id/status',
+    STATUS: '/bookings',
+    PAYMENT: '/bookings',
+    CANCEL: '/bookings',
     DELETE: '/bookings'
   },
   USERS: {
     BASE: '/users',
     LIST: '/users',
     CREATE: '/users',
+    ADMIN: '/users/admin',
     UPDATE: '/users',
     DELETE: '/users'
   },
   SERVICES: {
     BASE: '/services',
     LIST: '/services',
+    FEATURES: '/services/features',
+    CATEGORY: '/services/category',
     CREATE: '/services',
     UPDATE: '/services',
     DELETE: '/services'
@@ -235,12 +240,17 @@ export const API_ENDPOINTS = {
   },
   ADMIN: {
     DASHBOARD: '/admin/dashboard',
-    REPORTS: '/admin/reports'
+    REPORTS: '/admin/reports',
+    ACTIVITIES: '/admin/activities'
   },
   STAFF: {
     DASHBOARD: '/staff/dashboard',
     SCHEDULE: '/staff/schedule',
-    GUESTS: '/staff/guests'
+    GUESTS: '/staff/guests',
+    BOOKINGS: '/staff/bookings',
+    ROOMS: '/staff/rooms',
+    ACTIVITIES: '/staff/activities',
+    SERVICES: '/staff/services'
   }
 };
 

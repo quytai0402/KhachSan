@@ -83,12 +83,31 @@ const Reports = () => {
         // Get report data using adminAPI
         const response = await adminAPI.getReports(formattedStartDate, formattedEndDate);
         
-        // Set the report data
-        setReportData(response.data);
+        // Set the report data with safe defaults
+        const responseData = response.data || {};
+        setReportData({
+          totalRevenue: responseData.totalRevenue || 0,
+          totalBookings: responseData.totalBookings || 0,
+          totalGuests: responseData.totalGuests || 0,
+          occupancyRate: responseData.occupancyRate || 0,
+          revenueByMonth: Array.isArray(responseData.revenueByMonth) ? responseData.revenueByMonth : [],
+          bookingsByRoomType: Array.isArray(responseData.bookingsByRoomType) ? responseData.bookingsByRoomType : [],
+          recentBookings: Array.isArray(responseData.recentBookings) ? responseData.recentBookings : []
+        });
         setError(null);
       } catch (err) {
         console.error('Error fetching report data:', err);
-        setError('Failed to load reports. Please try again.');
+        setError('Không thể tải báo cáo. Vui lòng thử lại sau.');
+        // Reset to default values on error
+        setReportData({
+          totalRevenue: 0,
+          totalBookings: 0,
+          totalGuests: 0,
+          occupancyRate: 0,
+          revenueByMonth: [],
+          bookingsByRoomType: [],
+          recentBookings: []
+        });
       } finally {
         setLoading(false);
       }
@@ -261,7 +280,7 @@ const Reports = () => {
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard 
             title="Tổng Doanh Thu" 
-            value={`${reportData.totalRevenue.toLocaleString()} VNĐ`} 
+            value={`${(reportData?.totalRevenue || 0).toLocaleString()} VNĐ`} 
             icon={<AttachMoneyIcon />}
             color="success"
           />
@@ -269,7 +288,7 @@ const Reports = () => {
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard 
             title="Tổng Đặt Phòng" 
-            value={reportData.totalBookings} 
+            value={reportData?.totalBookings || 0} 
             icon={<EventAvailableIcon />}
             color="primary"
           />
@@ -277,7 +296,7 @@ const Reports = () => {
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard 
             title="Tổng Khách" 
-            value={reportData.totalGuests} 
+            value={reportData?.totalGuests || 0} 
             icon={<PeopleIcon />}
             color="secondary"
           />
@@ -285,7 +304,7 @@ const Reports = () => {
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard 
             title="Tỷ Lệ Lấp Đầy" 
-            value={`${reportData.occupancyRate}%`} 
+            value={`${(reportData?.occupancyRate || 0)}%`} 
             icon={<TrendingUpIcon />}
             color="info"
           />

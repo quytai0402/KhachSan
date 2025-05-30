@@ -214,13 +214,13 @@ router.post('/', auth, async (req, res) => {
       socketEvents.emitToRoles(req.io, socketEvents.NOTIFICATION, notification);
     }
 
-    res.json(booking);
+    res.json({ success: true, data: booking });
   } catch (err) {
     console.error('Error creating booking:', err);
     if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Invalid room or user ID format' });
+      return res.status(404).json({ success: false, message: 'Invalid room or user ID format' });
     }
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
 
@@ -352,13 +352,13 @@ router.post('/guest', async (req, res) => {
       }
     }
 
-    res.json(booking);
+    res.json({ success: true, data: booking });
   } catch (err) {
     console.error('Error creating guest booking:', err);
     if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Invalid room ID format' });
+      return res.status(404).json({ success: false, message: 'Invalid room ID format' });
     }
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
 
@@ -388,13 +388,13 @@ router.put('/:id/status', [auth, admin], async (req, res) => {
     }
 
     await booking.save();
-    res.json(booking);
+    res.json({ success: true, data: booking });
   } catch (err) {
     console.error(err.message);
     if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ success: false, message: 'Booking not found' });
     }
-    res.status(500).send('Server error');
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
 
@@ -414,13 +414,13 @@ router.put('/:id/payment', [auth, admin], async (req, res) => {
     // Update payment status
     booking.paymentStatus = paymentStatus;
     await booking.save();
-    res.json(booking);
+    res.json({ success: true, data: booking });
   } catch (err) {
     console.error(err.message);
     if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ success: false, message: 'Booking not found' });
     }
-    res.status(500).send('Server error');
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
 
@@ -462,16 +462,15 @@ router.delete('/:id', auth, async (req, res) => {
 
     // Send cancellation email
     sendBookingCancellation(user, booking, room).catch(err => 
-      console.error('Failed to send booking cancellation email:', err)
-    );
+      console.error('Failed to send booking cancellation email:', err)      );
 
-    res.json({ message: 'Booking cancelled' });
+    res.json({ success: true, message: 'Booking cancelled' });
   } catch (err) {
     console.error(err.message);
     if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ success: false, message: 'Booking not found' });
     }
-    res.status(500).send('Server error');
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
 
@@ -565,13 +564,13 @@ router.put('/:id/cancel', auth, async (req, res) => {
       socketEvents.emitToRoles(req.io, socketEvents.NOTIFICATION, notification);
     }
 
-    res.json(booking);
+    res.json({ success: true, data: booking });
   } catch (err) {
     console.error(err.message);
     if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ success: false, message: 'Booking not found' });
     }
-    res.status(500).send('Server error');
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
 
@@ -594,10 +593,10 @@ router.get('/phone/:phoneNumber', async (req, res) => {
       return res.status(404).json({ message: 'No bookings found for this phone number' });
     }
     
-    res.json(bookings);
+    res.json({ success: true, data: bookings });
   } catch (err) {
     console.error('Error fetching bookings by phone:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
 
