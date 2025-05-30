@@ -189,15 +189,10 @@ const App = () => {
                       <Route path="/promotions/:id" element={<PromotionDetail />} />
                       <Route path="/contact" element={<Contact />} />
                       
+                      {/* Booking Route - Available for both guests and authenticated users */}
+                      <Route path="/booking/:roomId" element={<BookingForm />} />
+                      
                       {/* User Routes - Requires Authentication */}
-                      <Route 
-                        path="/booking/:roomId" 
-                        element={
-                          <ProtectedRoute>
-                            <BookingForm />
-                          </ProtectedRoute>
-                        } 
-                      />
                       <Route 
                         path="/profile" 
                         element={

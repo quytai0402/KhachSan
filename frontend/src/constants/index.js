@@ -177,8 +177,8 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
-    PROFILE: '/auth/profile',
-    USER: '/auth/profile',
+    PROFILE: '/auth/user',
+    USER: '/auth/user',
     CHANGE_PASSWORD: '/auth/change-password'
   },
   ROOMS: {

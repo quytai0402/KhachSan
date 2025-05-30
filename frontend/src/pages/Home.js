@@ -18,6 +18,7 @@ import {
   Paper,
   Rating,
   styled,
+  
   Skeleton,
   useTheme,
   useMediaQuery,
@@ -38,8 +39,10 @@ import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonIcon from '@mui/icons-material/Person';
 import PoolIcon from '@mui/icons-material/Pool';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 import RoomCard from '../components/RoomCard';
+import useIntersectionObserver from '../hooks/useIntersectionObserver';
 
 const heroImage = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80';
 
@@ -112,12 +115,28 @@ const PromotionCard = styled(Card)(({ theme }) => ({
   height: '100%',
   display: 'flex',
   overflow: 'hidden',
-  borderRadius: 16,
-  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-  transition: 'all 0.3s ease',
+  borderRadius: 20,
+  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+  transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+  position: 'relative',
+  '&:before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '100%',
+    background: 'linear-gradient(to right, rgba(30, 78, 140, 0.05), rgba(0, 0, 0, 0))',
+    zIndex: 0,
+    opacity: 0,
+    transition: 'opacity 0.4s ease',
+  },
   '&:hover': {
-    transform: 'translateY(-8px)',
-    boxShadow: '0 12px 28px rgba(0,0,0,0.15)',
+    transform: 'translateY(-12px) scale(1.02)',
+    boxShadow: '0 16px 40px rgba(0,0,0,0.2)',
+    '&:before': {
+      opacity: 1,
+    }
   }
 }));
 
@@ -133,6 +152,12 @@ const Home = () => {
   const isMobileView = useMediaQuery(theme.breakpoints.down('sm')); 
   // eslint-disable-next-line no-unused-vars
   const isTabletView = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Intersection observer hooks for animations
+  const [featuredRoomsRef, isFeaturedRoomsVisible] = useIntersectionObserver({
+    threshold: 0.1,
+    rootMargin: '0px 0px -100px 0px'
+  });
   
   // Search form state
   const [checkIn, setCheckIn] = useState(new Date());
@@ -443,9 +468,17 @@ const Home = () => {
       </Container>
 
       {/* Featured Rooms Section */}
-      <Box sx={{ py: 8, bgcolor: '#f9fafb' }}>
+      <Box sx={{ py: 8, bgcolor: '#f9fafb' }} ref={featuredRoomsRef}>
         <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Box 
+            sx={{ 
+              textAlign: 'center', 
+              mb: 6,
+              opacity: isFeaturedRoomsVisible ? 1 : 0,
+              transform: isFeaturedRoomsVisible ? 'translateY(0)' : 'translateY(20px)',
+              transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+            }}
+          >
             <Typography 
               variant="h3" 
               component="h2" 
@@ -487,8 +520,20 @@ const Home = () => {
             <Alert severity="error" sx={{ mb: 4 }}>{error}</Alert>
           ) : featuredRooms.length > 0 ? (
             <Grid container spacing={4}>
-              {featuredRooms.map((room) => (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={room._id}>
+              {featuredRooms.map((room, index) => (
+                <Grid 
+                  item 
+                  xs={12} 
+                  sm={6} 
+                  md={4} 
+                  lg={3} 
+                  key={room._id}
+                  sx={{
+                    opacity: isFeaturedRoomsVisible ? 1 : 0,
+                    transform: isFeaturedRoomsVisible ? 'translateY(0)' : 'translateY(40px)',
+                    transition: `opacity 0.6s ease-out ${index * 0.2}s, transform 0.6s ease-out ${index * 0.2}s`,
+                  }}
+                >
                   <RoomCard room={room} />
                 </Grid>
               ))}
@@ -638,33 +683,122 @@ const Home = () => {
               promotions.map((promo) => (
                 <Grid item xs={12} md={4} key={promo._id}>
                   <PromotionCard>
-                    <CardMedia
-                      component="img"
-                      sx={{ width: 180 }}
-                      image={promo.image ? `http://localhost:5000${promo.image}` : 'https://source.unsplash.com/random/300x200/?hotel'}
-                      alt={promo.title || promo.name}
-                    />
-                    <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
-                      <Chip 
-                        label={`Tiết kiệm ${promo.discountPercent}%`} 
-                        color="secondary" 
-                        size="small" 
-                        sx={{ alignSelf: 'flex-start', mb: 1 }}
+                    <Box sx={{ position: 'relative', width: '40%', overflow: 'hidden' }}>
+                      <CardMedia
+                        component="img"
+                        sx={{ 
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.5s ease',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                          }
+                        }}
+                        image={promo.image ? `http://localhost:5000${promo.image}` : 'https://source.unsplash.com/random/300x200/?hotel'}
+                        alt={promo.title || promo.name}
                       />
-                      <Typography component="div" variant="h6" fontWeight={600}>
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 12,
+                          left: 0,
+                          bgcolor: 'secondary.main',
+                          color: 'white',
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: '0 20px 20px 0',
+                          fontWeight: 'bold',
+                          fontSize: '0.8rem',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          zIndex: 1,
+                        }}
+                      >
+                        <Box component="span" 
+                          sx={{ 
+                            display: 'inline-block',
+                            animation: 'pulse 1.5s infinite',
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            bgcolor: 'white'
+                          }}
+                        />
+                        Tiết kiệm {promo.discountPercent}%
+                      </Box>
+                    </Box>
+                    <Box 
+                      sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        p: 3, 
+                        width: '60%',
+                        position: 'relative',
+                        zIndex: 1
+                      }}
+                    >
+                      <Typography 
+                        component="div" 
+                        variant="h6" 
+                        fontWeight={700}
+                        sx={{ mb: 1, color: 'primary.dark' }}
+                      >
                         {promo.title || promo.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
                         {promo.description?.slice(0, 100)}...
                       </Typography>
-                      <Button 
-                        size="small" 
-                        component={RouterLink} 
-                        to={`/promotions/${promo._id}`}
-                        sx={{ alignSelf: 'flex-start', mt: 'auto' }}
-                      >
-                        Xem chi tiết
-                      </Button>
+                      
+                      <Box sx={{ mt: 'auto' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <AccessTimeIcon fontSize="small" sx={{ mr: 1, fontSize: '0.9rem', color: 'text.secondary' }} />
+                          <Typography variant="caption" color="text.secondary">
+                            Có hiệu lực đến: {new Date(promo.validTo).toLocaleDateString('vi-VN')}
+                          </Typography>
+                        </Box>
+                        
+                        <Box sx={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          mt: 1
+                        }}>
+                          <Box sx={{
+                            bgcolor: 'background.paper',
+                            p: 0.5,
+                            px: 1,
+                            borderRadius: 1,
+                            border: '1px dashed',
+                            borderColor: 'primary.light',
+                            letterSpacing: 0.5,
+                            fontFamily: 'monospace',
+                            fontWeight: 'bold',
+                            color: 'primary.dark',
+                            fontSize: '0.8rem'
+                          }}>
+                            {promo.code}
+                          </Box>
+                          <Button 
+                            component={RouterLink} 
+                            to={`/promotions/${promo._id}`}
+                            variant="outlined"
+                            size="small"
+                            sx={{ 
+                              fontWeight: 600,
+                              borderWidth: 2,
+                              borderRadius: 2,
+                              '&:hover': {
+                                borderWidth: 2,
+                              }
+                            }}
+                          >
+                            Xem chi tiết
+                          </Button>
+                        </Box>
+                      </Box>
                     </Box>
                   </PromotionCard>
                 </Grid>

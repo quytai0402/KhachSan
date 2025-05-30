@@ -65,13 +65,20 @@ const RoomDetail = () => {
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAvailable, setIsAvailable] = useState(true);
   
   useEffect(() => {
     const fetchRoomDetail = async () => {
       try {
         setLoading(true);
         const response = await roomAPI.getRoomById(id);
-        setRoom(response.data);
+        const roomData = response.data.data || response.data;
+        setRoom(roomData);
+        
+        // Check if room is available (not in maintenance, cleaning, or occupied)
+        const availableStatuses = ['available', 'vacant-clean', 'vacant-dirty'];
+        setIsAvailable(availableStatuses.includes(roomData.status));
+        
       } catch (err) {
         console.error('Error fetching room details:', err);
         setError('Failed to load room details. Please try again later.');
@@ -84,11 +91,8 @@ const RoomDetail = () => {
   }, [id]);
   
   const handleBookNow = () => {
-    if (isAuthenticated) {
-      navigate(`/booking/${id}`);
-    } else {
-      navigate(`/login?redirect=/booking/${id}`);
-    }
+    // Allow both authenticated and non-authenticated users to access booking form
+    navigate(`/booking/${id}`);
   };
   
   // Default placeholder images if none provided
@@ -320,15 +324,15 @@ const RoomDetail = () => {
                 size="large"
                 fullWidth
                 onClick={handleBookNow}
-                disabled={room.status !== 'available'}
+                disabled={!isAvailable}
                 startIcon={<BookmarkAddIcon />}
               >
-                Đặt Ngay
+                {isAvailable ? 'Đặt Ngay' : 'Không khả dụng'}
               </Button>
               
-              {room.status !== 'available' && (
+              {!isAvailable && (
                 <Alert severity="warning">
-                  Phòng này hiện không khả dụng để đặt.
+                  Phòng này hiện không khả dụng để đặt. Vui lòng chọn phòng khác hoặc thử lại sau.
                 </Alert>
               )}
               
