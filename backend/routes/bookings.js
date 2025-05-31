@@ -33,7 +33,7 @@ router.get('/me', auth, asyncHandler(async (req, res) => {
 // @route   GET api/bookings/:id
 // @desc    Get booking by ID
 // @access  Private
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', auth, asyncHandler(async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
       .populate('user', ['name', 'email', 'phone'])
@@ -57,11 +57,11 @@ router.get('/:id', auth, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ success: false, message: 'Booking not found' });
     }
-    res.status(500).send('Server error');
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
-});
+}));
 
 // @route   GET api/bookings/room/:roomId
 // @desc    Get bookings for a specific room
@@ -83,7 +83,7 @@ router.get('/room/:roomId', asyncHandler(async (req, res) => {
 // @route   POST api/bookings
 // @desc    Create a booking
 // @access  Private
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, asyncHandler(async (req, res) => {
   const {
     room: roomId,
     checkInDate,
@@ -222,12 +222,12 @@ router.post('/', auth, async (req, res) => {
     }
     res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
-});
+}));
 
 // @route   POST api/bookings/guest
 // @desc    Create a booking for guest (without authentication)
 // @access  Public
-router.post('/guest', async (req, res) => {
+router.post('/guest', asyncHandler(async (req, res) => {
   const {
     roomId,
     checkInDate,
@@ -360,244 +360,207 @@ router.post('/guest', async (req, res) => {
     }
     res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
-});
+}));
 
 // @route   PUT api/bookings/:id/status
 // @desc    Update booking status
 // @access  Private (Admin only)
-router.put('/:id/status', [auth, admin], async (req, res) => {
+router.put('/:id/status', [auth, admin], asyncHandler(async (req, res) => {
   const { status } = req.body;
 
-  try {
-    // Find the booking
-    const booking = await Booking.findById(req.params.id);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-
-    // Update booking status
-    booking.status = status;
-    
-    // Update the room status based on the booking status
-    if (status === 'checked-in') {
-      await Room.findByIdAndUpdate(booking.room, { status: 'booked' });
-    } else if (status === 'checked-out') {
-      await Room.findByIdAndUpdate(booking.room, { status: 'cleaning' });
-    } else if (status === 'cancelled') {
-      await Room.findByIdAndUpdate(booking.room, { status: 'available' });
-    }
-
-    await booking.save();
-    res.json({ success: true, data: booking });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
-    }
-    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  // Find the booking
+  const booking = await Booking.findById(req.params.id);
+  if (!booking) {
+    return res.status(404).json({ message: 'Booking not found' });
   }
-});
+
+  // Update booking status
+  booking.status = status;
+  
+  // Update the room status based on the booking status
+  if (status === 'checked-in') {
+    await Room.findByIdAndUpdate(booking.room, { status: 'booked' });
+  } else if (status === 'checked-out') {
+    await Room.findByIdAndUpdate(booking.room, { status: 'cleaning' });
+  } else if (status === 'cancelled') {
+    await Room.findByIdAndUpdate(booking.room, { status: 'available' });
+  }
+
+  await booking.save();
+  res.json({ success: true, data: booking });
+}));
 
 // @route   PUT api/bookings/:id/payment
 // @desc    Update payment status
 // @access  Private (Admin only)
-router.put('/:id/payment', [auth, admin], async (req, res) => {
+router.put('/:id/payment', [auth, admin], asyncHandler(async (req, res) => {
   const { paymentStatus } = req.body;
 
-  try {
-    // Find the booking
-    const booking = await Booking.findById(req.params.id);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-
-    // Update payment status
-    booking.paymentStatus = paymentStatus;
-    await booking.save();
-    res.json({ success: true, data: booking });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
-    }
-    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  // Find the booking
+  const booking = await Booking.findById(req.params.id);
+  if (!booking) {
+    return res.status(404).json({ message: 'Booking not found' });
   }
-});
+
+  // Update payment status
+  booking.paymentStatus = paymentStatus;
+  await booking.save();
+  res.json({ success: true, data: booking });
+}));
 
 // @route   DELETE api/bookings/:id
 // @desc    Cancel a booking
 // @access  Private
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    // Find the booking
-    const booking = await Booking.findById(req.params.id);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-
-    // Get user and room information for email
-    const user = await User.findById(req.user.id);
-    const room = await Room.findById(booking.room);
-
-    // Check if user owns the booking or is admin
-    if (booking.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'Not authorized' });
-    }
-
-    // Check if booking can be cancelled (e.g., not too close to check-in date)
-    const now = new Date();
-    const checkIn = new Date(booking.checkInDate);
-    const hoursUntilCheckIn = (checkIn - now) / (1000 * 60 * 60);
-    
-    if (hoursUntilCheckIn < 24 && req.user.role !== 'admin') {
-      return res.status(400).json({ message: 'Bookings can only be cancelled at least 24 hours before check-in' });
-    }
-
-    // Update booking status
-    booking.status = 'cancelled';
-    await booking.save();
-
-    // Free up the room
-    await Room.findByIdAndUpdate(booking.room, { status: 'available' });
-
-    // Send cancellation email
-    sendBookingCancellation(user, booking, room).catch(err => 
-      console.error('Failed to send booking cancellation email:', err)      );
-
-    res.json({ success: true, message: 'Booking cancelled' });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
-    }
-    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+router.delete('/:id', auth, asyncHandler(async (req, res) => {
+  // Find the booking
+  const booking = await Booking.findById(req.params.id);
+  if (!booking) {
+    return res.status(404).json({ message: 'Booking not found' });
   }
-});
+
+  // Get user and room information for email
+  const user = await User.findById(req.user.id);
+  const room = await Room.findById(booking.room);
+
+  // Check if user owns the booking or is admin
+  if (booking.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return res.status(401).json({ message: 'Not authorized' });
+  }
+
+  // Check if booking can be cancelled (e.g., not too close to check-in date)
+  const now = new Date();
+  const checkIn = new Date(booking.checkInDate);
+  const hoursUntilCheckIn = (checkIn - now) / (1000 * 60 * 60);
+  
+  if (hoursUntilCheckIn < 24 && req.user.role !== 'admin') {
+    return res.status(400).json({ message: 'Bookings can only be cancelled at least 24 hours before check-in' });
+  }
+
+  // Update booking status
+  booking.status = 'cancelled';
+  await booking.save();
+
+  // Free up the room
+  await Room.findByIdAndUpdate(booking.room, { status: 'available' });
+
+  // Send cancellation email
+  sendBookingCancellation(user, booking, room).catch(err => 
+    console.error('Failed to send booking cancellation email:', err)      );
+
+  res.json({ success: true, message: 'Booking cancelled' });
+}));
 
 // @route   PUT api/bookings/:id/cancel
 // @desc    Cancel a booking
 // @access  Private
-router.put('/:id/cancel', auth, async (req, res) => {
-  try {
-    const booking = await Booking.findById(req.params.id)
-      .populate('room', ['roomNumber', 'type', 'price']);
+router.put('/:id/cancel', auth, asyncHandler(async (req, res) => {
+  const booking = await Booking.findById(req.params.id)
+    .populate('room', ['roomNumber', 'type', 'price']);
 
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-
-    // Check if user is authorized
-    if (booking.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'Not authorized' });
-    }
-
-    // Check if booking can be cancelled
-    if (booking.status === 'cancelled') {
-      return res.status(400).json({ message: 'Booking is already cancelled' });
-    }
-
-    // Cancel the booking
-    booking.status = 'cancelled';
-    booking.cancelledAt = Date.now();
-
-    // If room is currently booked by this booking, update its status
-    const room = await Room.findById(booking.room._id);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const checkInDate = new Date(booking.checkInDate);
-    checkInDate.setHours(0, 0, 0, 0);
-    
-    const checkOutDate = new Date(booking.checkOutDate);
-    checkOutDate.setHours(0, 0, 0, 0);
-    
-    // If the booking is for the current date range and the room is booked, update room status
-    if (room.status === 'booked' && 
-        today >= checkInDate && 
-        today <= checkOutDate) {
-      room.status = 'available';
-      await room.save();
-      
-      // Emit room status change event
-      if (req.io) {
-        req.io.emit(socketEvents.ROOM_STATUS_CHANGED, {
-          roomId: room._id,
-          status: room.status
-        });
-      }
-    }
-
-    await booking.save();
-
-    // Get user for email notification
-    const user = await User.findById(booking.user);
-
-    // Send cancellation email
-    if (user) {
-      sendBookingCancellation(user, booking, room).catch(err => 
-        console.error('Failed to send booking cancellation email:', err)
-      );
-    }
-
-    // Emit booking cancelled event
-    if (req.io) {
-      socketEvents.emitToRoles(req.io, socketEvents.BOOKING_CANCELED, booking);
-      
-      // Also notify the user if they didn't initiate the cancel
-      if (booking.user.toString() !== req.user.id) {
-        socketEvents.emitToUser(req.io, booking.user.toString(), socketEvents.BOOKING_CANCELED, booking);
-      }
-      
-      // Send notification
-      const notification = {
-        message: `Booking #${booking._id.toString().slice(-6)} for Room ${room.roomNumber} has been cancelled`,
-        type: 'booking',
-        data: {
-          bookingId: booking._id,
-          roomNumber: room.roomNumber,
-          checkInDate: booking.checkInDate,
-          checkOutDate: booking.checkOutDate
-        },
-        timestamp: new Date()
-      };
-      
-      socketEvents.emitToRoles(req.io, socketEvents.NOTIFICATION, notification);
-    }
-
-    res.json({ success: true, data: booking });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
-    }
-    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  if (!booking) {
+    return res.status(404).json({ message: 'Booking not found' });
   }
-});
+
+  // Check if user is authorized
+  if (booking.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return res.status(401).json({ message: 'Not authorized' });
+  }
+
+  // Check if booking can be cancelled
+  if (booking.status === 'cancelled') {
+    return res.status(400).json({ message: 'Booking is already cancelled' });
+  }
+
+  // Cancel the booking
+  booking.status = 'cancelled';
+  booking.cancelledAt = Date.now();
+
+  // If room is currently booked by this booking, update its status
+  const room = await Room.findById(booking.room._id);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const checkInDate = new Date(booking.checkInDate);
+  checkInDate.setHours(0, 0, 0, 0);
+  
+  const checkOutDate = new Date(booking.checkOutDate);
+  checkOutDate.setHours(0, 0, 0, 0);
+  
+  // If the booking is for the current date range and the room is booked, update room status
+  if (room.status === 'booked' && 
+      today >= checkInDate && 
+      today <= checkOutDate) {
+    room.status = 'available';
+    await room.save();
+    
+    // Emit room status change event
+    if (req.io) {
+      req.io.emit(socketEvents.ROOM_STATUS_CHANGED, {
+        roomId: room._id,
+        status: room.status
+      });
+    }
+  }
+
+  await booking.save();
+
+  // Get user for email notification
+  const user = await User.findById(booking.user);
+
+  // Send cancellation email
+  if (user) {
+    sendBookingCancellation(user, booking, room).catch(err => 
+      console.error('Failed to send booking cancellation email:', err)
+    );
+  }
+
+  // Emit booking cancelled event
+  if (req.io) {
+    socketEvents.emitToRoles(req.io, socketEvents.BOOKING_CANCELED, booking);
+    
+    // Also notify the user if they didn't initiate the cancel
+    if (booking.user.toString() !== req.user.id) {
+      socketEvents.emitToUser(req.io, booking.user.toString(), socketEvents.BOOKING_CANCELED, booking);
+    }
+    
+    // Send notification
+    const notification = {
+      message: `Booking #${booking._id.toString().slice(-6)} for Room ${room.roomNumber} has been cancelled`,
+      type: 'booking',
+      data: {
+        bookingId: booking._id,
+        roomNumber: room.roomNumber,
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate
+      },
+      timestamp: new Date()
+    };
+    
+    socketEvents.emitToRoles(req.io, socketEvents.NOTIFICATION, notification);
+  }
+
+  res.json({ success: true, data: booking });
+}));
 
 // @route   GET api/bookings/phone/:phoneNumber
 // @desc    Get bookings by guest phone number
 // @access  Public (for guest booking lookup)
-router.get('/phone/:phoneNumber', async (req, res) => {
-  try {
-    const { phoneNumber } = req.params;
-    
-    // Find all bookings with the given phone number
-    const bookings = await Booking.find({ 
-      isGuestBooking: true,
-      guestPhone: phoneNumber 
-    })
-    .populate('room', ['roomNumber', 'type', 'price', 'images'])
-    .sort({ createdAt: -1 });
-    
-    if (!bookings || bookings.length === 0) {
-      return res.status(404).json({ message: 'No bookings found for this phone number' });
-    }
-    
-    res.json({ success: true, data: bookings });
-  } catch (err) {
-    console.error('Error fetching bookings by phone:', err);
-    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+router.get('/phone/:phoneNumber', asyncHandler(async (req, res) => {
+  const { phoneNumber } = req.params;
+  
+  // Find all bookings with the given phone number
+  const bookings = await Booking.find({ 
+    isGuestBooking: true,
+    guestPhone: phoneNumber 
+  })
+  .populate('room', ['roomNumber', 'type', 'price', 'images'])
+  .sort({ createdAt: -1 });
+  
+  if (!bookings || bookings.length === 0) {
+    return res.status(404).json({ message: 'No bookings found for this phone number' });
   }
-});
+  
+  res.json({ success: true, data: bookings });
+}));
 
 module.exports = router;

@@ -214,13 +214,13 @@ router.post('/', [auth, admin, upload.array('images', 5)], asyncHandler(async (r
     // Save room to database
     const room = await newRoom.save();
     console.log('Room created successfully:', room._id);
-    res.status(201).json(room); // Changed to 201 for resource creation
+    res.status(201).json({ success: true, data: room }); // Changed to 201 for resource creation
   } catch (err) {
     console.error('Error creating room:', err.message);
     if (err.name === 'ValidationError') {
-      return res.status(400).json({ message: 'Validation Error', errors: err.errors });
+      return res.status(400).json({ success: false, message: 'Validation Error', errors: err.errors });
     }
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 }));
 
@@ -330,6 +330,6 @@ router.delete('/:id', [auth, admin], asyncHandler(async (req, res) => {
     }
     res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
-});
+}));
 
 module.exports = router;
