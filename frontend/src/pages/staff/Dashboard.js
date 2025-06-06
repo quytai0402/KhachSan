@@ -191,12 +191,14 @@ const StaffDashboard = () => {
         }
         
         // Always use real data, but provide fallbacks when fields are missing
+        // Ensure dashboardData is an object to prevent spread syntax errors
+        const safeData = dashboardData && typeof dashboardData === 'object' ? dashboardData : {};
         const combinedStats = {
-          ...dashboardData,
+          ...safeData,
           tasks: {
-            total: taskStats ? taskStats.total : (dashboardData.tasks?.total || 0),
-            rooms: taskStats ? taskStats.cleaning : (dashboardData.tasks?.rooms || 0),
-            services: taskStats ? taskStats.service : (dashboardData.tasks?.services || 0)
+            total: taskStats ? taskStats.total : (safeData.tasks?.total || 0),
+            rooms: taskStats ? taskStats.cleaning : (safeData.tasks?.rooms || 0),
+            services: taskStats ? taskStats.service : (safeData.tasks?.services || 0)
           }
         };
 
@@ -274,12 +276,14 @@ const StaffDashboard = () => {
       
       if (dashboardData) {
         // Combine data before updating state
+        // Ensure dashboardData is an object to prevent spread syntax errors
+        const safeData = dashboardData && typeof dashboardData === 'object' ? dashboardData : {};
         const combinedStats = {
-          ...dashboardData,
+          ...safeData,
           tasks: {
-            total: taskStats ? taskStats.total : (dashboardData.tasks?.total || 0),
-            rooms: taskStats ? taskStats.cleaning : (dashboardData.tasks?.rooms || 0),
-            services: taskStats ? taskStats.service : (dashboardData.tasks?.services || 0)
+            total: taskStats ? taskStats.total : (safeData.tasks?.total || 0),
+            rooms: taskStats ? taskStats.cleaning : (safeData.tasks?.rooms || 0),
+            services: taskStats ? taskStats.service : (safeData.tasks?.services || 0)
           }
         };
         

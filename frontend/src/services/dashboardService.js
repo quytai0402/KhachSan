@@ -30,6 +30,12 @@ class DashboardService {
       // Debug data from API
       console.log('Dashboard API response:', dashboardData);
       
+      // Ensure dashboardData is an object to prevent spread syntax errors
+      if (!dashboardData || typeof dashboardData !== 'object') {
+        console.error('Invalid dashboard data received:', dashboardData);
+        throw new Error('Invalid dashboard data format');
+      }
+      
       // Force convert nested objects into proper number values to ensure correct display
       if (dashboardData.rooms) {
         dashboardData.rooms.total = Number(dashboardData.rooms.total) || 0;

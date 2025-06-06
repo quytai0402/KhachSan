@@ -78,10 +78,12 @@ const Bookings = () => {
       try {
         setLoading(true);
         const response = await bookingAPI.getAllBookings();
-        setBookings(response.data);
+        const bookingsData = Array.isArray(response.data) ? response.data : [];
+        setBookings(bookingsData);
       } catch (err) {
         console.error('Error fetching bookings:', err);
         setError('Failed to load bookings. Please try again.');
+        setBookings([]);
       } finally {
         setLoading(false);
       }
@@ -219,10 +221,12 @@ const Bookings = () => {
       } else {
         console.error('Invalid response format:', response);
         setError('Định dạng dữ liệu không hợp lệ. Vui lòng thử lại sau.');
+        setBookings([]);
       }
     } catch (err) {
       console.error('Error refreshing bookings:', err);
       setError('Không thể tải danh sách đặt phòng. Vui lòng thử lại sau.');
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -230,6 +234,12 @@ const Bookings = () => {
   
   // Apply filters to bookings
   useEffect(() => {
+    // Ensure bookings is an array before filtering
+    if (!Array.isArray(bookings)) {
+      setFilteredBookings([]);
+      return;
+    }
+
     let filtered = [...bookings];
     
     // Apply status filter

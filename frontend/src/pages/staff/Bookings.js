@@ -56,11 +56,14 @@ const StaffBookings = () => {
       try {
         // Lấy dữ liệu đặt phòng từ API thực tế
         const response = await staffAPI.getStaffBookings();
-        setBookings(response.data);
-        setFilteredBookings(response.data);
+        const bookingsData = Array.isArray(response.data) ? response.data : [];
+        setBookings(bookingsData);
+        setFilteredBookings(bookingsData);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching bookings:', err);
+        setBookings([]);
+        setFilteredBookings([]);
         setLoading(false);
       }
     };
@@ -69,6 +72,12 @@ const StaffBookings = () => {
   }, []);
 
   useEffect(() => {
+    // Ensure bookings is an array before filtering
+    if (!Array.isArray(bookings)) {
+      setFilteredBookings([]);
+      return;
+    }
+
     let result = bookings;
     
     // Apply search filter
@@ -309,7 +318,7 @@ const StaffBookings = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredBookings
+              {Array.isArray(filteredBookings) && filteredBookings
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((booking) => (
                   <TableRow hover key={booking.id} onClick={() => handleOpenDialog(booking)}>
@@ -350,7 +359,7 @@ const StaffBookings = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-              {filteredBookings.length === 0 && (
+              {(!Array.isArray(filteredBookings) || filteredBookings.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={8} align="center">
                     <Typography variant="body1" sx={{ py: 2 }}>
@@ -365,7 +374,7 @@ const StaffBookings = () => {
         <TablePagination
           rowsPerPageOptions={[10, 25, 50]}
           component="div"
-          count={filteredBookings.length}
+          count={Array.isArray(filteredBookings) ? filteredBookings.length : 0}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

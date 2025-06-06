@@ -76,14 +76,12 @@ const AdminHousekeeping = () => {
       setLoading(true);
       try {
         const tasksData = await taskService.getTasks();
-        if (tasksData && tasksData.length > 0) {
-          setTasks(tasksData);
-        } else {
-          setTasks([]);
-        }
+        const validTasksData = Array.isArray(tasksData) ? tasksData : [];
+        setTasks(validTasksData);
       } catch (error) {
         console.error("Error fetching tasks:", error);
         toast.error("Không thể tải danh sách nhiệm vụ");
+        setTasks([]);
       } finally {
         setLoading(false);
       }
@@ -141,6 +139,12 @@ const AdminHousekeeping = () => {
 
   // Filter tasks based on search/filter criteria
   useEffect(() => {
+    // Ensure tasks is an array before filtering
+    if (!Array.isArray(tasks)) {
+      setFilteredTasks([]);
+      return;
+    }
+
     // Filter tasks based on all criteria
     let filtered = [...tasks];
 
@@ -194,13 +198,13 @@ const AdminHousekeeping = () => {
     setLoading(true);
     try {
       const tasksData = await taskService.getTasks();
-      if (tasksData) {
-        setTasks(tasksData);
-        toast.success('Danh sách nhiệm vụ đã được cập nhật');
-      }
+      const validTasksData = Array.isArray(tasksData) ? tasksData : [];
+      setTasks(validTasksData);
+      toast.success('Danh sách nhiệm vụ đã được cập nhật');
     } catch (error) {
       console.error("Error refreshing tasks:", error);
       toast.error("Không thể cập nhật danh sách nhiệm vụ");
+      setTasks([]);
     } finally {
       setLoading(false);
     }

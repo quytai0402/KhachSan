@@ -69,7 +69,8 @@ const Users = () => {
     email: '',
     role: 'user',
     phone: '',
-    address: ''
+    address: '',
+    password: ''
   });
   
   const [selectedUser, setSelectedUser] = useState(null);
@@ -89,7 +90,10 @@ const Users = () => {
   
   // Filter users based on search term and role
   useEffect(() => {
-    if (!users) return;
+    if (!users || !Array.isArray(users)) {
+      setFilteredUsers([]);
+      return;
+    }
     
     let result = [...users];
     
@@ -116,11 +120,16 @@ const Users = () => {
       try {
         setLoading(true);
         const response = await userAPI.getAllUsers();
-        setUsers(response.data);
-        setFilteredUsers(response.data);
+        // Backend returns { success: true, data: users }
+        const usersData = response.data?.data || response.data || [];
+        setUsers(usersData);
+        setFilteredUsers(usersData);
       } catch (err) {
         console.error('Error fetching users:', err);
         setError('Không thể tải danh sách người dùng. Vui lòng thử lại.');
+        // Set empty arrays on error to prevent map errors
+        setUsers([]);
+        setFilteredUsers([]);
       } finally {
         setLoading(false);
       }
@@ -172,7 +181,8 @@ const Users = () => {
       email: '',
       role: 'user',
       phone: '',
-      address: ''
+      address: '',
+      password: ''
     });
     setOpenAddDialog(true);
   };
@@ -190,8 +200,9 @@ const Users = () => {
   const handleAddUser = async () => {
     try {
       setSubmitting(true);
-      const response = await userAPI.createUser(formData);
-      setUsers(prev => [...prev, response.data]);
+      const response = await userAPI.createAdmin(formData);
+      setUsers(prev => [...prev, response.data.data]);
+      setFilteredUsers(prev => [...prev, response.data.data]);
       handleCloseDialogs();
     } catch (err) {
       console.error('Error adding user:', err);
@@ -208,9 +219,15 @@ const Users = () => {
     try {
       setSubmitting(true);
       const response = await userAPI.updateUser(selectedUser._id, formData);
+      const updatedUser = response.data.data;
       setUsers(prev => 
         prev.map(user => 
-          user._id === selectedUser._id ? response.data : user
+          user._id === selectedUser._id ? updatedUser : user
+        )
+      );
+      setFilteredUsers(prev => 
+        prev.map(user => 
+          user._id === selectedUser._id ? updatedUser : user
         )
       );
       handleCloseDialogs();
@@ -230,8 +247,9 @@ const Users = () => {
       setSubmitting(true);
       const response = await userAPI.deleteUser(selectedUser._id);
       
-      if (response && response.data) {
+      if (response && response.status === 200) {
         setUsers(prev => prev.filter(user => user._id !== selectedUser._id));
+        setFilteredUsers(prev => prev.filter(user => user._id !== selectedUser._id));
         toast.success(`Đã xóa người dùng ${selectedUser.name} thành công`);
         handleCloseDialogs();
       } else {
@@ -253,12 +271,17 @@ const Users = () => {
     try {
       setLoading(true);
       const response = await userAPI.getAllUsers();
-      setUsers(response.data);
-      setFilteredUsers(response.data);
+      // Backend returns { success: true, data: users }
+      const usersData = response.data?.data || response.data || [];
+      setUsers(usersData);
+      setFilteredUsers(usersData);
       setError(null);
     } catch (err) {
       console.error('Error refreshing users:', err);
       setError('Không thể làm mới danh sách người dùng. Vui lòng thử lại.');
+      // Set empty arrays on error to prevent map errors
+      setUsers([]);
+      setFilteredUsers([]);
     } finally {
       setLoading(false);
     }
@@ -408,7 +431,7 @@ const Users = () => {
         </Grid>
         <Grid item xs={12} md={3}>
           <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
-            Hiển thị {filteredUsers.length} trên {users.length} người dùng
+            Hiển thị {Array.isArray(filteredUsers) ? filteredUsers.length : 0} trên {Array.isArray(users) ? users.length : 0} người dùng
           </Typography>
         </Grid>
       </Grid>
@@ -447,7 +470,7 @@ const Users = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredUsers.length === 0 ? (
+                {!Array.isArray(filteredUsers) || filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} align="center">Không tìm thấy người dùng nào</TableCell>
                   </TableRow>
@@ -701,7 +724,7 @@ const Users = () => {
             variant="contained" 
             sx={{ bgcolor: '#1e4e8c' }}
             onClick={handleAddUser}
-            disabled={submitting || !formData.name || !formData.email}
+            disabled={submitting || !formData.name || !formData.email || !formData.password}
           >
             {submitting ? <CircularProgress size={24} /> : 'Thêm người dùng'}
           </Button>
